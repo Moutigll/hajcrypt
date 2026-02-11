@@ -1,0 +1,3 @@
+[submodule "hajlib"]
+	path = hajlib
+	url = git@github.com:Moutigll/hajlib.git
