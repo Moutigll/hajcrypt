@@ -1,54 +1,79 @@
-NAME		= ft_ssl
-
-LIB_NAME	= hajcrypt
-LIB_PATH	= hajlib
-LIB_LIBA	= $(LIB_PATH)/hajlib.a
-
-CC			= clang
-CFLAGS		= -Wall -Wextra -Werror -g
-INCLUDES	= -I./includes -I$(LIB_PATH)/include
-
+NAME        = ft_ssl
 BUILD_DIR   = build
+
+CONST_EXEC  = $(BUILD_DIR)/genConst
+
+LIB_NAME    = hajcrypt
+HLIB_PATH   = hajlib
+HLIB_LIBA   = $(HLIB_PATH)/hajlib.a
+
+CC          = clang
+CFLAGS      = -Wall -Wextra -Werror -g
+INCLUDES    = -I./includes -I$(HLIB_PATH)/include
 
 include sources.mk
 
+# --- ANSI colors ---
+GREEN   = \033[0;32m
+YELLOW  = \033[1;33m
+BLUE    = \033[0;34m
+RED     = \033[0;31m
+RESET   = \033[0m
 
 all: $(NAME)
 
+# --- Build hajlib ---
+$(HLIB_LIBA):
+	@echo -e "$(BLUE)Building hajlib...$(RESET)"
+	$(MAKE) -C $(HLIB_PATH) -j $(nproc)
 
-# Build external hajlib
-$(LIB_LIBA):
-	@echo "Building hajlib..."
-	$(MAKE) -C $(LIB_PATH)
+# ---- Generate constants ----
+$(BUILD_DIR)/consts/%.o: $(CONST_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-# Compile project objects
+$(CONST_EXEC): $(HLIB_LIBA) $(CONST_OBJ)
+	@echo -e "$(GREEN)Linking genConst executable...$(RESET)"
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(CONST_OBJ) $(HLIB_LIBA)
+	@echo -e "$(GREEN)Executable $@ generated.$(RESET)"
+
+$(CONST_HEADERS): $(CONST_EXEC)
+	@echo -e "$(YELLOW)Generating constant headers...$(RESET)"
+	@mkdir -p $(CONST_HDR_DIR)
+	./$(CONST_EXEC) $(CONST_HDR_DIR)
+	@echo -e "$(YELLOW)Headers generated: $@$(RESET)"
+
+# --- Compile project objects ---
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-# Build project static library
-$(BUILD_DIR)/lib$(LIB_NAME).a: $(LIB_OBJ)
+# --- Build static library ---
+$(LIB_NAME).a: $(CONST_HEADERS) $(LIB_OBJ)
+	@echo -e "$(GREEN)Building static library $@...$(RESET)"
 	@mkdir -p $(BUILD_DIR)
 	ar rcs $@ $(LIB_OBJ)
+	@echo -e "$(GREEN)Library $@ generated.$(RESET)"
 
-# Build executable
-$(NAME): $(LIB_LIBA) $(BUILD_DIR)/lib$(LIB_NAME).a $(CLI_OBJ)
-	@echo "Linking $(NAME)..."
+# --- Build executable ---
+$(NAME): $(HLIB_LIBA) $(LIB_NAME).a $(CLI_OBJ)
+	@echo -e "$(BLUE)Linking final executable $(NAME)...$(RESET)"
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(NAME) \
 		$(CLI_OBJ) \
-		$(BUILD_DIR)/lib$(LIB_NAME).a \
-		$(LIB_LIBA)
+		$(LIB_NAME).a \
+		$(HLIB_LIBA)
+	@echo -e "$(GREEN)Executable $(NAME) ready.$(RESET)"
 
-
-# Clean
-
+# --- Clean ---
 clean:
-	$(MAKE) -C $(LIB_PATH) clean
+	$(MAKE) -C $(HLIB_PATH) clean
+	rm -f $(CONST_HEADERS)
 	rm -rf $(BUILD_DIR)
 
 fclean: clean
 	rm -f $(NAME)
-	$(MAKE) -C $(LIB_PATH) fclean
+	rm -f $(LIB_NAME).a
+	$(MAKE) -C $(HLIB_PATH) fclean
 
 re: fclean all
 

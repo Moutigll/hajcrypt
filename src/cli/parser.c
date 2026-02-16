@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "../../hajlib/include/hajlib.h"	/* IWYU pragma: keep */
 #include "../../includes/cli/parser.h"
@@ -89,7 +88,7 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 		}
 		i++;
 	}
-	fprintf(stderr, "ft_ssl: Error: '%s' is an invalid command.\n", arg);
+	ft_dprintf(2, "ft_ssl: Error: '%s' is an invalid command.\n", arg);
 	return (1);
 }
 
@@ -107,17 +106,18 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 	tFtGetoptStatus status;
 	const char *shortOpts = "pqrs:";
 
+	
 	/* minimal validation */
 	if (argc < 2 || !argv || !opts)
 	{
 		/* TODO: print a list of available algorithms */
-		fprintf(stderr, "ft_ssl: missing command\n");
+		ft_dprintf(2, "ft_ssl: missing command\n");
 		return (1);
 	}
 
 	if (initSslOptions(opts, argc) != 0)
 	{
-		fprintf(stderr, "ft_ssl: memory allocation failed\n");
+		ft_dprintf(2, "ft_ssl: memory allocation failed\n");
 		return (1);
 	}
 
@@ -133,7 +133,8 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		return (0);
 	}
 
-	ftGetoptInit(&st, argc - 2, argv + 2);
+	ft_getoptInit(&st, argc - 2, argv + 2);
+	st.index = 0; /* reset index to start of options (argv[2]) */
 
 	/* iterate options */
 	for (;;)
@@ -146,7 +147,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		if (status == FT_GETOPT_ERROR)
 		{
 			/* st.badOpt or st.status carries info; print usable message */
-			fprintf(stderr, "ft_ssl: %s: illegal option -- %s\n",
+			ft_dprintf(2, "ft_ssl: %s: illegal option %s\n",
 				argv[1], st.badOpt ? st.badOpt : "(unknown)");
 			freeSslOptions(opts);
 			return (1);
