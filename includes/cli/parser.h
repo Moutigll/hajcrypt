@@ -3,12 +3,7 @@
 
 #include <stddef.h>
 
-typedef enum e_algo
-{
-	ALGO_NONE,
-	ALGO_MD5,
-	ALGO_SHA256
-}	t_algo;
+#include "client.h"
 
 typedef struct s_sslOptions
 {
@@ -37,5 +32,6 @@ typedef struct {
 
 int	parseSslArgs(int argc, char **argv, t_sslOptions *opts);
 
+void freeSslOptions(t_sslOptions *opts);
 
 #endif /* HAJCRYPT_CLI_PARSER_H */

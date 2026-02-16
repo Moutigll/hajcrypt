@@ -4,15 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef struct s_hash
-{
-	void	(*init)(void *ctx);
-	void	(*update)(void *ctx, const uint8_t *data, size_t len);
-	void	(*final)(uint8_t *digest, void *ctx);
-	size_t	ctxSize;
-	size_t	digestSize;
-}	t_hash;
-
 typedef struct paddParams
 {
 	size_t	blockSize;		/* Block size in bytes (64 for MD5/SHA-256) */

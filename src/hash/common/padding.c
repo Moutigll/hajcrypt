@@ -24,7 +24,7 @@ uint8_t *padMessage(const uint8_t	*msg,
 
 	buffer = malloc(*newLen);
 	if (!buffer)
-		return NULL;
+		return (NULL);
 
 	/* copy the original message into the buffer */
 	ft_memcpy(buffer, msg, paddParams->msgLen);
@@ -45,5 +45,5 @@ uint8_t *padMessage(const uint8_t	*msg,
 			buffer[*newLen - 8 + i] = ((uint64_t)paddParams->msgLen * 8 >> (8 * (7 - i))) & 0xFF;
 	}
 
-	return buffer;
+	return (buffer);
 }

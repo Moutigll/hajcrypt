@@ -22,6 +22,10 @@ RESET   = \033[0m
 
 all: $(NAME)
 
+lib: $(LIB_NAME).a
+
+const: $(CONST_EXEC) $(CONST_HEADERS)
+
 # --- Build hajlib ---
 $(HLIB_LIBA):
 	@echo -e "$(BLUE)Building hajlib...$(RESET)"
