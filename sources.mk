@@ -11,12 +11,15 @@ CONST_SRC = \
 
 LIB_SRC = \
 	$(SRC_DIR)/hash/common/padding.c \
-	$(SRC_DIR)/hash/common/endian.c
+	$(SRC_DIR)/hash/common/endian.c \
+	$(SRC_DIR)/hash/md5/md5.c \
+	$(SRC_DIR)/hash/md5/transform.c
 
 
 CLI_SRC = \
 	$(SRC_DIR)/cli/main.c \
-	$(SRC_DIR)/cli/parser.c
+	$(SRC_DIR)/cli/parser.c \
+	$(SRC_DIR)/cli/dispatch.c
 
 CONST_OBJ = $(patsubst $(CONST_DIR)/%.c, $(BUILD_DIR)/consts/%.o, $(CONST_SRC))
 LIB_OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(LIB_SRC))

@@ -15,13 +15,15 @@ typedef struct paddParams
  * @brief Pads the input message according to the specifications of the hash function.
  * This function takes an input message and pads it to ensure that its length is a multiple of the block size required by the hash function.
  * The padding scheme involves appending a '1' bit, followed by '0' bits, and finally appending the original message length in bits as a 64-bit integer. *
- * @param msg - pointer to the original message
- * @param paddParams - pointer to a t_paddParams structure containing the block size, endianness, and original message length
+ * @param lastBlock - pointer to the last block of the original message
+ * @param lastLen - length of the last block in bytes
+ * @param params - pointer to a t_paddParams structure containing the block size, endianness, and original message length
  * @param newLen - pointer to a size_t variable where the length of the padded message will be stored
  * @return pointer to the newly allocated padded message, or NULL if memory allocation fails. The caller is responsible for freeing this memory.
  */
-uint8_t *padMessage(const uint8_t	*msg,
-					t_paddParams	*paddParams,
+uint8_t *padMessage(const uint8_t	*lastBlock,
+					size_t			lastLen,
+					t_paddParams	*params,
 					size_t			*newLen);
 
 /**

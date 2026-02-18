@@ -4,45 +4,56 @@
 
 #include "../../../includes/hash/hash.h"
 
-uint8_t *padMessage(const uint8_t	*msg,
-					t_paddParams	*paddParams,
+uint8_t *padMessage(const uint8_t	*lastBlock,
+					size_t			lastLen,
+					t_paddParams	*params,
 					size_t			*newLen)
 {
-	size_t baseSize;
-	size_t remainder;
-	size_t padding;
-	uint8_t *buffer;
-	size_t i;
+	size_t		required;
+	size_t		paddingZeros;
+	uint8_t		*buffer;
+	size_t		i;
+	uint64_t	bitLen;
 
-	/* Base size: message length + 1 byte for the '1' bit + 8 bytes for the original message length */
-	baseSize = paddParams->msgLen + 1 + 8;
+	required = lastLen + 1 + 8; // 1 byte for 0x80 and 8 bytes for length field
 
-	remainder = baseSize % paddParams->blockSize;
-	padding = (remainder == 0) ? 0 : paddParams->blockSize - remainder;
+	if (required % params->blockSize <= params->blockSize - 8
+		&& required % params->blockSize != 0)
+		paddingZeros = params->blockSize - (required % params->blockSize);
+	else if (required % params->blockSize == 0)
+		paddingZeros = 0;
+	else
+		paddingZeros = (2 * params->blockSize) - (required % params->blockSize);
 
-	*newLen = baseSize + padding;
+	*newLen = required + paddingZeros;
 
 	buffer = malloc(*newLen);
 	if (!buffer)
 		return (NULL);
 
-	/* copy the original message into the buffer */
-	ft_memcpy(buffer, msg, paddParams->msgLen);
+	ft_memcpy(buffer, lastBlock, lastLen);
 
-	/* append the 0x80 byte */
-	buffer[paddParams->msgLen] = 0x80;
+	buffer[lastLen] = 0x80;
 
-	/* fill with zeros until the length - 8 bytes */
-	for (i = paddParams->msgLen + 1; i < *newLen - 8; i++)
-		buffer[i] = 0x00;
-
-	/* append the original message length in bits (little or big endian depending on parameter) */
-	for (i = 0; i < 8; i++)
+	i = lastLen + 1;
+	while (i < *newLen - 8)
 	{
-		if (paddParams->isLittleEndian)
-			buffer[*newLen - 8 + i] = ((uint64_t)paddParams->msgLen * 8 >> (8 * i)) & 0xFF;
+		buffer[i] = 0x00;
+		i++;
+	}
+
+	bitLen = (uint64_t)params->msgLen * 8;
+
+	i = 0;
+	while (i < 8)
+	{
+		if (params->isLittleEndian)
+			buffer[*newLen - 8 + i] =
+				(bitLen >> (8 * i)) & 0xFF;
 		else
-			buffer[*newLen - 8 + i] = ((uint64_t)paddParams->msgLen * 8 >> (8 * (7 - i))) & 0xFF;
+			buffer[*newLen - 8 + i] =
+				(bitLen >> (8 * (7 - i))) & 0xFF;
+		i++;
 	}
 
 	return (buffer);

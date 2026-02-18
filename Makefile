@@ -1,15 +1,19 @@
-NAME        = ft_ssl
-BUILD_DIR   = build
+NAME		= ft_ssl
+BUILD_DIR	= build
 
-CONST_EXEC  = $(BUILD_DIR)/genConst
+CONST_EXEC	= $(BUILD_DIR)/genConst
 
-LIB_NAME    = hajcrypt
-HLIB_PATH   = hajlib
-HLIB_LIBA   = $(HLIB_PATH)/hajlib.a
+LIB_NAME	= hajcrypt
+HLIB_PATH	= hajlib
+HLIB_LIBA	= $(HLIB_PATH)/hajlib.a
 
-CC          = clang
-CFLAGS      = -Wall -Wextra -Werror -g
-INCLUDES    = -I./includes -I$(HLIB_PATH)/include
+CC			= clang
+BASE_FLAGS	= -Wall -Wextra -Werror --pedantic
+OPT_FLAGS	?= -O3 -flto
+SAN_FLAGS	?=
+CFLAGS		= $(BASE_FLAGS) $(OPT_FLAGS) $(SAN_FLAGS)
+
+INCLUDES	= -I./includes -I$(HLIB_PATH)/include
 
 include sources.mk
 
@@ -25,6 +29,11 @@ all: $(NAME)
 lib: $(LIB_NAME).a
 
 const: $(CONST_EXEC) $(CONST_HEADERS)
+
+ifneq (,$(filter leak,$(MAKECMDGOALS)))
+SAN_FLAGS = -g -fsanitize=address -fno-omit-frame-pointer
+OPT_FLAGS = -O1
+endif
 
 # --- Build hajlib ---
 $(HLIB_LIBA):
@@ -81,4 +90,7 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+leak:
+	@true
+
+.PHONY: all clean fclean re const lib leak
