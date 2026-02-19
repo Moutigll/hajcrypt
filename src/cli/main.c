@@ -1,23 +1,32 @@
-#include <stdio.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "../../hajlib/include/hprintf.h"
 #include "../../includes/cli/parser.h"
+#include "../../hajlib/include/hstring.h"
 
-#define BUFFER_SIZE 16 * 1024
+#define BUFFER_SIZE (16 * 1024)
 
-static int executeSsl(t_sslOptions *opts)
+static void printDigest(const t_hash *hash, uint8_t *digest)
 {
-	const t_hash	*hash;
+	size_t i;
+	char hex[3];
+
+	for (i = 0; i < hash->digestSize; i++)
+	{
+		ft_snprintf(hex, sizeof(hex), "%02x", digest[i]);
+		ft_printf("%s", hex);
+	}
+	ft_printf("\n");
+}
+
+static int processFd(int fd, const t_hash *hash)
+{
 	void			*ctx;
 	uint8_t			*digest;
-	unsigned char	buffer[BUFFER_SIZE];
+	uint8_t			buffer[BUFFER_SIZE];
 	ssize_t			bytesRead;
-
-	hash = getHashByAlgo(opts->algo);
-	if (!hash)
-		return (1);
 
 	ctx = malloc(hash->ctxSize);
 	digest = malloc(hash->digestSize);
@@ -26,30 +35,87 @@ static int executeSsl(t_sslOptions *opts)
 
 	hash->init(ctx);
 
-	bytesRead = read(STDIN_FILENO, buffer, BUFFER_SIZE);
-	while (bytesRead > 0)
-	{
+	while ((bytesRead = read(fd, buffer, BUFFER_SIZE)) > 0)
 		hash->update(ctx, buffer, bytesRead);
-		bytesRead = read(STDIN_FILENO, buffer, BUFFER_SIZE);
-	}
 
 	if (bytesRead < 0)
 		return (1);
 
 	hash->final(digest, ctx);
-
-	/* print digest */
-	ft_printf("\n");
-	for (size_t i = 0; i < hash->digestSize; i++)
-	{
-		char hex[3]; // 2 caractères pour le hex + '\0'
-		ft_snprintf(hex, sizeof(hex), "%02x", digest[i]);
-		ft_printf("%s", hex);
-	}
-	ft_printf("\n");
+	printDigest(hash, digest);
 
 	free(ctx);
 	free(digest);
+	return (0);
+}
+
+static int processString(const char *str, const t_hash *hash)
+{
+	void	*ctx;
+	uint8_t	*digest;
+
+	ctx = malloc(hash->ctxSize);
+	digest = malloc(hash->digestSize);
+	if (!ctx || !digest)
+		return (1);
+
+	hash->init(ctx);
+	hash->update(ctx, (const uint8_t *)str, ft_strlen(str));
+	hash->final(digest, ctx);
+
+	printDigest(hash, digest);
+
+	free(ctx);
+	free(digest);
+	return (0);
+}
+
+/* --------------------- execute --------------------- */
+
+static int executeSsl(t_sslOptions *opts)
+{
+	const t_hash	*hash;
+	size_t			i;
+	int				fd;
+
+	hash = getHashByAlgo(opts->algo);
+	if (!hash)
+		return (1);
+
+	/* -p : read from stdin */
+	if (opts->flagP)
+		processFd(STDIN_FILENO, hash);
+
+	/* -s : strings */
+	i = 0;
+	while (i < opts->stringCount)
+	{
+		processString(opts->stringInputs[i], hash);
+		i++;
+	}
+
+	/* files */
+	i = 0;
+	while (i < opts->fileCount)
+	{
+		fd = open(opts->fileInputs[i], O_RDONLY);
+		if (fd < 0)
+		{
+			ft_dprintf(STDERR_FILENO,
+				"ft_ssl: %s: No such file or directory\n",
+				opts->fileInputs[i]);
+		}
+		else
+		{
+			processFd(fd, hash);
+			close(fd);
+		}
+		i++;
+	}
+
+	/* default stdin */
+	if (opts->readFromStdin && !opts->flagP)
+		processFd(STDIN_FILENO, hash);
 
 	return (0);
 }

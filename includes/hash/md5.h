@@ -24,23 +24,37 @@ typedef struct s_md5Ctx
 /* ------------------------ core MD5 functions ------------------------ */
 
 /**
- * @brief Initializes the MD5 context.
- * Sets state to initial values and clears buffer/bit length.
+ * @brief Initializes MD5 context with initial state constants.
+ * The initial state is defined by the MD5 specification and consists of specific 32-bit values for A, B, C, D.
+ * @param ctx - pointer to MD5 context structure to initialize
  */
 void	md5Init(void *ctx);
 
 /**
- * @brief Updates MD5 context with data chunk.
- * Can be called multiple times for streaming data.
+ * @brief Updates the MD5 context with new input data.
+ * This function can be called multiple times with chunks of the message to be hashed.
+ * It processes 512-bit blocks of data and updates the internal state accordingly.
+ * @param ctx - pointer to MD5 context structure to update
+ * @param data - pointer to input data to hash
+ * @param len - length of the input data in bytes
  */
 void	md5Update(void *ctx, const uint8_t *data, size_t len);
 
 /**
- * @brief Finalizes the MD5 digest.
- * Writes the resulting 16-byte hash to `digest`.
+ * @brief Finalizes the MD5 hash computation and produces the final digest.
+ * This function should be called after all input data has been processed with md5Update.
+ * It performs any necessary padding and appends the message length, then computes the final hash value.
+ * @param digest - pointer to a buffer (at least 16 bytes) where the final 128-bit (16-byte) MD5 digest will be stored
+ * @param ctx - pointer to MD5 context structure that has been updated with all input data
  */
 void	md5Final(uint8_t *digest, void *ctx);
 
+/* Internal function to perform the MD5 transformation on a single 512-bit block.
+ * This function is called by md5Update when a full block of data is ready to be processed.
+ * It takes the current state (A, B, C, D) and the 512-bit block of input data, and updates the state according to the MD5 algorithm.
+ * @param state - array of 4 uint32_t representing the current state (A, B, C, D)
+ * @param block - 64-byte array containing the 512-bit block of input data to process
+ */
 void	md5Transform(uint32_t state[4], const uint8_t block[64]);
 
 #endif /* HAJCRYPT_MD5_H */
