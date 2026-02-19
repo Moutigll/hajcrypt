@@ -38,7 +38,6 @@ void	md5Update(void *ctx, const uint8_t *data, size_t len)
 		ft_memcpy(&md5->buffer[index], data, partLen);
 
 		md5Transform(md5->state, md5->buffer);
-
 		i = partLen;
 		// Process as many full 64-byte blocks as possible directly from input data
 		while (i + 63 < len)
@@ -76,7 +75,9 @@ void md5Final(uint8_t *digest, void *ctx)
 
 	/* Process each padded block */
 	for (offset = 0; offset < paddedLen; offset += 64)
+	{
 		md5Transform(md5->state, padded + offset);
+	}
 
 	free(padded);
 

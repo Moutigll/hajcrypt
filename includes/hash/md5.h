@@ -16,7 +16,7 @@
  */
 typedef struct s_md5Ctx
 {
-	uint32_t	state[4];	/* A, B, C, D */
+	uint32_t	state[4] __attribute__((aligned(16))); /* A, B, C, D state variables */
 	uint64_t	bitlen;		/* total message length in bits */
 	uint8_t		buffer[64];	/* 512-bit message block */
 }   t_md5Ctx;
