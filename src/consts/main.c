@@ -1,6 +1,4 @@
 #include <fcntl.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 #include "../../hajlib/include/hchar.h"
 #include "../../hajlib/include/hprintf.h"
@@ -10,9 +8,18 @@
 
 const static t_header headers[] = {
 	{ "md5", generateMd5Header },
+	{ "sha256", generateSha256Header }
 };
 
-
+void writeUint32Hex(char buf[11], uint32_t n)
+{
+	static const char hex[] = "0123456789ABCDEF";
+	buf[0] = '0';
+	buf[1] = 'x';
+	for (int i = 0; i < 8; i++)
+		buf[2 + i] = hex[(n >> ((7 - i) * 4)) & 0xF];
+	buf[10] = '\0';
+}
 
 static void buildPath(char *dst, const char *dir, const char *file)
 {
@@ -78,6 +85,8 @@ int main(void)
 
 		ft_dprintf(fd, "\n#endif /* HAJCRYPT_%s_CONSTS_H */\n", upperFile);
 		close(fd);
+
+		ft_printf("Generated header for %s at %s/%s.h\n", headers[i].name, outdir, headers[i].name);
 	}
 
 	return (0);

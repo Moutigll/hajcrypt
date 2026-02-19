@@ -3,18 +3,19 @@ CONST_DIR		= $(SRC_DIR)/consts
 CONST_HDR_DIR	= includes/consts
 
 CONST_HEADERS = \
-	$(CONST_HDR_DIR)/md5.h
+	$(CONST_HDR_DIR)/md5.h \
+	$(CONST_HDR_DIR)/sha256.h
 
 CONST_SRC = \
 	$(CONST_DIR)/main.c \
-	$(CONST_DIR)/md5.c
+	$(CONST_DIR)/md5.c \
+	$(CONST_DIR)/sha256.c
 
 LIB_SRC = \
 	$(SRC_DIR)/hash/common/padding.c \
 	$(SRC_DIR)/hash/common/endian.c \
 	$(SRC_DIR)/hash/md5/md5.c \
 	$(SRC_DIR)/hash/md5/transform.c
-
 
 CLI_SRC = \
 	$(SRC_DIR)/cli/main.c \

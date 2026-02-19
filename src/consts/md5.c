@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <stdint.h>
 
 #include "../../hajlib/include/hprintf.h"
@@ -6,23 +5,6 @@
 
 #include "../../includes/consts/consts.h"
 
-#define MD5_FRACTIONAL(x) ((uint32_t)((x - (uint32_t)(x)) * 4294967296.0))
-#define SIN_CONSTS_COUNT 64
-
-/* Convert uint32_t -> hex string (0xXXXXXXXX) */
-static char *uint32ToHex(uint32_t n)
-{
-	static const char hex[] = "0123456789ABCDEF";
-	char *buf = malloc(11);
-	if (!buf)
-		return (NULL);
-	buf[0] = '0';
-	buf[1] = 'x';
-	for (int i = 0; i < 8; i++)
-		buf[2 + i] = hex[(n >> ((7 - i) * 4)) & 0xF];
-	buf[10] = '\0';
-	return (buf);
-}
 
 /* Generate 64 constants based on sine function as an example */
 int generateMd5SinConsts(int fd)
@@ -31,11 +13,10 @@ int generateMd5SinConsts(int fd)
 	ft_dprintf(fd, "static const uint32_t g_MD5_K[64] = {\n");
 	for (int i = 0; i < 64; i++)
 	{
-		uint32_t val = MD5_FRACTIONAL(ft_fabs(ft_sin(i + 1)));
-		char *hex = uint32ToHex(val);
-
-		ft_dprintf(fd, "\t%s,%s\n", hex, (i == 63) ? "" : "");
-		free(hex);
+		uint32_t val = GET_FRACTIONAL(ft_fabs(ft_sin(i + 1)));
+		char buf[11];
+		writeUint32Hex(buf, val);
+		ft_dprintf(fd, "\t%s,%s\n", buf, (i == 63) ? "" : "");
 	}
 	ft_dprintf(fd, "};\n");
 

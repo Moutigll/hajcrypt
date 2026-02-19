@@ -176,14 +176,14 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 							opts->stringInputs[opts->stringCount++] = (char *)st.optArg;
 						else
 						{
-							fprintf(stderr, "ft_ssl: too many inputs\n");
+							ft_dprintf(STDERR_FILENO, "ft_ssl: too many inputs\n");
 							freeSslOptions(opts);
 							return (1);
 						}
 					}
 					else
 					{
-						fprintf(stderr, "ft_ssl: %s: option requires an argument -- s\n", argv[1]);
+						ft_dprintf(STDERR_FILENO, "ft_ssl: %s: option requires an argument -- s\n", argv[1]);
 						freeSslOptions(opts);
 						return (1);
 					}
@@ -191,7 +191,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 
 				default:
 					/* unknown option value (defensive) */
-					fprintf(stderr, "ft_ssl: unknown option '%c'\n", (char)st.opt);
+					ft_dprintf(STDERR_FILENO, "ft_ssl: unknown option '%c'\n", (char)st.opt);
 					freeSslOptions(opts);
 					return (1);
 			}
@@ -207,7 +207,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 			opts->fileInputs[opts->fileCount++] = st.argv[st.index];
 		else
 		{
-			fprintf(stderr, "ft_ssl: too many inputs\n");
+			ft_dprintf(STDERR_FILENO, "ft_ssl: too many inputs\n");
 			freeSslOptions(opts);
 			return (1);
 		}
