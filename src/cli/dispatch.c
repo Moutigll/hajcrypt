@@ -10,17 +10,17 @@ const t_hash g_md5Hash = {
 	.digestSize = 16
 };
 
-// const t_hash g_sha256Hash = {
-// 	.init = sha256Init,
-// 	.update = sha256Update,
-// 	.final = sha256Final,
-// 	.ctxSize = sizeof(t_sha256Ctx),
-// 	.digestSize = 32
-// };
+const t_hash g_sha256Hash = {
+	.init = sha256Init,
+	.update = sha256Update,
+	.final = sha256Final,
+	.ctxSize = sizeof(t_sha256Ctx),
+	.digestSize = 32
+};
 
 static const t_hashDispatch g_hashTable[] = {
 	{ ALGO_MD5,    &g_md5Hash },
-	//{ ALGO_SHA256, &g_sha256Hash },
+	{ ALGO_SHA256, &g_sha256Hash },
 	{ ALGO_NONE,   NULL }
 };
 

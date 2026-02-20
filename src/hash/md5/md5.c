@@ -1,9 +1,10 @@
+#include <stdlib.h>
+
 #include "../../../hajlib/include/hmemory.h"
 #include "../../../includes/consts/md5.h"
 #include "../../../includes/hash/hash.h"
 
 #include "../../../includes/hash/md5.h"
-#include <stdlib.h>
 
 void md5Init(void *ctx)
 {
@@ -57,29 +58,26 @@ void	md5Update(void *ctx, const uint8_t *data, size_t len)
 
 void md5Final(uint8_t *digest, void *ctx)
 {
-	t_md5Ctx	*md5 = (t_md5Ctx *)ctx;
-	size_t		paddedLen;
-	uint8_t		*padded;
-	size_t		offset;
+	t_md5Ctx		*md5 = (t_md5Ctx *)ctx;
+	uint8_t			padded[128];
 	t_paddParams	params;
+	size_t			paddedLen;
+	size_t			offset;
 
 	/* Setup padding parameters */
 	params.blockSize		= 64;
 	params.msgLen			= md5->bitlen / 8;
 	params.isLittleEndian	= 1;
 
-	/* Pad remaining message */
-	padded = padMessage(md5->buffer, (md5->bitlen / 8) % 64, &params, &paddedLen);
-	if (!padded)
-		return;	// malloc failed
+	/* Pad remaining message into local buffer */
+	paddedLen = padMessage(padded, md5->buffer, 
+						   (md5->bitlen / 8) % 64, &params);
 
 	/* Process each padded block */
 	for (offset = 0; offset < paddedLen; offset += 64)
 	{
 		md5Transform(md5->state, padded + offset);
 	}
-
-	free(padded);
 
 	/* Output digest in little-endian */
 	for (size_t i = 0; i < 4; i++)

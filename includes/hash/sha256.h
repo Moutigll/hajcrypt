@@ -12,13 +12,12 @@
  * - bufferLen: current length of data in the buffer
  * This structure is used internally by the SHA-256 implementation to maintain state across multiple calls to update
  */
-typedef struct s_sha256Ctx
-{
-	uint32_t	state[8];
-	uint64_t	totalLen;
-	uint8_t		buffer[64];
-	size_t		bufferLen;
-}	t_sha256Ctx;
+typedef struct s_sha256Ctx {
+	uint32_t state[8] __attribute__((aligned(4)));
+	uint64_t totalLen;
+	uint32_t bufferLen;
+	uint8_t buffer[64] __attribute__((aligned(4)));
+} t_sha256Ctx;
 
 /**
  * @brief Initializes SHA-256 context with initial state constants.
@@ -45,5 +44,11 @@ void	sha256Update(void *ctx, const uint8_t *data, size_t len);
  * @param ctx - pointer to SHA-256 context structure that has been updated with all input data
  */
 void	sha256Final(uint8_t *digest, void *ctx);
+
+void	sha256Transform(uint32_t *state, const uint8_t *data);
+
+void	sha256Transform_arm64(uint32_t *state, const uint8_t *data);
+
+void	sha256Transform_x86_64(uint32_t *state, const uint8_t *data);
 
 #endif /* HAJCRYPT_SHA256_H */
