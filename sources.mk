@@ -15,7 +15,12 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/common/padding.c \
 	$(SRC_DIR)/hash/common/endian.c \
 	$(SRC_DIR)/hash/md5/md5.c \
-	$(SRC_DIR)/hash/md5/transform.c
+	$(SRC_DIR)/hash/md5/transform.c \
+	$(SRC_DIR)/hash/sha256/sha256.c \
+	$(SRC_DIR)/hash/sha256/transform.c
+
+LIB_ASM_ARM_SRC = \
+	$(SRC_DIR)/hash/sha256/transform_arm64.s
 
 CLI_SRC = \
 	$(SRC_DIR)/cli/main.c \
@@ -23,5 +28,7 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/dispatch.c
 
 CONST_OBJ = $(patsubst $(CONST_DIR)/%.c, $(BUILD_DIR)/consts/%.o, $(CONST_SRC))
-LIB_OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(LIB_SRC))
+LIB_SRC_OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(LIB_SRC))
+LIB_ASM_ARM_OBJ = $(patsubst $(SRC_DIR)/hash/sha256/transform_arm64.s, $(BUILD_DIR)/hash/sha256/transform_arm64.o, $(LIB_ASM_ARM_SRC))
+LIB_ASM_X86_OBJ = $(patsubst $(SRC_DIR)/hash/sha256/transform_x86_64.s, $(BUILD_DIR)/hash/sha256/transform_x86_64.o, $(LIB_ASM_X86_SRC))
 CLI_OBJ = $(patsubst $(SRC_DIR)/cli/%.c, $(BUILD_DIR)/cli/%.o, $(CLI_SRC))
