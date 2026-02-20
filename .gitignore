@@ -3,3 +3,4 @@ ft_ssl
 hajcrypt.a
 includes/consts/*
 !includes/consts/consts.h
+benchmark.html
