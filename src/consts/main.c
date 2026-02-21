@@ -8,7 +8,8 @@
 
 const static t_header headers[] = {
 	{ "md5", generateMd5Header },
-	{ "sha256", generateSha256Header }
+	{ "sha256", generateSha256Header },
+	{ "whirlpool", generateWhirlpoolHeader }
 };
 
 void writeUint32Hex(char buf[11], uint32_t n)
@@ -19,6 +20,20 @@ void writeUint32Hex(char buf[11], uint32_t n)
 	for (int i = 0; i < 8; i++)
 		buf[2 + i] = hex[(n >> ((7 - i) * 4)) & 0xF];
 	buf[10] = '\0';
+}
+
+int isPrime(int n)
+{
+	if (n < 2)
+		return 0;
+	if (n == 2 || n == 3)
+		return 1;
+	if (n % 2 == 0)
+		return 0;
+	for (int i = 3; i*i <= n; i += 2)
+		if (n % i == 0)
+			return 0;
+	return 1;
 }
 
 static void buildPath(char *dst, const char *dir, const char *file)

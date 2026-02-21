@@ -25,6 +25,12 @@ typedef struct s_header {
  */
 void writeUint32Hex(char buf[11], uint32_t n);
 
+/* @brief Check if a given integer is prime.
+ * @param n - the integer to check for primality
+ * @return 1 if n is prime, 0 otherwise
+ */
+int isPrime(int n);
+
 /**
  * @brief Generate the MD5 header file with initial state constants and sine-based constants.
  * @param fd - file descriptor to write the generated header content to
@@ -38,5 +44,12 @@ int generateMd5Header(int fd);
  * @return 0 on success, 1 on failure (e.g. write error)
  */
 int generateSha256Header(int fd);
+
+/**
+ * @brief Generate the Whirlpool header file with initial state constants and prime-based constants.
+ * @param fd - file descriptor to write the generated header content to
+ * @return 0 on success, 1 on failure (e.g. write error)
+ */
+int generateWhirlpoolHeader(int fd);
 
 #endif /* HAJCRYPT_CONSTS_H */
