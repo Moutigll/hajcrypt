@@ -57,10 +57,12 @@ static int initSslOptions(t_sslOptions *opts, int argc)
 
 static void setAlgoMd5(t_sslOptions *opts)    { opts->algo = ALGO_MD5; }
 static void setAlgoSha256(t_sslOptions *opts) { opts->algo = ALGO_SHA256; }
+static void setAlgoWhirlpool(t_sslOptions *opts) { opts->algo = ALGO_WHIRLPOOL; }
 
 static const t_algoDispatch gAlgoDispatch[] = {
 	{ "md5",    setAlgoMd5    },
 	{ "sha256", setAlgoSha256 },
+	{ "whirlpool", setAlgoWhirlpool },
 	{ NULL,     NULL          }
 };
 

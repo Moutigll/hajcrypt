@@ -4,12 +4,14 @@ CONST_HDR_DIR	= includes/consts
 
 CONST_HEADERS = \
 	$(CONST_HDR_DIR)/md5.h \
-	$(CONST_HDR_DIR)/sha256.h
+	$(CONST_HDR_DIR)/sha256.h \
+	$(CONST_HDR_DIR)/whirpool.h
 
 CONST_SRC = \
 	$(CONST_DIR)/main.c \
 	$(CONST_DIR)/md5.c \
-	$(CONST_DIR)/sha256.c
+	$(CONST_DIR)/sha256.c \
+	$(CONST_DIR)/whirpool.c
 
 LIB_SRC = \
 	$(SRC_DIR)/hash/common/padding.c \
@@ -17,7 +19,9 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/md5/md5.c \
 	$(SRC_DIR)/hash/md5/transform.c \
 	$(SRC_DIR)/hash/sha256/sha256.c \
-	$(SRC_DIR)/hash/sha256/transform.c
+	$(SRC_DIR)/hash/sha256/transform.c \
+	$(SRC_DIR)/hash/whirlpool/whirlpool.c \
+	$(SRC_DIR)/hash/whirlpool/transform.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s

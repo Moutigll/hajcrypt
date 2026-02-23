@@ -68,6 +68,7 @@ void md5Final(uint8_t *digest, void *ctx)
 	params.blockSize		= 64;
 	params.msgLen			= md5->bitlen / 8;
 	params.isLittleEndian	= 1;
+	params.lenghtFieldSize	= 8;
 
 	/* Pad remaining message into local buffer */
 	paddedLen = padMessage(padded, md5->buffer, 

@@ -1,6 +1,7 @@
 #include "../../includes/cli/client.h"
 #include "../../includes/hash/md5.h"
 #include "../../includes/hash/sha256.h"
+#include "../../includes/hash/whirlpool.h"
 
 const t_hash g_md5Hash = {
 	.init = md5Init,
@@ -18,9 +19,18 @@ const t_hash g_sha256Hash = {
 	.digestSize = 32
 };
 
+const t_hash g_whirlpoolHash = {
+	.init = whirlpoolInit,
+	.update = whirlpoolUpdate,
+	.final = whirlpoolFinal,
+	.ctxSize = sizeof(t_whirlpoolCtx),
+	.digestSize = 64
+};
+
 static const t_hashDispatch g_hashTable[] = {
 	{ ALGO_MD5,    &g_md5Hash },
 	{ ALGO_SHA256, &g_sha256Hash },
+	{ ALGO_WHIRLPOOL, &g_whirlpoolHash },
 	{ ALGO_NONE,   NULL }
 };
 
