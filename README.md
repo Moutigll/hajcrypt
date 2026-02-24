@@ -70,7 +70,7 @@ make test
 Clone the repository and build with `Makefile`:
 
 ```bash
-git clone <repo_url>
+git clone <repo_url> --recursive
 cd hajcrypt
 make
 ```
