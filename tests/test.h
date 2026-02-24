@@ -1,0 +1,60 @@
+#ifndef HAJCRYPT_TEST_H
+#define HAJCRYPT_TEST_H
+
+#include <stdint.h>
+#include <stddef.h>
+
+#define COLOR_RESET   "\033[0m"
+#define COLOR_RED	 "\033[31m"
+#define COLOR_GREEN   "\033[32m"
+#define COLOR_YELLOW  "\033[33m"
+#define COLOR_BLUE	"\033[34m"
+#define COLOR_MAGENTA "\033[35m"
+#define COLOR_CYAN	"\033[36m"
+
+/**
+ * @brief Holds a test vector for hash function testing, including input message, its length, and the expected hash output.
+ * This structure is used to define test cases for validating the correctness of hash function implementations.
+ * - input: pointer to the input message to be hashed (can be binary data)
+ * - input_len: length of the input message in bytes
+ * - expected: pointer to the expected hash output in hexadecimal string format (for easy comparison and display)
+ */
+typedef struct {
+	const char	*input;
+	size_t		input_len;
+	const char	*expected;
+} testVector_t;
+
+/**
+ * @brief Holds test entry information for executing a test function.
+ * This structure maps a test name to its corresponding test function pointer,
+ * allowing for dynamic test execution and reporting.
+ * - name: descriptive name of the test (used for logging and identification)
+ * - func: pointer to the test function that returns 0 on success, non-zero on failure
+ */
+typedef struct {
+	const char	*name;
+	int			(*func)(void);
+} testEntry_t;
+
+/* Utility functions for test reporting and comparison */
+void printSuccess(const char *msg);
+void printFailure(const char *msg);
+void printInfo(const char *msg);
+int compareHex(const char *expected, const uint8_t *actual, size_t len);
+void hexDump(const uint8_t *data, size_t len);
+
+/* Test function declarations */
+int testMd5Basic(void);
+int testMd5Update(void);
+int testMd5Large(void);
+
+int testSha256Basic(void);
+int testSha256Update(void);
+int testSha256Large(void);
+
+int testWhirlpoolBasic(void);
+int testWhirlpoolUpdate(void);
+int testWhirlpoolLarge(void);
+
+#endif /* HAJCRYPT_TEST_H */

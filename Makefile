@@ -54,7 +54,8 @@ endif
 # --- Build hajlib ---
 $(HLIB_LIBA):
 	@echo -e "$(BLUE)Building hajlib...$(RESET)"
-	$(MAKE) -C $(HLIB_PATH)
+	$(MAKE) -C $(HLIB_PATH) -j $(nproc)
+	@echo -e "$(GREEN)hajlib built.$(RESET)"
 
 
 # ---- Generate constants ----
@@ -98,6 +99,16 @@ $(NAME): $(HLIB_LIBA) $(LIB_NAME).a $(CLI_OBJ)
 		$(LIB_NAME).a \
 		$(HLIB_LIBA)
 	@echo -e "$(GREEN)Executable $(NAME) ready.$(RESET)"
+
+test: $(LIB_NAME).a $(TEST_SRC)
+	@echo -e "$(BLUE)Compiling tests...$(RESET)"
+	@mkdir -p $(BUILD_DIR)/tests
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(BUILD_DIR)/tests/test_runner \
+		$(TEST_SRC) \
+		$(LIB_NAME).a \
+		$(HLIB_LIBA)
+	@echo -e "$(GREEN)Running tests...$(RESET)"
+	$(BUILD_DIR)/tests/test_runner
 
 # --- Clean ---
 clean:

@@ -87,7 +87,7 @@ static uint64_t computeTableEntry(int src_col, uint8_t x, const uint8_t whirlpoo
 			result |= (uint64_t)product << (56 - 8 * dst_col); /* Place in big-endian position */
 		}
 	}
-	return result;
+	return (result);
 }
 /**
  * Generate T-tables for Whirlpool

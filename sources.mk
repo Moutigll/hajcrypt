@@ -5,13 +5,13 @@ CONST_HDR_DIR	= includes/consts
 CONST_HEADERS = \
 	$(CONST_HDR_DIR)/md5.h \
 	$(CONST_HDR_DIR)/sha256.h \
-	$(CONST_HDR_DIR)/whirpool.h
+	$(CONST_HDR_DIR)/whirlpool.h
 
 CONST_SRC = \
-	$(CONST_DIR)/main.c \
-	$(CONST_DIR)/md5.c \
-	$(CONST_DIR)/sha256.c \
-	$(CONST_DIR)/whirlpool.c
+	$(CONST_DIR)/main.const.c \
+	$(CONST_DIR)/md5.const.c \
+	$(CONST_DIR)/sha256.const.c \
+	$(CONST_DIR)/whirlpool.const.c
 
 LIB_SRC = \
 	$(SRC_DIR)/hash/common/padding.c \
@@ -31,6 +31,13 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/main.c \
 	$(SRC_DIR)/cli/parser.c \
 	$(SRC_DIR)/cli/dispatch.c
+
+TEST_SRC = \
+	tests/main.test.c \
+	tests/utils.test.c \
+	tests/src/md5.test.c \
+	tests/src/sha256.test.c \
+	tests/src/whirlpool.test.c
 
 CONST_OBJ = $(patsubst $(CONST_DIR)/%.c, $(BUILD_DIR)/consts/%.o, $(CONST_SRC))
 LIB_SRC_OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(LIB_SRC))
