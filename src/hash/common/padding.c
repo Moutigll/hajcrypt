@@ -1,56 +1,53 @@
 #include <stdlib.h>
 
-#include "../../../hajlib/include/hmemory.h"
 
 #include "../../../includes/hash/hash.h"
 
-size_t padMessage(uint8_t		*dst,
-				  const uint8_t	*lastBlock,
-				  size_t		lastLen,
-				  t_paddParams	*params)
+size_t padMessage(uint8_t *dst, const uint8_t *lastBlock, size_t lastLen, t_paddParams *params)
 {
-	size_t		required;
-	size_t		paddingZeros;
-	size_t		totalLen;
+	size_t		offset = 0;
 	size_t		i;
 	uint64_t	bitLen;
-
-	if (!dst || !lastBlock || !params)
-		return 0;
-
-	/* Calculate required length: original + 0x80 + 8 bytes length */
-	required = lastLen + 1 + 8;
-
-	/* Calculate padding zeros needed to reach block size multiple */
-	if (required % params->blockSize <= params->blockSize - 8 &&
-		required % params->blockSize != 0)
-		paddingZeros = params->blockSize - (required % params->blockSize);
-	else if (required % params->blockSize == 0)
-		paddingZeros = 0;
+	
+	if (!dst || !lastBlock || !params || params->blockSize == 0)
+		return (0);
+	
+	for (i = 0; i < lastLen; i++) /* Copy remaining bytes of the last block */
+		dst[offset++] = lastBlock[i];
+	
+	dst[offset++] = 0x80;
+	
+	size_t	target = params->blockSize - params->lengthFieldSize;
+	size_t	mod = offset % params->blockSize;
+	size_t	needed;
+	
+	if (mod <= target)
+		needed = target - mod;
 	else
-		paddingZeros = (2 * params->blockSize) - (required % params->blockSize);
-
-	totalLen = required + paddingZeros;
-
-	/* Copy original data */
-	ft_memcpy(dst, lastBlock, lastLen);
-
-	/* Add the 0x80 marker */
-	dst[lastLen] = 0x80;
-
-	/* Fill with zeros until the length field */
-	for (i = lastLen + 1; i < totalLen - 8; i++)
-		dst[i] = 0x00;
-
-	/* Add the length in bits (64-bit) */
+		needed = params->blockSize - mod + target;
+	
+	for (i = 0; i < needed; i++) /* Pad with zeros */
+		dst[offset++] = 0x00;
+	
 	bitLen = (uint64_t)params->msgLen * 8;
-	for (i = 0; i < 8; i++)
-	{
-		if (params->isLittleEndian)
-			dst[totalLen - 8 + i] = (bitLen >> (8 * i)) & 0xFF;
-		else
-			dst[totalLen - 8 + i] = (bitLen >> (8 * (7 - i))) & 0xFF;
+	
+	if (params->isLittleEndian) { /* Write length in little-endian format */
+		for (i = 0; i < params->lengthFieldSize; i++) { /* Write according to specified length field size */
+			int shift = 8 * i;
+			if (shift < 64)
+				dst[offset + i] = (bitLen >> shift) & 0xFF;
+			else
+				dst[offset + i] = 0;
+		}
+	} else { /* Write length in big-endian format */
+		for (i = 0; i < params->lengthFieldSize; i++) {
+			int shift = 8 * (params->lengthFieldSize - 1 - i);
+			if (shift < 64)
+				dst[offset + i] = (bitLen >> shift) & 0xFF;
+			else
+				dst[offset + i] = 0;
+		}
 	}
-
-	return (totalLen);
+	
+	return (offset + params->lengthFieldSize);
 }

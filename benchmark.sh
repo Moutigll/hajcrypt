@@ -3,6 +3,7 @@ set -euo pipefail
 
 FT_SSL=./ft_ssl
 OPENSSL=openssl
+RHASH=rhash
 OUTPUT=benchmark.html
 TMPDIR=$(mktemp -d /tmp/ft_ssl_bench_XXXXXX)
 
@@ -15,7 +16,11 @@ if [ ! -x "$FT_SSL" ]; then
   exit 1
 fi
 if ! command -v $OPENSSL >/dev/null 2>&1; then
-  echo "Error: openssl not found in PATH" >&2
+  echo "Warning: openssl not found in PATH (MD5/SHA256 will be skipped)" >&2
+  OPENSSL=""
+fi
+if ! command -v $RHASH >/dev/null 2>&1; then
+  echo "Error: rhash not found in PATH (required for Whirlpool)" >&2
   exit 1
 fi
 
@@ -26,10 +31,12 @@ md5_ft_vals=()
 md5_ssl_vals=()
 sha_ft_vals=()
 sha_ssl_vals=()
+whirlpool_ft_vals=()
+whirlpool_rhash_vals=()
 
 # measure single run: returns elapsed nanoseconds
 _run_once_ns() {
-  # $1 = command... (full command as array)
+  # $@ = command... (full command as array)
   local start end
   start=$(date +%s%N)
   # run the command (stdout discarded)
@@ -57,11 +64,16 @@ measure_avg_seconds() {
 	if [ "$bin" = "$OPENSSL" ]; then
 	  if [ "$algo" = "md5" ]; then
 		ns=$(_run_once_ns $bin dgst -md5 "$file")
-	  else
+	  elif [ "$algo" = "sha256" ]; then
 		ns=$(_run_once_ns $bin dgst -sha256 "$file")
+	  else
+		ns=0
 	  fi
+	elif [ "$bin" = "$RHASH" ]; then
+	  # rhash --whirlpool filename
+	  ns=$(_run_once_ns $bin --whirlpool "$file")
 	else
-	  # ft_ssl expects: ft_ssl md5 filename  (or ft_ssl sha256 filename)
+	  # ft_ssl expects: ft_ssl algo filename (md5, sha256, whirlpool)
 	  ns=$(_run_once_ns "$bin" "$algo" "$file")
 	fi
 
@@ -90,24 +102,48 @@ for size in "${SIZES[@]}"; do
 
   labels+=("$size")
 
+  # MD5 ft_ssl
   echo "  MD5 ft_ssl..."
   v=$(measure_avg_seconds md5 "$file" "$FT_SSL" "$size")
   md5_ft_vals+=("$v")
   echo "	-> $v s"
 
-  echo "  MD5 openssl..."
-  v=$(measure_avg_seconds md5 "$file" "$OPENSSL" "$size")
-  md5_ssl_vals+=("$v")
-  echo "	-> $v s"
+  # MD5 openssl (if available)
+  if [ -n "$OPENSSL" ]; then
+	echo "  MD5 openssl..."
+	v=$(measure_avg_seconds md5 "$file" "$OPENSSL" "$size")
+	md5_ssl_vals+=("$v")
+	echo "	-> $v s"
+  else
+	md5_ssl_vals+=("0")
+  fi
 
+  # SHA256 ft_ssl
   echo "  SHA256 ft_ssl..."
   v=$(measure_avg_seconds sha256 "$file" "$FT_SSL" "$size")
   sha_ft_vals+=("$v")
   echo "	-> $v s"
 
-  echo "  SHA256 openssl..."
-  v=$(measure_avg_seconds sha256 "$file" "$OPENSSL" "$size")
-  sha_ssl_vals+=("$v")
+  # SHA256 openssl (if available)
+  if [ -n "$OPENSSL" ]; then
+	echo "  SHA256 openssl..."
+	v=$(measure_avg_seconds sha256 "$file" "$OPENSSL" "$size")
+	sha_ssl_vals+=("$v")
+	echo "	-> $v s"
+  else
+	sha_ssl_vals+=("0")
+  fi
+
+  # Whirlpool ft_ssl
+  echo "  Whirlpool ft_ssl..."
+  v=$(measure_avg_seconds whirlpool "$file" "$FT_SSL" "$size")
+  whirlpool_ft_vals+=("$v")
+  echo "	-> $v s"
+
+  # Whirlpool rhash
+  echo "  Whirlpool rhash..."
+  v=$(measure_avg_seconds whirlpool "$file" "$RHASH" "$size")
+  whirlpool_rhash_vals+=("$v")
   echo "	-> $v s"
 done
 
@@ -120,7 +156,7 @@ join_commas() {
   printf '%s' "$*"
 }
 
-# prepare JS arrays (ensure proper comma separated strings)
+# prepare JS arrays
 labels_js=$(printf '"%s",' "${labels[@]}")
 labels_js="[${labels_js%,}]"
 
@@ -135,6 +171,12 @@ shaft_js="[${shaft_js%,}]"
 
 shassl_js=$(printf '%s,' "${sha_ssl_vals[@]}")
 shassl_js="[${shassl_js%,}]"
+
+whirlpoolft_js=$(printf '%s,' "${whirlpool_ft_vals[@]}")
+whirlpoolft_js="[${whirlpoolft_js%,}]"
+
+whirlpoolrhash_js=$(printf '%s,' "${whirlpool_rhash_vals[@]}")
+whirlpoolrhash_js="[${whirlpoolrhash_js%,}]"
 
 # generate HTML
 cat > "$OUTPUT" <<EOF
@@ -153,14 +195,15 @@ canvas{background:#fff;border-radius:8px;display:block;margin:20px auto}
 </style>
 </head>
 <body>
-<h1 style="text-align:center">ft_ssl vs OpenSSL — MD5 & SHA256</h1>
+<h1 style="text-align:center">ft_ssl vs OpenSSL/rhash — MD5, SHA256 & Whirlpool</h1>
 <div class="legend">
   <div><span class="box" style="background:#4CAF50"></span><span class="small">ft_ssl</span></div>
-  <div><span class="box" style="background:#F44336"></span><span class="small">OpenSSL</span></div>
+  <div><span class="box" style="background:#F44336"></span><span class="small">OpenSSL/rhash</span></div>
 </div>
 
 <canvas id="md5" width="900" height="400"></canvas>
 <canvas id="sha" width="900" height="400"></canvas>
+<canvas id="whirlpool" width="900" height="400"></canvas>
 
 <script>
 const labels = $labels_js;
@@ -168,22 +211,28 @@ const md5_ft = $md5ft_js;
 const md5_ssl = $md5ssl_js;
 const sha_ft = $shaft_js;
 const sha_ssl = $shassl_js;
+const whirlpool_ft = $whirlpoolft_js;
+const whirlpool_rhash = $whirlpoolrhash_js;
 
 // draw function (time in seconds)
-function draw(id, title, a1, a2) {
+function draw(id, title, a1, a2, label1 = 'ft_ssl', label2 = 'OpenSSL') {
   new Chart(document.getElementById(id), {
 	type: 'line',
 	data: {
 	  labels: labels,
 	  datasets: [
-		{ label: 'ft_ssl', data: a1, borderColor: '#4CAF50', fill:false, tension:0.1 },
-		{ label: 'OpenSSL', data: a2, borderColor: '#F44336', fill:false, tension:0.1 },
+		{ label: label1, data: a1, borderColor: '#4CAF50', fill:false, tension:0.1 },
+		{ label: label2, data: a2, borderColor: '#F44336', fill:false, tension:0.1 },
 	  ]
 	},
 	options: {
 	  plugins: { title: { display:true, text: title } },
 	  scales: {
-		x: { title: { display:true, text:'File size (bytes)' }, type:'linear' },
+		x: { 
+		  title: { display:true, text:'File size (bytes)' }, 
+		  type:'linear',
+		  ticks: { callback: function(v) { return v.toExponential(); } }
+		},
 		y: { title: { display:true, text:'Time (s)' } }
 	  }
 	}
@@ -192,6 +241,7 @@ function draw(id, title, a1, a2) {
 
 draw('md5', 'MD5 — average (warmup ignored)', md5_ft, md5_ssl);
 draw('sha', 'SHA256 — average (warmup ignored)', sha_ft, sha_ssl);
+draw('whirlpool', 'Whirlpool — average (warmup ignored)', whirlpool_ft, whirlpool_rhash, 'ft_ssl', 'rhash');
 </script>
 </body>
 </html>

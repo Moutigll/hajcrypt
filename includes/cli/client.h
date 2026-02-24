@@ -8,7 +8,8 @@ typedef enum e_algo
 {
 	ALGO_NONE,
 	ALGO_MD5,
-	ALGO_SHA256
+	ALGO_SHA256,
+	ALGO_WHIRLPOOL
 }	t_algo;
 
 typedef struct s_hash

@@ -6,9 +6,10 @@
 
 typedef struct paddParams
 {
-	size_t	blockSize;		/* Block size in bytes (64 for MD5/SHA-256) */
-	int		isLittleEndian;	/* 1 if little-endian, 0 if big-endian */
-	size_t	msgLen;			/* Original message length in bytes */
+	size_t	blockSize;			/* Block size in bytes (64 for MD5/SHA-256) */
+	int		isLittleEndian;		/* 1 if little-endian, 0 if big-endian */
+	size_t	msgLen;				/* Original message length in bytes */
+	size_t	lengthFieldSize;	/* Size of the length field in bytes (8 for MD5/SHA-256), (32 for Whirlpool) */
 }   t_paddParams;
 
 /**
