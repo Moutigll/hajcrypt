@@ -4,7 +4,35 @@
 #include "../../hajlib/include/hajlib.h"	/* IWYU pragma: keep */
 #include "../../includes/cli/parser.h"
 
+static const t_algoName g_algoNames[] = {
+	{ "md5", ALGO_MD5 },
+	{ "sha256", ALGO_SHA256 },
+	{ "whirlpool", ALGO_WHIRLPOOL },
+	{ NULL, ALGO_NONE }
+};
 
+const char *getAlgoName(t_algo algo)
+{
+	for (size_t i = 0; g_algoNames[i].name; i++)
+	{
+		if (g_algoNames[i].algo == algo)
+			return (g_algoNames[i].name);
+	}
+	return (NULL);
+}
+
+void printAlgoName(t_algo algo)
+{
+	const char *name = getAlgoName(algo);
+
+	if (!name)
+		return;
+	
+	while (*name) {
+		ft_putchar_fd(ft_toupper(*name), STDOUT_FILENO);
+		name++;
+	}
+}
 void freeSslOptions(t_sslOptions *opts)
 {
 	if (!opts)
@@ -18,6 +46,13 @@ void freeSslOptions(t_sslOptions *opts)
 	opts->maxInputs = 0;
 }
 
+static void printUsage()
+{
+	ft_printf("Commands:\n");
+	for (size_t i = 0; g_algoNames[i].name; i++)
+		ft_printf("%s\n", g_algoNames[i].name);
+	ft_printf("\nFlags:\n -p -q -r -s\n");
+}
 
 static int initSslOptions(t_sslOptions *opts, int argc)
 {
@@ -55,17 +90,6 @@ static int initSslOptions(t_sslOptions *opts, int argc)
 
 /* ------------------------ algorithm dispatch ------------------------ */
 
-static void setAlgoMd5(t_sslOptions *opts)    { opts->algo = ALGO_MD5; }
-static void setAlgoSha256(t_sslOptions *opts) { opts->algo = ALGO_SHA256; }
-static void setAlgoWhirlpool(t_sslOptions *opts) { opts->algo = ALGO_WHIRLPOOL; }
-
-static const t_algoDispatch gAlgoDispatch[] = {
-	{ "md5",    setAlgoMd5    },
-	{ "sha256", setAlgoSha256 },
-	{ "whirlpool", setAlgoWhirlpool },
-	{ NULL,     NULL          }
-};
-
 /**
  * @brief Parse the algorithm name and set the corresponding algo in opts. *
  * @param arg - algorithm name (e.g. "md5", "sha256")
@@ -80,16 +104,17 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 		return (1);
 
 	i = 0;
-	while (gAlgoDispatch[i].name)
+	while (g_algoNames[i].name)
 	{
-		if (ft_strcmp(arg, gAlgoDispatch[i].name) == 0)
+		if (ft_strcmp(arg, g_algoNames[i].name) == 0)
 		{
-			gAlgoDispatch[i].setter(opts);
+			opts->algo = g_algoNames[i].algo;
 			return (0);
 		}
 		i++;
 	}
-	ft_dprintf(STDERR_FILENO, "ft_ssl: Error: '%s' is an invalid command.\n", arg);
+	ft_dprintf(STDERR_FILENO, "ft_ssl: Error: '%s' is an invalid command.\n\n", arg);
+	printUsage();
 	return (1);
 }
 
@@ -112,7 +137,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 	if (argc < 2 || !argv || !opts)
 	{
 		/* TODO: print a list of available algorithms */
-		ft_dprintf(STDERR_FILENO, "ft_ssl: missing command\n");
+		ft_dprintf(STDERR_FILENO, "usage: ft_ssl command [flags] [file/string]\n");
 		return (1);
 	}
 
