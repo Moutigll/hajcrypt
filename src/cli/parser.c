@@ -46,7 +46,7 @@ void freeSslOptions(t_sslOptions *opts)
 	opts->maxInputs = 0;
 }
 
-static void printUsage()
+static void printUsage(void)
 {
 	ft_printf("Commands:\n");
 	for (size_t i = 0; g_algoNames[i].name; i++)

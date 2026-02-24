@@ -122,8 +122,10 @@ static int processString(const char *str, const t_hash *hash, t_sslOptions *opts
 	hash->update(ctx, (const uint8_t *)str, ft_strlen(str));
 	hash->final(digest, ctx);
 
-	if (!opts->flagQ) {
-		if (opts->flagR) {
+	if (!opts->flagQ)
+	{
+		if (opts->flagR)
+		{
 			for (size_t i = 0; i < hash->digestSize; i++)
 				ft_printf("%02x", digest[i]);
 			ft_printf(" \"%s\"\n", str);

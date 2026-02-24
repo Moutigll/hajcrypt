@@ -48,7 +48,7 @@ endif
 # --- Check for leak flag to add debug flags ---
 ifneq (,$(filter leak,$(MAKECMDGOALS)))
 SAN_FLAGS = --pedantic -g -fsanitize=address -fno-omit-frame-pointer
-OPT_FLAGS = -O1
+OPT_FLAGS = 
 endif
 
 # --- Build hajlib ---
