@@ -72,7 +72,7 @@ void whirlpoolFinal(uint8_t *digest, void *ctx)
 	params.blockSize = 64;
 	params.msgLen = wh->totalLen / 8;
 	params.isLittleEndian = 0;
-	params.lenghtFieldSize = 32;
+	params.lengthFieldSize = 32;
 	
 	paddedLen = padMessage(padded, wh->buffer, wh->bufferLen, &params);
 	

@@ -90,7 +90,7 @@ void sha256Final(uint8_t *digest, void *ctx)
 	params.blockSize = 64;
 	params.msgLen = sha256->totalLen;
 	params.isLittleEndian = 0;
-	params.lenghtFieldSize = 8;
+	params.lengthFieldSize = 8;
 
 	paddedLen = padMessage(padded, sha256->buffer, 
 					sha256->bufferLen, &params);

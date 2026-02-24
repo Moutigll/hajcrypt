@@ -11,7 +11,7 @@ CONST_SRC = \
 	$(CONST_DIR)/main.c \
 	$(CONST_DIR)/md5.c \
 	$(CONST_DIR)/sha256.c \
-	$(CONST_DIR)/whirpool.c
+	$(CONST_DIR)/whirlpool.c
 
 LIB_SRC = \
 	$(SRC_DIR)/hash/common/padding.c \

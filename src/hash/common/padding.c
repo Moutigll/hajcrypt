@@ -17,7 +17,7 @@ size_t padMessage(uint8_t *dst, const uint8_t *lastBlock, size_t lastLen, t_padd
 	
 	dst[offset++] = 0x80;
 	
-	size_t	target = params->blockSize - params->lenghtFieldSize;
+	size_t	target = params->blockSize - params->lengthFieldSize;
 	size_t	mod = offset % params->blockSize;
 	size_t	needed;
 	
@@ -32,7 +32,7 @@ size_t padMessage(uint8_t *dst, const uint8_t *lastBlock, size_t lastLen, t_padd
 	bitLen = (uint64_t)params->msgLen * 8;
 	
 	if (params->isLittleEndian) { /* Write length in little-endian format */
-		for (i = 0; i < params->lenghtFieldSize; i++) { /* Write according to specified length field size */
+		for (i = 0; i < params->lengthFieldSize; i++) { /* Write according to specified length field size */
 			int shift = 8 * i;
 			if (shift < 64)
 				dst[offset + i] = (bitLen >> shift) & 0xFF;
@@ -40,8 +40,8 @@ size_t padMessage(uint8_t *dst, const uint8_t *lastBlock, size_t lastLen, t_padd
 				dst[offset + i] = 0;
 		}
 	} else { /* Write length in big-endian format */
-		for (i = 0; i < params->lenghtFieldSize; i++) {
-			int shift = 8 * (params->lenghtFieldSize - 1 - i);
+		for (i = 0; i < params->lengthFieldSize; i++) {
+			int shift = 8 * (params->lengthFieldSize - 1 - i);
 			if (shift < 64)
 				dst[offset + i] = (bitLen >> shift) & 0xFF;
 			else
@@ -49,5 +49,5 @@ size_t padMessage(uint8_t *dst, const uint8_t *lastBlock, size_t lastLen, t_padd
 		}
 	}
 	
-	return (offset + params->lenghtFieldSize);
+	return (offset + params->lengthFieldSize);
 }
