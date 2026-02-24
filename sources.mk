@@ -21,7 +21,8 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/sha256/sha256.c \
 	$(SRC_DIR)/hash/sha256/transform.c \
 	$(SRC_DIR)/hash/whirlpool/whirlpool.c \
-	$(SRC_DIR)/hash/whirlpool/transform.c
+	$(SRC_DIR)/hash/whirlpool/transform.c \
+	$(SRC_DIR)/hash/whirlpool/transform.opt.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s

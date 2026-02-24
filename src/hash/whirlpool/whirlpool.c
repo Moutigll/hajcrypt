@@ -3,6 +3,8 @@
 
 #include "../../../includes/hash/whirlpool.h"
 
+#define WHIRLPOOL_OPT 1
+
 void whirlpoolInit(void *ctx)
 {
 	t_whirlpoolCtx *wh = (t_whirlpoolCtx *)ctx;
@@ -28,12 +30,20 @@ void whirlpoolUpdate(void *ctx, const uint8_t *data, size_t len)
 	if (len >= partLen)
 	{
 		ft_memcpy(&wh->buffer[index], data, partLen);
+#ifdef WHIRLPOOL_OPT
+		whirlpoolTransformOpt(wh->state, wh->buffer);
+#else
 		whirlpoolTransform(wh->state, wh->buffer);
+#endif
 		i = partLen;
 
 		while (i + 63 < len)
 		{
+#ifdef WHIRLPOOL_OPT
+			whirlpoolTransformOpt(wh->state, &data[i]);
+#else
 			whirlpoolTransform(wh->state, &data[i]);
+#endif
 			i += 64;
 		}
 
@@ -67,7 +77,11 @@ void whirlpoolFinal(uint8_t *digest, void *ctx)
 	paddedLen = padMessage(padded, wh->buffer, wh->bufferLen, &params);
 	
 	for (offset = 0; offset < paddedLen; offset += 64)
+#ifdef WHIRLPOOL_OPT
+		whirlpoolTransformOpt(wh->state, padded + offset);
+#else
 		whirlpoolTransform(wh->state, padded + offset);
+#endif
 	
 	/* Copy final state to digest in big-endian order */
 	for (i = 0; i < 8; i++) {

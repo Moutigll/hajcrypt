@@ -48,6 +48,22 @@ void whirlpoolUpdate(void *ctx, const uint8_t *data, size_t len);
  */
 void whirlpoolFinal(uint8_t *digest, void *ctx);
 
+/**
+ * @brief Performs a single Whirlpool transformation on a 512-bit state using a 512-bit block.
+ * This function is used internally by the Whirlpool implementation to process input data blocks.
+ * @param state - pointer to the 512-bit (8 × 64-bit) state array to be transformed
+ * @param block - pointer to the 512-bit (64-byte) input block to be processed
+ */
 void whirlpoolTransform(uint64_t *state, const uint8_t *block);
+
+/**
+ * @brief Optimized version of the Whirlpool transformation using T-tables.
+ * This function is an optimized implementation of the Whirlpool transformation that uses precomputed T-tables
+ * to combine the SubBytes, ShiftColumns, and MixRows steps into efficient table lookups and XOR operations.
+ * It is used internally by the Whirlpool implementation to process input data blocks more efficiently.
+ * @param H - pointer to the 512-bit (8 × 64-bit) state array to be transformed
+ * @param block - pointer to the 512-bit (64-byte) input block to be processed
+ */
+void whirlpoolTransformOpt(uint64_t *H, const uint8_t *block);
 
 #endif /* HAJCRYPT_WHIRLPOOL_H */

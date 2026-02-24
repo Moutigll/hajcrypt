@@ -73,25 +73,22 @@ static void generateMdsMatrix(uint8_t mds[8][8])
  * @param whirlpool_MDS - The MDS matrix (8x8) to use for generating the T-tables
  * @return 64-bit value representing the combined S-box and MDS transformation for the given column
  */
-static uint64_t computeTableEntry(int col, uint8_t x, const uint8_t whirlpool_MDS[8][8])
+static uint64_t computeTableEntry(int src_col, uint8_t x, const uint8_t whirlpool_MDS[8][8])
 {
-	uint8_t		s = WHIRLPOOL_SBOX[x];
-	uint64_t	result = 0;
-	
+	uint8_t s = WHIRLPOOL_SBOX[x];
+	uint64_t result = 0;
 	/* For each row of the MDS matrix, multiply the S-box output by the corresponding coefficient 
 	 * and place it in the correct byte position (big-endian order)
 	 */
-	for (int row = 0; row < 8; row++) {
-		uint8_t coeff = whirlpool_MDS[row][col];
+	for (int dst_col = 0; dst_col < 8; dst_col++) {
+		uint8_t coeff = whirlpool_MDS[src_col][dst_col];
 		if (coeff != 0) {
 			uint8_t product = ft_gf2nMul(s, coeff, WHIRLPOOL_POLY, 8);
-			/* Place in big-endian: row 0 = most significant byte (bits 63-56) */
-			result |= (uint64_t)product << (56 - 8 * row);
+			result |= (uint64_t)product << (56 - 8 * dst_col); /* Place in big-endian position */
 		}
 	}
 	return result;
 }
-
 /**
  * Generate T-tables for Whirlpool
  * 
