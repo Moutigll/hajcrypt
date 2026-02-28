@@ -16,6 +16,7 @@ CONST_SRC = \
 LIB_SRC = \
 	$(SRC_DIR)/hash/common/padding.c \
 	$(SRC_DIR)/hash/common/endian.c \
+	$(SRC_DIR)/random/hajSecRandBytes.c \
 	$(SRC_DIR)/hash/md5/md5.c \
 	$(SRC_DIR)/hash/md5/transform.c \
 	$(SRC_DIR)/hash/sha256/sha256.c \
