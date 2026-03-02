@@ -16,12 +16,14 @@
  * @member bits	  Number of valid bits currently stored in the buffer
  * @member isDecoding Flag indicating whether the context is in decoding mode (1) or encoding mode (0)
  * @member lineLen   Current line length, typically used to track Base64 output line wrapping
+ * @member outCount  Number of output bytes written so far
  */
 typedef struct s_base64Ctx {
 	uint32_t	buffer;
 	int			bits;
 	int			isDecoding;
-	size_t		lineLen;
+	size_t		outCount;
+	int			error;
 } t_base64Ctx;
 
 
@@ -46,9 +48,9 @@ void base64Init(void *ctx, int isDecoding);
  * @param out Pointer to the output buffer where encoded/decoded data will be written.
  * @param outLen Pointer to a size_t variable where the number of bytes written to the output buffer will be stored.
  * 
- * @return void
+ * @return 0 on success, -1 on error
  */
-void base64Update(void			*ctx,
+int	base64Update(void			*ctx,
 				  const uint8_t	*in,
 				  size_t		inLen,
 				  uint8_t		*out,
