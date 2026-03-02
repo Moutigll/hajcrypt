@@ -5,9 +5,15 @@
 
 #include "client.h"
 
+typedef enum e_cmdType {
+	CMD_HASH,
+	CMD_ENCODE
+} t_cmdType;
+
 typedef struct s_sslOptions
 {
-	t_algo	algo;
+	t_algo		algo;
+	t_cmdType	cmdType;
 
 	int		flagP;
 	int		flagQ;
@@ -25,6 +31,12 @@ typedef struct s_sslOptions
 	size_t	maxInputs;
 
 	int		readFromStdin;
+
+	/* Encoding */
+	int		isDecoding;
+	char	*inputFile;
+	char	*outputFile;
+	int		wrapOutput;
 }	t_sslOptions;
 
 typedef struct {
@@ -46,6 +58,6 @@ void printAlgoName(t_algo algo);
 int processFd(int fd, const t_hash *hash, t_sslOptions *opts, const char *filename);
 
 int processString(const char *str, const t_hash *hash, t_sslOptions *opts);
-
+int	executeEncode(t_sslOptions *opts);
 
 #endif /* HAJCRYPT_CLI_PARSER_H */
