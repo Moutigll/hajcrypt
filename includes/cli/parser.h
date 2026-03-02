@@ -12,6 +12,9 @@ typedef struct s_sslOptions
 	int		flagP;
 	int		flagQ;
 	int		flagR;
+	int		flagK;
+
+	char	*hmacKey;
 
 	char	**stringInputs;
 	size_t	stringCount;
@@ -37,5 +40,12 @@ void freeSslOptions(t_sslOptions *opts);
 const char *getAlgoName(t_algo algo);
 
 void printAlgoName(t_algo algo);
+
+
+
+int processFd(int fd, const t_hash *hash, t_sslOptions *opts, const char *filename);
+
+int processString(const char *str, const t_hash *hash, t_sslOptions *opts);
+
 
 #endif /* HAJCRYPT_CLI_PARSER_H */

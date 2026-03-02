@@ -4,19 +4,12 @@
 #include "../../hajlib/include/hajlib.h"	/* IWYU pragma: keep */
 #include "../../includes/cli/parser.h"
 
-static const t_algoName g_algoNames[] = {
-	{ "md5", ALGO_MD5 },
-	{ "sha256", ALGO_SHA256 },
-	{ "whirlpool", ALGO_WHIRLPOOL },
-	{ NULL, ALGO_NONE }
-};
-
 const char *getAlgoName(t_algo algo)
 {
-	for (size_t i = 0; g_algoNames[i].name; i++)
+	for (size_t i = 0; g_hashTable[i].hash; i++)
 	{
-		if (g_algoNames[i].algo == algo)
-			return (g_algoNames[i].name);
+		if (g_hashTable[i].algo == algo)
+			return (g_hashTable[i].hash->name);
 	}
 	return (NULL);
 }
@@ -49,8 +42,8 @@ void freeSslOptions(t_sslOptions *opts)
 static void printUsage(void)
 {
 	ft_printf("Commands:\n");
-	for (size_t i = 0; g_algoNames[i].name; i++)
-		ft_printf("%s\n", g_algoNames[i].name);
+	for (size_t i = 0; g_hashTable[i].hash; i++)
+		ft_printf("%s\n", g_hashTable[i].hash->name);
 	ft_printf("\nFlags:\n -p -q -r -s\n");
 }
 
@@ -104,11 +97,11 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 		return (1);
 
 	i = 0;
-	while (g_algoNames[i].name)
+	while (g_hashTable[i].hash)
 	{
-		if (ft_strcmp(arg, g_algoNames[i].name) == 0)
+		if (ft_strcmp(arg, g_hashTable[i].hash->name) == 0)
 		{
-			opts->algo = g_algoNames[i].algo;
+			opts->algo = g_hashTable[i].algo;
 			return (0);
 		}
 		i++;
@@ -130,7 +123,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 {
 	tFtGetopt st;
 	tFtGetoptStatus status;
-	const char *shortOpts = "pqrs:";
+	const char *shortOpts = "pqrs:k:";
 
 	
 	/* minimal validation */
@@ -194,6 +187,11 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 
 				case 'r':
 					opts->flagR = 1;
+					break;
+
+				case 'k':
+					opts->flagK = 1;
+					opts->hmacKey = (char *)st.optArg;
 					break;
 
 				case 's':
