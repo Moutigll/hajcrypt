@@ -52,4 +52,11 @@ int generateSha256Header(int fd);
  */
 int generateWhirlpoolHeader(int fd);
 
+/**
+ * @brief Generate the Base64 encoding and decoding tables as a header file.
+ * @param fd - file descriptor to write the generated header content to
+ * @return 0 on success, 1 on failure (e.g. write error)
+ */
+int generateBase64Header(int fd);
+
 #endif /* HAJCRYPT_CONSTS_H */
