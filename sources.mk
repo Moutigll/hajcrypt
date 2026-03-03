@@ -27,7 +27,7 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/whirlpool/transform.c \
 	$(SRC_DIR)/hash/whirlpool/transform.opt.c \
 	$(SRC_DIR)/hash/hmac.c \
-	$(SRC_DIR)/encoding/base64.c
+	$(SRC_DIR)/cipher/base64.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s
@@ -36,8 +36,8 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/main.c \
 	$(SRC_DIR)/cli/parser.c \
 	$(SRC_DIR)/cli/dispatch.c \
-	$(SRC_DIR)/cli/processStream.c \
-	$(SRC_DIR)/cli/processEncoding.c \
+	$(SRC_DIR)/cli/processHash.c \
+	$(SRC_DIR)/cli/processCipher.c
 
 TEST_SRC = \
 	tests/main.test.c \

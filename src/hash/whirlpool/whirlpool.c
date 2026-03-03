@@ -90,3 +90,13 @@ void whirlpoolFinal(uint8_t *digest, void *ctx)
 		}
 	}
 }
+
+const t_hash g_whirlpoolHash = {
+	.name = "whirlpool",
+	.init = whirlpoolInit,
+	.update = whirlpoolUpdate,
+	.final = whirlpoolFinal,
+	.hmacInit = whirlpoolHmacInit,
+	.ctxSize = sizeof(t_whirlpoolCtx),
+	.digestSize = 64
+};

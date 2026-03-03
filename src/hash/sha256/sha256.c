@@ -113,3 +113,13 @@ void sha256Final(uint8_t *digest, void *ctx)
 		digest[i * 4 + 3] = sha256->state[i] & 0xFF;
 	}
 }
+
+const t_hash g_sha256Hash = {
+	.name = "sha256",
+	.init = sha256Init,
+	.update = sha256Update,
+	.final = sha256Final,
+	.hmacInit = sha256HmacInit,
+	.ctxSize = sizeof(t_sha256Ctx),
+	.digestSize = 32
+};

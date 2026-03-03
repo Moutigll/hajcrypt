@@ -12,10 +12,10 @@ const char *getAlgoName(t_algo algo)
 			return (g_hashTable[i].hash->name);
 	}
 
-	for (size_t i = 0; g_encodeTable[i].encode; i++)
+	for (size_t i = 0; g_cipherTable[i].cipher; i++)
 	{
-		if (g_encodeTable[i].algo == algo)
-			return (g_encodeTable[i].encode->name);
+		if (g_cipherTable[i].algo == algo)
+			return (g_cipherTable[i].cipher->name);
 	}
 
 	return (NULL);
@@ -48,13 +48,13 @@ void freeSslOptions(t_sslOptions *opts)
 
 static void printUsage(void)
 {
-	ft_printf("Commands:\n");
-	ft_printf("\tHashing:\n");
+	ft_printf("Standard commands:\n");
+	ft_printf("\nMessage Digest commands:\n");
 	for (size_t i = 0; g_hashTable[i].hash; i++)
-		ft_printf("\t\t%s\n", g_hashTable[i].hash->name);
-	ft_printf("\n\tEncoding:\n");
-	for (size_t i = 0; g_encodeTable[i].encode; i++)
-		ft_printf("\t\t%s\n", g_encodeTable[i].encode->name);
+		ft_printf("\t%s\n", g_hashTable[i].hash->name);
+	ft_printf("\nCipher commands:\n");
+	for (size_t i = 0; g_cipherTable[i].cipher; i++)
+		ft_printf("\t%s\n", g_cipherTable[i].cipher->name);
 	ft_printf("\nFlags:\n -p -q -r -s <string> -k <key> -e (encode) -d (decode) -i <input file> -o <output file>\n");
 }
 
@@ -116,10 +116,10 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 		}
 	}
 
-	for (int i = 0; g_encodeTable[i].encode; i++) {
-		if (ft_strcmp(arg, g_encodeTable[i].encode->name) == 0) {
-			opts->algo = g_encodeTable[i].algo;
-			opts->cmdType = CMD_ENCODE;
+	for (int i = 0; g_cipherTable[i].cipher; i++) {
+		if (ft_strcmp(arg, g_cipherTable[i].cipher->name) == 0) {
+			opts->algo = g_cipherTable[i].algo;
+			opts->cmdType = CMD_CIPHER;
 			return (0);
 		}
 	}

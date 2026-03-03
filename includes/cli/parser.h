@@ -7,7 +7,7 @@
 
 typedef enum e_cmdType {
 	CMD_HASH,
-	CMD_ENCODE
+	CMD_CIPHER
 } t_cmdType;
 
 typedef struct s_sslOptions
@@ -58,6 +58,6 @@ void printAlgoName(t_algo algo);
 int processFd(int fd, const t_hash *hash, t_sslOptions *opts, const char *filename);
 
 int processString(const char *str, const t_hash *hash, t_sslOptions *opts);
-int	executeEncode(t_sslOptions *opts);
+int	executeCipher(t_sslOptions *opts);
 
 #endif /* HAJCRYPT_CLI_PARSER_H */

@@ -52,8 +52,8 @@ static int executeSsl(t_sslOptions *opts)
 		/* default stdin */
 		if (opts->readFromStdin && !opts->flagP)
 			processFd(STDIN_FILENO, hash, opts, NULL);
-	} else if (opts->cmdType == CMD_ENCODE) {
-		return executeEncode(opts);
+	} else if (opts->cmdType == CMD_CIPHER) {
+		return executeCipher(opts);
 	}
 
 	return (0);

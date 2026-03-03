@@ -4,9 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "whirlpool.h"
-
-#define HASH_MAX_CTX_SIZE sizeof(t_whirlpoolCtx)
+#define HASH_MAX_CTX_SIZE 256
 
 /**
  * @struct s_hashAlgo

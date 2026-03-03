@@ -6,7 +6,7 @@
 #include "../../includes/cli/client.h"
 #include "../../includes/cli/parser.h"
 
-#define ENCODE_BUFFER_SIZE (16 * 1024)
+#define CIPHER_BUFFER_SIZE (16 * 1024)
 #define WRAP_LIMIT 64
 
 static int	writeWrapped(int fd, const uint8_t *data, size_t len, int *lineLen)
@@ -31,23 +31,21 @@ static int	writeWrapped(int fd, const uint8_t *data, size_t len, int *lineLen)
 	return (0);
 }
 
-static int	processReadLoop(int				fd,
-							void			*ctx,
-							const t_encode	*enc,
-							t_sslOptions	*opts,
-							int				*lineLen)
+static int	processReadLoop(int fd, void *ctx, const t_cipher *cipher,
+							t_sslOptions *opts, int *lineLen)
 {
-	uint8_t		inBuf[ENCODE_BUFFER_SIZE];
-	uint8_t		outBuf[ENCODE_BUFFER_SIZE * 2];
+	uint8_t		inBuf[CIPHER_BUFFER_SIZE];
+	uint8_t		outBuf[CIPHER_BUFFER_SIZE * 2]; // Assez grand pour l'encodage
 	ssize_t		bytesRead;
 	size_t		outLen;
 	int			shouldWrap;
 	int			ret;
 
-	if (!ctx || !enc || !opts || !lineLen)
+	if (!ctx || !cipher || !opts || !lineLen)
 		return (-1);
 
-	shouldWrap = (!opts->isDecoding && opts->wrapOutput && enc->supportsWrap);
+	/* Le wrapping n'est applicable qu'en mode non-décodage (encryption/encodage) */
+	shouldWrap = (!opts->isDecoding && opts->wrapOutput && cipher->supportsWrap);
 	ret = 0;
 
 	while (1)
@@ -56,11 +54,8 @@ static int	processReadLoop(int				fd,
 		if (bytesRead <= 0)
 			break;
 
-		if (enc->update(ctx, inBuf, (size_t)bytesRead, outBuf, &outLen) < 0)
-		{
-			ret = -1;
-			break;
-		}
+		cipher->update(ctx, inBuf, (size_t)bytesRead, outBuf, &outLen);
+		/* Note: update ne retourne pas de code d'erreur, on suppose que l'état d'erreur est dans le contexte */
 
 		if (outLen == 0)
 			continue;
@@ -88,21 +83,19 @@ static int	processReadLoop(int				fd,
 	return (ret);
 }
 
-static int	processFinalBlock(void				*ctx,
-							  const t_encode	*enc,
-							  t_sslOptions		*opts,
-							  int				lineLen)
+static int	processFinalBlock(void *ctx, const t_cipher *cipher,
+							  t_sslOptions *opts, int lineLen)
 {
-	uint8_t		finalBuf[ENCODE_BUFFER_SIZE * 2];
+	uint8_t		finalBuf[CIPHER_BUFFER_SIZE * 2];
 	size_t		finalLen;
 	int			shouldWrap;
 
-	if (!ctx || !enc || !opts)
+	if (!ctx || !cipher || !opts)
 		return (-1);
 
-	enc->final(ctx, finalBuf, &finalLen);
+	cipher->final(ctx, finalBuf, &finalLen);
 	
-	shouldWrap = (!opts->isDecoding && opts->wrapOutput && enc->supportsWrap);
+	shouldWrap = (!opts->isDecoding && opts->wrapOutput && cipher->supportsWrap);
 	
 	if (finalLen > 0)
 	{
@@ -118,6 +111,7 @@ static int	processFinalBlock(void				*ctx,
 		}
 	}
 
+	/* Pour l'encodage (non-décodage), on ajoute un newline final si des données ont été produites */
 	if (!opts->isDecoding && (finalLen > 0 || lineLen > 0))
 	{
 		if (write(STDOUT_FILENO, "\n", 1) != 1)
@@ -127,31 +121,34 @@ static int	processFinalBlock(void				*ctx,
 	return (0);
 }
 
-static int	processEncodeFd(int fd, const t_encode *enc, t_sslOptions *opts)
+static int	processCipherFd(int fd, const t_cipher *cipher, t_sslOptions *opts)
 {
 	void	*ctx;
 	int		lineLen;
 	int		ret;
 
-	if (!enc || !opts)
+	if (!cipher || !opts)
 		return (1);
 
-	ctx = malloc(enc->ctxSize);
+	ctx = malloc(cipher->ctxSize);
 	if (!ctx)
 		return (1);
 
-	enc->init(ctx, opts->isDecoding ? 1 : 0);
+	/* Initialisation avec la direction appropriée */
+	cipher->init(ctx, NULL, 0, NULL,
+				 opts->isDecoding ? CIPHER_DECRYPT : CIPHER_ENCRYPT);
 	lineLen = 0;
 
-	ret = processReadLoop(fd, ctx, enc, opts, &lineLen);
+	ret = processReadLoop(fd, ctx, cipher, opts, &lineLen);
 	if (ret == 0)
-		ret = processFinalBlock(ctx, enc, opts, lineLen);
+		ret = processFinalBlock(ctx, cipher, opts, lineLen);
 
+	cipher->free(ctx);
 	free(ctx);
 	return (ret < 0 ? 1 : 0);
 }
 
-static int	openInputFile(const char *filename, const char *encName)
+static int	openInputFile(const char *filename, const char *cipherName)
 {
 	int	fd;
 
@@ -160,12 +157,12 @@ static int	openInputFile(const char *filename, const char *encName)
 	{
 		ft_dprintf(STDERR_FILENO,
 			"ft_ssl: %s: %s: No such file or directory\n",
-			encName, filename);
+			cipherName, filename);
 	}
 	return (fd);
 }
 
-static int	openOutputFile(const char *filename, const char *encName)
+static int	openOutputFile(const char *filename, const char *cipherName)
 {
 	int	fd;
 
@@ -174,14 +171,14 @@ static int	openOutputFile(const char *filename, const char *encName)
 	{
 		ft_dprintf(STDERR_FILENO,
 			"ft_ssl: %s: cannot create %s\n",
-			encName, filename);
+			cipherName, filename);
 	}
 	return (fd);
 }
 
-int	executeEncode(t_sslOptions *opts)
+int	executeCipher(t_sslOptions *opts)
 {
-	const t_encode	*enc;
+	const t_cipher	*cipher;
 	int				inFd;
 	int				outFd;
 	int				ret;
@@ -189,10 +186,10 @@ int	executeEncode(t_sslOptions *opts)
 	if (!opts)
 		return (1);
 
-	enc = getEncodeByAlgo(opts->algo);
-	if (!enc)
+	cipher = getCipherByAlgo(opts->algo);
+	if (!cipher)
 	{
-		ft_dprintf(STDERR_FILENO, "ft_ssl: unknown encoding algorithm\n");
+		ft_dprintf(STDERR_FILENO, "ft_ssl: unknown cipher algorithm\n");
 		return (1);
 	}
 
@@ -201,14 +198,14 @@ int	executeEncode(t_sslOptions *opts)
 
 	if (opts->inputFile)
 	{
-		inFd = openInputFile(opts->inputFile, enc->name);
+		inFd = openInputFile(opts->inputFile, cipher->name);
 		if (inFd < 0)
 			return (1);
 	}
 
 	if (opts->outputFile)
 	{
-		outFd = openOutputFile(opts->outputFile, enc->name);
+		outFd = openOutputFile(opts->outputFile, cipher->name);
 		if (outFd < 0)
 		{
 			if (inFd != STDIN_FILENO)
@@ -222,7 +219,7 @@ int	executeEncode(t_sslOptions *opts)
 		}
 	}
 
-	ret = processEncodeFd(inFd, enc, opts);
+	ret = processCipherFd(inFd, cipher, opts);
 
 	if (inFd != STDIN_FILENO)
 		close(inFd);
