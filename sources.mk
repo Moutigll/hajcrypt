@@ -27,7 +27,9 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/whirlpool/transform.c \
 	$(SRC_DIR)/hash/whirlpool/transform.opt.c \
 	$(SRC_DIR)/hash/hmac.c \
-	$(SRC_DIR)/cipher/base64.c
+	$(SRC_DIR)/cipher/base64.c \
+	$(SRC_DIR)/pbkdf/pbkdf.c \
+	$(SRC_DIR)/pbkdf/bytesToKey.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s
