@@ -14,7 +14,9 @@ typedef enum e_algo
 	ALGO_MD5,
 	ALGO_SHA256,
 	ALGO_WHIRLPOOL,
-	ALGO_BASE64
+	ALGO_BASE64,
+	ALGO_DES_ECB,
+	ALGO_DES_CBC
 }	t_algo;
 
 typedef struct s_hashDispatch
