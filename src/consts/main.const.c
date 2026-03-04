@@ -10,7 +10,8 @@ const static t_header headers[] = {
 	{ "md5", generateMd5Header },
 	{ "sha256", generateSha256Header },
 	{ "whirlpool", generateWhirlpoolHeader },
-	{ "base64", generateBase64Header }
+	{ "base64", generateBase64Header },
+	{ "des", generateDesHeader }
 };
 
 void writeUint32Hex(char buf[11], uint32_t n)
