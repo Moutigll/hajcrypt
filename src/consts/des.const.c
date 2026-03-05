@@ -60,6 +60,13 @@ static const uint8_t DES_SBOX[8][4][16] = {
 	}
 };
 
+static const uint8_t g_des_P[32] = {
+	16, 7,20,21,29,12,28,17,
+	 1,15,23,26, 5,18,31,10,
+	 2, 8,24,14,32,27, 3, 9,
+	19,13,30, 6,22,11, 4,25
+};
+
 /* ---------- Initial Permutation (IP) ---------- */
 
 /**
@@ -208,9 +215,14 @@ static void writePTable(int fd)
 	ft_dprintf(fd, " * This table is hardcoded from the DES specification\n");
 	ft_dprintf(fd, " */\n");
 	ft_dprintf(fd, "static const uint8_t g_des_P[32] = {\n");
-	ft_dprintf(fd, "\t16, 7,20,21,29,12,28,17, 1,15,23,26, 5,18,31,10,\n");
-	ft_dprintf(fd, "\t 2, 8,24,14,32,27, 3, 9,19,13,30, 6,22,11, 4,25\n");
-	ft_dprintf(fd, "};\n\n");
+	for (int i = 0; i < 32; i++) {
+		ft_dprintf(fd, "\t%2d", g_des_P[i]);
+		if (i < 31)
+			ft_dprintf(fd, ",");
+		if ((i + 1) % 8 == 0 && i < 31)
+			ft_dprintf(fd, "\n");
+	}
+	ft_dprintf(fd, "\n};\n\n");
 }
 
 /* ---------- Permuted Choice 1 (PC1) ---------- */
@@ -431,6 +443,112 @@ static void generateSboxFlatTables(int fd)
 	ft_dprintf(fd, "};\n\n");
 }
 
+/* ---------- Lookup tables for E (byte-oriented) ---------- */
+
+static void generateETables(int fd, const uint8_t e[48])
+{
+	uint64_t	tables[4][256] = {0};
+	
+	for (int byte_idx = 0; byte_idx < 4; byte_idx++) {
+		for (int val = 0; val < 256; val++) {
+			uint32_t	R = (uint32_t)val << (8 * byte_idx);
+			uint64_t	expanded = 0;
+			for (int i = 0; i < 48; i++) {
+				int bitPos = e[i] - 1;
+				expanded <<= 1;
+				expanded |= (R >> (31 - bitPos)) & 1;
+			}
+			tables[byte_idx][val] = expanded;
+		}
+	}
+	
+	ft_dprintf(fd, "/*\n");
+	ft_dprintf(fd, " * Expansion E lookup tables (byte-oriented).\n");
+	ft_dprintf(fd, " * tables[byte_index][byte_value] gives the 48-bit contribution.\n");
+	ft_dprintf(fd, " * Chaque valeur est sur 48 bits (12 chiffres hex).\n");
+	ft_dprintf(fd, " */\n");
+	ft_dprintf(fd, "static const uint64_t g_des_E_tab[4][256] = {\n");
+	
+	for (int b = 0; b < 4; b++) {
+		ft_dprintf(fd, "\t{ /* byte %d */\n", b);
+		for (int val = 0; val < 256; val++) {
+			ft_dprintf(fd, "\t\t0x");
+			uint64_t	v = tables[b][val];
+			for (int k = 0; k < 12; k++) {
+				int shift = 44 - 4 * k;  /* 48-4 = 44 */
+				uint8_t	nibble = (v >> shift) & 0xF;
+				ft_dprintf(fd, "%X", nibble);
+			}
+			ft_dprintf(fd, "ULL");
+			if (val < 255)
+				ft_dprintf(fd, ",");
+			if ((val + 1) % 4 == 0)
+				ft_dprintf(fd, "\n");
+			else
+				ft_dprintf(fd, " ");
+		}
+		ft_dprintf(fd, "\t}");
+		if (b < 3)
+			ft_dprintf(fd, ",");
+		ft_dprintf(fd, "\n");
+	}
+	ft_dprintf(fd, "};\n\n");
+}
+
+/* ---------- SP tables (S-box + P) ---------- */
+
+static void generateSpTables(int fd, const uint8_t sbox[8][4][16], const uint8_t P[32])
+{
+	uint32_t sp[8][64];
+	int invP[32];
+	for (int i = 0; i < 32; i++) {
+		int input = P[i] - 1;
+		invP[input] = i;
+	}
+
+	for (int box = 0; box < 8; box++) {
+		for (int idx = 0; idx < 64; idx++) {
+			int row = ((idx >> 4) & 0x2) | (idx & 1);
+			int col = (idx >> 1) & 0xF;
+			uint8_t s_val = sbox[box][row][col];
+			uint32_t val = 0;
+			for (int bit = 0; bit < 4; bit++) {
+				if (s_val & (1 << (3 - bit))) {
+					int input_bit = box * 4 + bit; // 0..31
+					int output_bit = invP[input_bit];
+					val |= (1 << (31 - output_bit));
+				}
+			}
+			sp[box][idx] = val;
+		}
+	}
+
+	ft_dprintf(fd, "/*\n");
+	ft_dprintf(fd, " * SP tables (S-box + permutation P).\n");
+	ft_dprintf(fd, " * g_des_SP[box][sextet] gives the 32-bit output after P.\n");
+	ft_dprintf(fd, " */\n");
+	ft_dprintf(fd, "static const uint32_t g_des_SP[8][64] = {\n");
+	for (int box = 0; box < 8; box++) {
+		ft_dprintf(fd, "\t{ /* S%d */\n\t\t", box+1);
+		for (int idx = 0; idx < 64; idx++) {
+			ft_dprintf(fd, "0x%08X", sp[box][idx]);
+			if (idx < 63)
+				ft_dprintf(fd, ",");
+			if ((idx + 1) % 8 == 0)
+				ft_dprintf(fd, "\n\t\t");
+			else
+				ft_dprintf(fd, " ");
+		}
+		ft_dprintf(fd, "\n\t}");
+		if (box < 7)
+			ft_dprintf(fd, ",");
+		ft_dprintf(fd, "\n");
+	}
+	ft_dprintf(fd, "};\n\n");
+}
+
+
+
 /* ---------- Generate complete DES constants header ---------- */
 
 int generateDesHeader(int fd)
@@ -461,6 +579,8 @@ int generateDesHeader(int fd)
 	generateIpLookupTables(fd, ip);
 	generateFpLookupTables(fd, fp);
 	generateSboxFlatTables(fd);
+	generateETables(fd, e);
+	generateSpTables(fd, DES_SBOX, g_des_P);
 	
 	return (0);
 }
