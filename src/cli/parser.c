@@ -70,6 +70,9 @@ static int initSslOptions(t_sslOptions *opts, int argc)
 	opts->algo = ALGO_NONE;
 	opts->isDecoding = 0;
 	opts->hmacKey = NULL;
+	opts->keyHex = NULL;
+	opts->password = NULL;
+	opts->ivHex = NULL;
 	opts->flagK = 0;
 	opts->flagP = 0;
 	opts->flagQ = 0;
@@ -141,14 +144,13 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 {
 	tFtGetopt st;
 	tFtGetoptStatus status;
-	const char *shortOpts = "pqrs:k:edi:o:";
+	const char *shortOpts = "pqrs:k:edi:o:v:";
 
 	
 	/* minimal validation */
 	if (argc < 2 || !argv || !opts)
 	{
-		/* TODO: print a list of available algorithms */
-		ft_dprintf(STDERR_FILENO, "usage: ft_ssl command [flags] [file/string]\n");
+		printUsage();
 		return (1);
 	}
 
@@ -198,18 +200,19 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 					opts->flagP = 1;
 					opts->readFromStdin = 1;
 					break;
-
 				case 'q':
 					opts->flagQ = 1;
 					break;
-
 				case 'r':
 					opts->flagR = 1;
 					break;
-
 				case 'k':
 					opts->flagK = 1;
-					opts->hmacKey = (char *)st.optArg;
+					if (opts->cmdType == CMD_HASH) {
+						opts->hmacKey = (char *)st.optArg;
+					} else {
+						opts->keyHex = (char *)st.optArg;
+					}
 					break;
 
 				case 'e':
@@ -224,7 +227,9 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 				case 'o':
 					opts->outputFile = (char *)st.optArg;
 					break;
-
+				case 'v':
+					opts->ivHex = (char *)st.optArg;
+					break;
 
 				case 's':
 					if (st.optArg)

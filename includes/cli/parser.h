@@ -21,6 +21,10 @@ typedef struct s_sslOptions
 	int		flagK;
 
 	char	*hmacKey;
+	char	*keyHex;
+
+	char	*password;
+	char	*ivHex;
 
 	char	**stringInputs;
 	size_t	stringCount;
@@ -59,5 +63,13 @@ int processFd(int fd, const t_hash *hash, t_sslOptions *opts, const char *filena
 
 int processString(const char *str, const t_hash *hash, t_sslOptions *opts);
 int	executeCipher(t_sslOptions *opts);
+
+/* ---------- Cipher io helpers ---------- */
+int	writeOutput(int fd, const uint8_t *data, size_t len,
+				int shouldWrap, int *lineLen);
+int	prepareKeyAndIv(t_sslOptions *opts, const t_cipher *cipher,
+					uint8_t *key, uint8_t *iv);
+int	openInputFile(const char *filename, const char *cipherName);
+int	openOutputFile(const char *filename, const char *cipherName);
 
 #endif /* HAJCRYPT_CLI_PARSER_H */

@@ -15,6 +15,7 @@ typedef enum e_algo
 	ALGO_SHA256,
 	ALGO_WHIRLPOOL,
 	ALGO_BASE64,
+	ALGO_DES,
 	ALGO_DES_ECB,
 	ALGO_DES_CBC
 }	t_algo;

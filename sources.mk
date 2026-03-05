@@ -31,7 +31,10 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/hmac.c \
 	$(SRC_DIR)/cipher/base64.c \
 	$(SRC_DIR)/pbkdf/pbkdf.c \
-	$(SRC_DIR)/pbkdf/bytesToKey.c
+	$(SRC_DIR)/pbkdf/bytesToKey.c \
+	$(SRC_DIR)/cipher/des/transform.c \
+	$(SRC_DIR)/cipher/des/ecb.c \
+	$(SRC_DIR)/cipher/des/cbc.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s
@@ -41,7 +44,8 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/parser.c \
 	$(SRC_DIR)/cli/dispatch.c \
 	$(SRC_DIR)/cli/processHash.c \
-	$(SRC_DIR)/cli/processCipher.c
+	$(SRC_DIR)/cli/processCipher.c \
+	$(SRC_DIR)/cli/cipherIo.c
 
 TEST_SRC = \
 	tests/main.test.c \

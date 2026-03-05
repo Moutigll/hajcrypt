@@ -5,6 +5,7 @@
 #include "../../includes/hash/whirlpool.h"
 
 #include "../../includes/cipher/base64.h"
+#include "../../includes/cipher/des.h"
 
 const t_hashDispatch g_hashTable[] = {
 	{ ALGO_MD5,		&g_md5Hash },
@@ -15,6 +16,9 @@ const t_hashDispatch g_hashTable[] = {
 
 const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_BASE64,	&g_base64Cipher },
+	{ ALGO_DES,		&g_desCipher }, /* Default to ECB for DES */
+	{ ALGO_DES_ECB,	&g_desEcbCipher },
+	{ ALGO_DES_CBC,	&g_desCbcCipher },
 	{ ALGO_NONE,	NULL }
 };
 
