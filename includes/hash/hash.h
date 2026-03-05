@@ -4,6 +4,58 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "hmac.h"
+
+/**
+ * @struct s_hash
+ * @brief Hash algorithm interface structure
+ * 
+ * Defines a hash algorithm implementation with function pointers for
+ * initialization, updating, and finalization operations, along with
+ * HMAC support and metadata about the hash algorithm.
+ * 
+ * @var s_hash::name
+ *     Pointer to the null-terminated name of the hash algorithm (e.g., "SHA256")
+ * 
+ * @var s_hash::init
+ *     Function pointer to initialize the hash context.
+ *     @param ctx Pointer to the hash context structure
+ * 
+ * @var s_hash::update
+ *     Function pointer to update the hash with data.
+ *     @param ctx Pointer to the hash context structure
+ *     @param data Pointer to the data to hash
+ *     @param len Length of the data in bytes
+ * 
+ * @var s_hash::final
+ *     Function pointer to finalize the hash and produce the digest.
+ *     @param digest Pointer to buffer where the digest will be stored
+ *     @param ctx Pointer to the hash context structure
+ * 
+ * @var s_hash::hmacInit
+ *     Function pointer to initialize HMAC context with a key.
+ *     @param ctx Pointer to the HMAC context structure
+ *     @param key Pointer to the HMAC key
+ *     @param keyLen Length of the key in bytes
+ * 
+ * @var s_hash::ctxSize
+ *     Size in bytes of the hash context structure
+ * 
+ * @var s_hash::digestSize
+ *     Size in bytes of the hash digest output
+ */
+typedef struct s_hash
+{
+	char	*name;
+	void	(*init)(void *ctx);
+	void	(*update)(void *ctx, const uint8_t *data, size_t len);
+	void	(*final)(uint8_t *digest, void *ctx);
+	void	(*hmacInit)(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
+	size_t	ctxSize;
+	size_t	digestSize;
+}	t_hash;
+
+
 typedef struct paddParams
 {
 	size_t	blockSize;			/* Block size in bytes (64 for MD5/SHA-256) */

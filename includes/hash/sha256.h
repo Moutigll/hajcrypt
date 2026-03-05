@@ -4,6 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "hash.h"
+
+extern const t_hash g_sha256Hash;
+
 /* SHA-256 context structure to hold state during hashing.
  * Contains:
  * - state: 8 32-bit words that hold the current hash state

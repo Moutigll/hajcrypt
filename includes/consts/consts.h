@@ -52,4 +52,18 @@ int generateSha256Header(int fd);
  */
 int generateWhirlpoolHeader(int fd);
 
+/**
+ * @brief Generate the Base64 encoding and decoding tables as a header file.
+ * @param fd - file descriptor to write the generated header content to
+ * @return 0 on success, 1 on failure (e.g. write error)
+ */
+int generateBase64Header(int fd);
+
+/**
+ * @brief Generate the DES constants header file with all necessary tables for DES algorithm.
+ * @param fd - file descriptor to write the generated header content to
+ * @return 0 on success, 1 on failure (e.g. write error)
+ */
+int generateDesHeader(int fd);
+
 #endif /* HAJCRYPT_CONSTS_H */

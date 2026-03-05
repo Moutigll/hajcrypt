@@ -5,13 +5,17 @@ CONST_HDR_DIR	= includes/consts
 CONST_HEADERS = \
 	$(CONST_HDR_DIR)/md5.h \
 	$(CONST_HDR_DIR)/sha256.h \
-	$(CONST_HDR_DIR)/whirlpool.h
+	$(CONST_HDR_DIR)/whirlpool.h \
+	$(CONST_HDR_DIR)/base64.h \
+	$(CONST_HDR_DIR)/des.h
 
 CONST_SRC = \
 	$(CONST_DIR)/main.const.c \
 	$(CONST_DIR)/md5.const.c \
 	$(CONST_DIR)/sha256.const.c \
-	$(CONST_DIR)/whirlpool.const.c
+	$(CONST_DIR)/whirlpool.const.c \
+	$(CONST_DIR)/base64.const.c \
+	$(CONST_DIR)/des.const.c
 
 LIB_SRC = \
 	$(SRC_DIR)/hash/common/padding.c \
@@ -24,7 +28,13 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/whirlpool/whirlpool.c \
 	$(SRC_DIR)/hash/whirlpool/transform.c \
 	$(SRC_DIR)/hash/whirlpool/transform.opt.c \
-	$(SRC_DIR)/hash/hmac.c
+	$(SRC_DIR)/hash/hmac.c \
+	$(SRC_DIR)/cipher/base64.c \
+	$(SRC_DIR)/pbkdf/pbkdf.c \
+	$(SRC_DIR)/pbkdf/bytesToKey.c \
+	$(SRC_DIR)/cipher/des/transform.c \
+	$(SRC_DIR)/cipher/des/ecb.c \
+	$(SRC_DIR)/cipher/des/cbc.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s
@@ -33,7 +43,9 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/main.c \
 	$(SRC_DIR)/cli/parser.c \
 	$(SRC_DIR)/cli/dispatch.c \
-	$(SRC_DIR)/cli/processStream.c
+	$(SRC_DIR)/cli/processHash.c \
+	$(SRC_DIR)/cli/processCipher.c \
+	$(SRC_DIR)/cli/cipherIo.c
 
 TEST_SRC = \
 	tests/main.test.c \

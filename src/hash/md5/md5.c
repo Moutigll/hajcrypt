@@ -89,3 +89,13 @@ void md5Final(uint8_t *digest, void *ctx)
 		digest[i * 4 + 3] = (md5->state[i] >> 24) & 0xFF;
 	}
 }
+
+const t_hash g_md5Hash = {
+	.name = "md5",
+	.init = md5Init,
+	.update = md5Update,
+	.final = md5Final,
+	.hmacInit = md5HmacInit,
+	.ctxSize = sizeof(t_md5Ctx),
+	.digestSize = 16
+};

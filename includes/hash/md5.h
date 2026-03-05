@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "../../hajlib/include/hmath.h"
+#include "hash.h"
+
+extern const t_hash g_md5Hash;
 
 /**
  * @brief MD5 context structure to hold state during hashing.

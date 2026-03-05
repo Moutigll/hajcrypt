@@ -11,6 +11,13 @@ const char *getAlgoName(t_algo algo)
 		if (g_hashTable[i].algo == algo)
 			return (g_hashTable[i].hash->name);
 	}
+
+	for (size_t i = 0; g_cipherTable[i].cipher; i++)
+	{
+		if (g_cipherTable[i].algo == algo)
+			return (g_cipherTable[i].cipher->name);
+	}
+
 	return (NULL);
 }
 
@@ -41,10 +48,14 @@ void freeSslOptions(t_sslOptions *opts)
 
 static void printUsage(void)
 {
-	ft_printf("Commands:\n");
+	ft_printf("Standard commands:\n");
+	ft_printf("\nMessage Digest commands:\n");
 	for (size_t i = 0; g_hashTable[i].hash; i++)
-		ft_printf("%s\n", g_hashTable[i].hash->name);
-	ft_printf("\nFlags:\n -p -q -r -s\n");
+		ft_printf("\t%s\n", g_hashTable[i].hash->name);
+	ft_printf("\nCipher commands:\n");
+	for (size_t i = 0; g_cipherTable[i].cipher; i++)
+		ft_printf("\t%s\n", g_cipherTable[i].cipher->name);
+	ft_printf("\nFlags:\n -p -q -r -s <string> -k <key> -e (encode) -d (decode) -i <input file> -o <output file>\n");
 }
 
 static int initSslOptions(t_sslOptions *opts, int argc)
@@ -55,7 +66,15 @@ static int initSslOptions(t_sslOptions *opts, int argc)
 		return (1);
 
 
+	opts->cmdType = CMD_HASH;
 	opts->algo = ALGO_NONE;
+	opts->isDecoding = 0;
+	opts->hmacKey = NULL;
+	opts->keyHex = NULL;
+	opts->password = NULL;
+	opts->ivHex = NULL;
+	opts->wrapOutput = 0;
+	opts->flagK = 0;
 	opts->flagP = 0;
 	opts->flagQ = 0;
 	opts->flagR = 0;
@@ -64,6 +83,8 @@ static int initSslOptions(t_sslOptions *opts, int argc)
 	opts->stringCount = 0;
 	opts->fileInputs = NULL;
 	opts->fileCount = 0;
+	opts->inputFile = NULL;
+	opts->outputFile = NULL;
 
 	cap = (argc > 0) ? (size_t)argc : 1;
 	opts->maxInputs = cap;
@@ -91,21 +112,22 @@ static int initSslOptions(t_sslOptions *opts, int argc)
  */
 static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 {
-	size_t i;
-
-	if (!arg || !opts)
-		return (1);
-
-	i = 0;
-	while (g_hashTable[i].hash)
-	{
-		if (ft_strcmp(arg, g_hashTable[i].hash->name) == 0)
-		{
+	for (int i = 0; g_hashTable[i].hash; i++) {
+		if (ft_strcmp(arg, g_hashTable[i].hash->name) == 0) {
 			opts->algo = g_hashTable[i].algo;
+			opts->cmdType = CMD_HASH;
 			return (0);
 		}
-		i++;
 	}
+
+	for (int i = 0; g_cipherTable[i].cipher; i++) {
+		if (ft_strcmp(arg, g_cipherTable[i].cipher->name) == 0) {
+			opts->algo = g_cipherTable[i].algo;
+			opts->cmdType = CMD_CIPHER;
+			return (0);
+		}
+	}
+
 	ft_dprintf(STDERR_FILENO, "ft_ssl: Error: '%s' is an invalid command.\n\n", arg);
 	printUsage();
 	return (1);
@@ -123,14 +145,13 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 {
 	tFtGetopt st;
 	tFtGetoptStatus status;
-	const char *shortOpts = "pqrs:k:";
+	const char *shortOpts = "pqrs:k:edi:o:v:";
 
 	
 	/* minimal validation */
 	if (argc < 2 || !argv || !opts)
 	{
-		/* TODO: print a list of available algorithms */
-		ft_dprintf(STDERR_FILENO, "usage: ft_ssl command [flags] [file/string]\n");
+		printUsage();
 		return (1);
 	}
 
@@ -180,18 +201,35 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 					opts->flagP = 1;
 					opts->readFromStdin = 1;
 					break;
-
 				case 'q':
 					opts->flagQ = 1;
 					break;
-
 				case 'r':
 					opts->flagR = 1;
 					break;
-
 				case 'k':
 					opts->flagK = 1;
-					opts->hmacKey = (char *)st.optArg;
+					if (opts->cmdType == CMD_HASH) {
+						opts->hmacKey = (char *)st.optArg;
+					} else {
+						opts->keyHex = (char *)st.optArg;
+					}
+					break;
+
+				case 'e':
+					opts->isDecoding = 0;
+					break;
+				case 'd':
+					opts->isDecoding = 1;
+					break;
+				case 'i':
+					opts->inputFile = (char *)st.optArg;
+					break;
+				case 'o':
+					opts->outputFile = (char *)st.optArg;
+					break;
+				case 'v':
+					opts->ivHex = (char *)st.optArg;
 					break;
 
 				case 's':

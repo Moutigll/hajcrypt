@@ -5,25 +5,20 @@
 #include <stdint.h>
 
 #include "../hash/hmac.h"
+#include "../hash/hash.h"
+#include "../cipher/cipher.h"
 
 typedef enum e_algo
 {
 	ALGO_NONE,
 	ALGO_MD5,
 	ALGO_SHA256,
-	ALGO_WHIRLPOOL
+	ALGO_WHIRLPOOL,
+	ALGO_BASE64,
+	ALGO_DES,
+	ALGO_DES_ECB,
+	ALGO_DES_CBC
 }	t_algo;
-
-typedef struct s_hash
-{
-	char	*name;
-	void	(*init)(void *ctx);
-	void	(*update)(void *ctx, const uint8_t *data, size_t len);
-	void	(*final)(uint8_t *digest, void *ctx);
-	void	(*hmacInit)(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
-	size_t	ctxSize;
-	size_t	digestSize;
-}	t_hash;
 
 typedef struct s_hashDispatch
 {
@@ -31,8 +26,15 @@ typedef struct s_hashDispatch
 	const t_hash	*hash;
 }	t_hashDispatch;
 
+typedef struct s_cipherDispatch
+{
+	t_algo			algo;
+	const t_cipher	*cipher;
+}	t_cipherDispatch;
 extern const	t_hashDispatch g_hashTable[];
+extern const	t_cipherDispatch g_cipherTable[];
 
 const t_hash	*getHashByAlgo(t_algo algo);
+const t_cipher	*getCipherByAlgo(t_algo algo);
 
 #endif /* HAJCRYPT_CLI_CLIENT_H */

@@ -4,8 +4,12 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "hash.h"
+
 /* Whirlpool polynomial for GF(2^8): x^8 + x^4 + x^3 + x^2 + 1 (0x11D) */
 #define WHIRLPOOL_POLY 0x11D
+
+extern const t_hash g_whirlpoolHash;
 
 /* Whirlpool context structure to hold state during hashing.
  * Contains:
