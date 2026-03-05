@@ -8,6 +8,58 @@
 #define DES_FP_SIZE 64
 #define DES_E_SIZE 48
 
+/* Official DES S-box values (8 boxes, each 4 rows, 16 columns) */
+static const uint8_t DES_SBOX[8][4][16] = {
+	{ /* S1 */
+		{14,4,13,1,2,15,11,8,3,10,6,12,5,9,0,7},
+		{0,15,7,4,14,2,13,1,10,6,12,11,9,5,3,8},
+		{4,1,14,8,13,6,2,11,15,12,9,7,3,10,5,0},
+		{15,12,8,2,4,9,1,7,5,11,3,14,10,0,6,13}
+	},
+	{ /* S2 */
+		{15,1,8,14,6,11,3,4,9,7,2,13,12,0,5,10},
+		{3,13,4,7,15,2,8,14,12,0,1,10,6,9,11,5},
+		{0,14,7,11,10,4,13,1,5,8,12,6,9,3,2,15},
+		{13,8,10,1,3,15,4,2,11,6,7,12,0,5,14,9}
+	},
+	{ /* S3 */
+		{10,0,9,14,6,3,15,5,1,13,12,7,11,4,2,8},
+		{13,7,0,9,3,4,6,10,2,8,5,14,12,11,15,1},
+		{13,6,4,9,8,15,3,0,11,1,2,12,5,10,14,7},
+		{1,10,13,0,6,9,8,7,4,15,14,3,11,5,2,12}
+	},
+	{ /* S4 */
+		{7,13,14,3,0,6,9,10,1,2,8,5,11,12,4,15},
+		{13,8,11,5,6,15,0,3,4,7,2,12,1,10,14,9},
+		{10,6,9,0,12,11,7,13,15,1,3,14,5,2,8,4},
+		{3,15,0,6,10,1,13,8,9,4,5,11,12,7,2,14}
+	},
+	{ /* S5 */
+		{2,12,4,1,7,10,11,6,8,5,3,15,13,0,14,9},
+		{14,11,2,12,4,7,13,1,5,0,15,10,3,9,8,6},
+		{4,2,1,11,10,13,7,8,15,9,12,5,6,3,0,14},
+		{11,8,12,7,1,14,2,13,6,15,0,9,10,4,5,3}
+	},
+	{ /* S6 */
+		{12,1,10,15,9,2,6,8,0,13,3,4,14,7,5,11},
+		{10,15,4,2,7,12,9,5,6,1,13,14,0,11,3,8},
+		{9,14,15,5,2,8,12,3,7,0,4,10,1,13,11,6},
+		{4,3,2,12,9,5,15,10,11,14,1,7,6,0,8,13}
+	},
+	{ /* S7 */
+		{4,11,2,14,15,0,8,13,3,12,9,7,5,10,6,1},
+		{13,0,11,7,4,9,1,10,14,3,5,12,2,15,8,6},
+		{1,4,11,13,12,3,7,14,10,15,6,8,0,5,9,2},
+		{6,11,13,8,1,4,10,7,9,5,0,15,14,2,3,12}
+	},
+	{ /* S8 */
+		{13,2,8,4,6,15,11,1,10,9,3,14,5,0,12,7},
+		{1,15,13,8,10,3,7,4,12,5,6,11,0,14,9,2},
+		{7,11,4,1,9,12,14,2,0,6,10,13,15,3,5,8},
+		{2,1,14,7,4,10,8,13,15,12,9,0,3,5,6,11}
+	}
+};
+
 /* ---------- Initial Permutation (IP) ---------- */
 
 /**
@@ -221,82 +273,166 @@ static void writeSboxes(int fd)
 	ft_dprintf(fd, " * Designed by IBM/NSA with specific cryptographic properties\n");
 	ft_dprintf(fd, " */\n");
 	ft_dprintf(fd, "static const uint8_t g_des_S[8][4][16] = {\n");
-	
-	/* S1 */
-	ft_dprintf(fd, "\t{ /* S1 */\n");
-	ft_dprintf(fd, "\t\t{14, 4,13, 1, 2,15,11, 8, 3,10, 6,12, 5, 9, 0, 7},\n");
-	ft_dprintf(fd, "\t\t{ 0,15, 7, 4,14, 2,13, 1,10, 6,12,11, 9, 5, 3, 8},\n");
-	ft_dprintf(fd, "\t\t{ 4, 1,14, 8,13, 6, 2,11,15,12, 9, 7, 3,10, 5, 0},\n");
-	ft_dprintf(fd, "\t\t{15,12, 8, 2, 4, 9, 1, 7, 5,11, 3,14,10, 0, 6,13}\n");
-	ft_dprintf(fd, "\t},\n");
-	
-	/* S2 */
-	ft_dprintf(fd, "\t{ /* S2 */\n");
-	ft_dprintf(fd, "\t\t{15, 1, 8,14, 6,11, 3, 4, 9, 7, 2,13,12, 0, 5,10},\n");
-	ft_dprintf(fd, "\t\t{ 3,13, 4, 7,15, 2, 8,14,12, 0, 1,10, 6, 9,11, 5},\n");
-	ft_dprintf(fd, "\t\t{ 0,14, 7,11,10, 4,13, 1, 5, 8,12, 6, 9, 3, 2,15},\n");
-	ft_dprintf(fd, "\t\t{13, 8,10, 1, 3,15, 4, 2,11, 6, 7,12, 0, 5,14, 9}\n");
-	ft_dprintf(fd, "\t},\n");
-	
-	/* S3 */
-	ft_dprintf(fd, "\t{ /* S3 */\n");
-	ft_dprintf(fd, "\t\t{10, 0, 9,14, 6, 3,15, 5, 1,13,12, 7,11, 4, 2, 8},\n");
-	ft_dprintf(fd, "\t\t{13, 7, 0, 9, 3, 4, 6,10, 2, 8, 5,14,12,11,15, 1},\n");
-	ft_dprintf(fd, "\t\t{13, 6, 4, 9, 8,15, 3, 0,11, 1, 2,12, 5,10,14, 7},\n");
-	ft_dprintf(fd, "\t\t{ 1,10,13, 0, 6, 9, 8, 7, 4,15,14, 3,11, 5, 2,12}\n");
-	ft_dprintf(fd, "\t},\n");
-	
-	/* S4 */
-	ft_dprintf(fd, "\t{ /* S4 */\n");
-	ft_dprintf(fd, "\t\t{ 7,13,14, 3, 0, 6, 9,10, 1, 2, 8, 5,11,12, 4,15},\n");
-	ft_dprintf(fd, "\t\t{13, 8,11, 5, 6,15, 0, 3, 4, 7, 2,12, 1,10,14, 9},\n");
-	ft_dprintf(fd, "\t\t{10, 6, 9, 0,12,11, 7,13,15, 1, 3,14, 5, 2, 8, 4},\n");
-	ft_dprintf(fd, "\t\t{ 3,15, 0, 6,10, 1,13, 8, 9, 4, 5,11,12, 7, 2,14}\n");
-	ft_dprintf(fd, "\t},\n");
-	
-	/* S5 */
-	ft_dprintf(fd, "\t{ /* S5 */\n");
-	ft_dprintf(fd, "\t\t{ 2,12, 4, 1, 7,10,11, 6, 8, 5, 3,15,13, 0,14, 9},\n");
-	ft_dprintf(fd, "\t\t{14,11, 2,12, 4, 7,13, 1, 5, 0,15,10, 3, 9, 8, 6},\n");
-	ft_dprintf(fd, "\t\t{ 4, 2, 1,11,10,13, 7, 8,15, 9,12, 5, 6, 3, 0,14},\n");
-	ft_dprintf(fd, "\t\t{11, 8,12, 7, 1,14, 2,13, 6,15, 0, 9,10, 4, 5, 3}\n");
-	ft_dprintf(fd, "\t},\n");
-	
-	/* S6 */
-	ft_dprintf(fd, "\t{ /* S6 */\n");
-	ft_dprintf(fd, "\t\t{12, 1,10,15, 9, 2, 6, 8, 0,13, 3, 4,14, 7, 5,11},\n");
-	ft_dprintf(fd, "\t\t{10,15, 4, 2, 7,12, 9, 5, 6, 1,13,14, 0,11, 3, 8},\n");
-	ft_dprintf(fd, "\t\t{ 9,14,15, 5, 2, 8,12, 3, 7, 0, 4,10, 1,13,11, 6},\n");
-	ft_dprintf(fd, "\t\t{ 4, 3, 2,12, 9, 5,15,10,11,14, 1, 7, 6, 0, 8,13}\n");
-	ft_dprintf(fd, "\t},\n");
-	
-	/* S7 */
-	ft_dprintf(fd, "\t{ /* S7 */\n");
-	ft_dprintf(fd, "\t\t{ 4,11, 2,14,15, 0, 8,13, 3,12, 9, 7, 5,10, 6, 1},\n");
-	ft_dprintf(fd, "\t\t{13, 0,11, 7, 4, 9, 1,10,14, 3, 5,12, 2,15, 8, 6},\n");
-	ft_dprintf(fd, "\t\t{ 1, 4,11,13,12, 3, 7,14,10,15, 6, 8, 0, 5, 9, 2},\n");
-	ft_dprintf(fd, "\t\t{ 6,11,13, 8, 1, 4,10, 7, 9, 5, 0,15,14, 2, 3,12}\n");
-	ft_dprintf(fd, "\t},\n");
-	
-	/* S8 */
-	ft_dprintf(fd, "\t{ /* S8 */\n");
-	ft_dprintf(fd, "\t\t{13, 2, 8, 4, 6,15,11, 1,10, 9, 3,14, 5, 0,12, 7},\n");
-	ft_dprintf(fd, "\t\t{ 1,15,13, 8,10, 3, 7, 4,12, 5, 6,11, 0,14, 9, 2},\n");
-	ft_dprintf(fd, "\t\t{ 7,11, 4, 1, 9,12,14, 2, 0, 6,10,13,15, 3, 5, 8},\n");
-	ft_dprintf(fd, "\t\t{ 2, 1,14, 7, 4,10, 8,13,15,12, 9, 0, 3, 5, 6,11}\n");
-	ft_dprintf(fd, "\t}\n");
-	
+
+	for (int box = 0; box < 8; box++) {
+		ft_dprintf(fd, "\t{ /* S%d */\n", box + 1);
+		for (int row = 0; row < 4; row++) {
+			ft_dprintf(fd, "\t\t{");
+			for (int col = 0; col < 16; col++) {
+				ft_dprintf(fd, "%2d", DES_SBOX[box][row][col]);
+				if (col < 15) ft_dprintf(fd, ",");
+			}
+			ft_dprintf(fd, "}");
+			if (row < 3) ft_dprintf(fd, ",");
+			ft_dprintf(fd, "\n");
+		}
+		ft_dprintf(fd, "\t}");
+		if (box < 7) ft_dprintf(fd, ",");
+		ft_dprintf(fd, "\n");
+	}
+	ft_dprintf(fd, "};\n\n");
+}
+
+/* ---------- Lookup tables for IP (byte-oriented) ---------- */
+
+static void generateIpLookupTables(int fd, const uint8_t ip[64])
+{
+	uint64_t tables[8][256] = {0};
+	for (int byte_idx = 0; byte_idx < 8; byte_idx++) {
+		for (int val = 0; val < 256; val++) {
+			uint64_t contrib = 0;
+			for (int bit = 0; bit < 8; bit++) {
+				if (val & (1 << (7 - bit))) {
+					int input_bit_pos = byte_idx * 8 + bit;
+					for (int out = 0; out < 64; out++) {
+						if (ip[out] == input_bit_pos + 1) {
+							contrib |= (1ULL << (63 - out));
+							break;
+						}
+					}
+				}
+			}
+			tables[byte_idx][val] = contrib;
+		}
+	}
+	ft_dprintf(fd, "/*\n");
+	ft_dprintf(fd, " * IP lookup tables (byte-oriented).\n");
+	ft_dprintf(fd, " * tables[input_byte_index][byte_value] gives the 64-bit contribution.\n");
+	ft_dprintf(fd, " */\n");
+	ft_dprintf(fd, "static const uint64_t g_des_ip_lookup[8][256] = {\n");
+	for (int i = 0; i < 8; i++) {
+		ft_dprintf(fd, "\t{ /* byte %d */\n", i);
+		for (int j = 0; j < 256; j++) {
+			ft_dprintf(fd, "\t\t0x");
+			uint64_t val = tables[i][j];
+			for (int k = 0; k < 8; k++) {
+				uint8_t byte = (val >> (56 - 8 * k)) & 0xFF;
+				ft_dprintf(fd, "%02X", byte);
+			}
+			ft_dprintf(fd, "ULL");
+			if (j < 255)
+				ft_dprintf(fd, ",");
+			if ((j + 1) % 4 == 0 && j < 255)
+				ft_dprintf(fd, "\n");
+			else
+				ft_dprintf(fd, " ");
+		}
+		ft_dprintf(fd, "\n\t}");
+		if (i < 7)
+			ft_dprintf(fd, ",");
+		ft_dprintf(fd, "\n");
+	}
+	ft_dprintf(fd, "};\n\n");
+}
+
+/* ---------- Lookup tables for FP (byte-oriented) ---------- */
+
+static void generateFpLookupTables(int fd, const uint8_t fp[64])
+{
+	uint64_t tables[8][256] = {0};
+	for (int byte_idx = 0; byte_idx < 8; byte_idx++) {
+		for (int val = 0; val < 256; val++) {
+			uint64_t contrib = 0;
+			for (int bit = 0; bit < 8; bit++) {
+				if (val & (1 << (7 - bit))) {
+					int input_bit_pos = byte_idx * 8 + bit;
+					for (int out = 0; out < 64; out++) {
+						if (fp[out] == input_bit_pos + 1) {
+							contrib |= (1ULL << (63 - out));
+							break;
+						}
+					}
+				}
+			}
+			tables[byte_idx][val] = contrib;
+		}
+	}
+	ft_dprintf(fd, "/*\n");
+	ft_dprintf(fd, " * FP lookup tables (byte-oriented).\n");
+	ft_dprintf(fd, " * tables[input_byte_index][byte_value] gives the 64-bit contribution.\n");
+	ft_dprintf(fd, " */\n");
+	ft_dprintf(fd, "static const uint64_t g_des_fp_lookup[8][256] = {\n");
+	for (int i = 0; i < 8; i++) {
+		ft_dprintf(fd, "\t{ /* byte %d */\n", i);
+		for (int j = 0; j < 256; j++) {
+			ft_dprintf(fd, "\t\t0x");
+			uint64_t val = tables[i][j];
+			for (int k = 0; k < 8; k++) {
+				uint8_t byte = (val >> (56 - 8 * k)) & 0xFF;
+				ft_dprintf(fd, "%02X", byte);
+			}
+			ft_dprintf(fd, "ULL");
+			if (j < 255)
+				ft_dprintf(fd, ",");
+			if ((j + 1) % 4 == 0 && j < 255)
+				ft_dprintf(fd, "\n");
+			else
+				ft_dprintf(fd, " ");
+		}
+		ft_dprintf(fd, "\n\t}");
+		if (i < 7)
+			ft_dprintf(fd, ",");
+		ft_dprintf(fd, "\n");
+	}
+	ft_dprintf(fd, "};\n\n");
+}
+
+/* ---------- Flat S-box tables ---------- */
+
+static void generateSboxFlatTables(int fd)
+{
+	uint8_t flat[8][64];
+	for (int box = 0; box < 8; box++) {
+		for (int idx = 0; idx < 64; idx++) {
+			int row = ((idx >> 4) & 0x2) | (idx & 1);
+			int col = (idx >> 1) & 0xF;
+			flat[box][idx] = DES_SBOX[box][row][col];
+		}
+	}
+	ft_dprintf(fd, "/*\n");
+	ft_dprintf(fd, " * Flat S-box tables (6-bit input -> 4-bit output).\n");
+	ft_dprintf(fd, " * Index = (row<<4) | col, where row = (bit5<<1)|bit0, col = bits4-1.\n");
+	ft_dprintf(fd, " */\n");
+	ft_dprintf(fd, "static const uint8_t g_des_sbox_flat[8][64] = {\n");
+	for (int box = 0; box < 8; box++) {
+		ft_dprintf(fd, "\t{ /* S%d */\n\t\t", box+1);
+		for (int idx = 0; idx < 64; idx++) {
+			ft_dprintf(fd, "%3d", flat[box][idx]);
+			if (idx < 63)
+				ft_dprintf(fd, ",");
+			if ((idx + 1) % 16 == 0 && idx < 63)
+				ft_dprintf(fd, "\n\t\t");
+		}
+		ft_dprintf(fd, "\n\t}");
+		if (box < 7)
+			ft_dprintf(fd, ",");
+		ft_dprintf(fd, "\n");
+	}
 	ft_dprintf(fd, "};\n\n");
 }
 
 /* ---------- Generate complete DES constants header ---------- */
 
-/**
- * @brief Generate complete DES constants header file.
- * 
- * @param fd File descriptor to write to
- * @return 0 on success
- */
 int generateDesHeader(int fd)
 {
 	uint8_t ip[DES_IP_SIZE];
@@ -319,6 +455,12 @@ int generateDesHeader(int fd)
 	writePc2Table(fd);
 	writeShiftsTable(fd);
 	writeSboxes(fd);
+	
+	/* Write optimisation tables */
+	ft_dprintf(fd, "\n\n/* ---------- Precomputed lookup tables for IP and FP ---------- */\n");
+	generateIpLookupTables(fd, ip);
+	generateFpLookupTables(fd, fp);
+	generateSboxFlatTables(fd);
 	
 	return (0);
 }
