@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "../../../includes/cipher/des.h"
 
 void desEcbInit(void				*vctx,
@@ -30,56 +28,28 @@ void desEcbUpdate(void			*vctx,
 				  size_t		*outLen)
 {
 	t_desEcbCtx	*ctx = vctx;
-	size_t		processed = 0;
 	*outLen = 0;
 
-	while (processed < inLen) {
-		size_t to_copy = 8 - ctx->bufferLen;
-		if (to_copy > inLen - processed)
-			to_copy = inLen - processed;
-
-		memcpy(ctx->buffer + ctx->bufferLen, in + processed, to_copy);
-		ctx->bufferLen += to_copy;
-		processed += to_copy;
-
-		if (ctx->bufferLen == 8) {
-			uint64_t block = 0;
-			for (int i = 0; i < 8; i++)
-				block = (block << 8) | ctx->buffer[i];
-
-			if (ctx->dir == CIPHER_ENCRYPT)
-				block = desEncryptBlock(block, ctx->subkeys);
-			else
-				block = desDecryptBlock(block, ctx->subkeys);
-
-			for (int i = 0; i < 8; i++)
-				out[(*outLen)++] = (block >> (56 - i * 8)) & 0xFF;
-
-			ctx->bufferLen = 0;
-		}
-	}
+	for (size_t i = 0; i < inLen; i += 8) {
+        uint64_t block = 0;
+        for (int j = 0; j < 8; j++)
+            block = (block << 8) | in[i + j];
+        
+        if (ctx->dir == CIPHER_ENCRYPT)
+            block = desEncryptBlock(block, ctx->subkeys);
+        else
+            block = desDecryptBlock(block, ctx->subkeys);
+        
+        for (int j = 0; j < 8; j++)
+            out[(*outLen)++] = (block >> (56 - j * 8)) & 0xFF;
+    }
 }
 
 void desEcbFinal(void *vctx, uint8_t *out, size_t *outLen)
 {
-	t_desEcbCtx	*ctx = vctx;
-	*outLen = 0;
-
-	if (ctx->dir == CIPHER_ENCRYPT && ctx->bufferLen > 0) {
-		uint8_t block[8];
-		memcpy(block, ctx->buffer, ctx->bufferLen);
-		desPad(block, ctx->bufferLen, 8);
-
-		uint64_t blockVal = 0;
-		for (int i = 0; i < 8; i++)
-			blockVal = (blockVal << 8) | block[i];
-
-		blockVal = desEncryptBlock(blockVal, ctx->subkeys);
-
-		for (int i = 0; i < 8; i++)
-			out[(*outLen)++] = (blockVal >> (56 - i * 8)) & 0xFF;
-	}
-	/* For decryption, we assume the input is always a multiple of 8 bytes and properly padded, so no action is needed here. */
+    (void)vctx;
+	(void)out;
+    *outLen = 0;
 }
 
 void desEcbFree(void *vctx)
@@ -88,12 +58,22 @@ void desEcbFree(void *vctx)
 }
 
 const t_cipher g_desEcbCipher = {
-	.name = "DES-ECB",
+	.name = "des-ecb",
+	.mode = CIPHER_MODE_ECB,
+	.isEncoder = 1,
+
 	.blockSize = 8,
 	.keySize = 8,
 	.ivSize = 0,
+	.ctxSize = sizeof(t_desEcbCtx),
+
 	.init = desEcbInit,
 	.update = desEcbUpdate,
 	.final = desEcbFinal,
-	.free = desEcbFree
+	.free = desEcbFree,
+
+	.pad = desPad,
+	.unpad = desUnpad,
+
+	.supportsWrap = 0
 };
