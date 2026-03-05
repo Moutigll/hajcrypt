@@ -18,9 +18,9 @@ extern const t_cipher g_base64Cipher;
  * @var s_base64Ctx::bits
  *      Number of valid bits currently stored in the buffer
  * 
- * @var s_base64Ctx::isDecoding
- *      Flag indicating operation mode (non-zero for decoding, zero for encoding)
- * 
+ * @var s_base64Ctx::dir
+ *      Direction of operation (encryption for encoding, decryption for decoding)
+ *
  * @var s_base64Ctx::outCount
  *      Counter for output characters processed or generated
  * 

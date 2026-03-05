@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "../../hajlib/include/hprintf.h"
 #include "../../hajlib/include/hmemory.h"
@@ -122,7 +123,7 @@ static int	handleBlockCipher(int				fd,
 	uint8_t		tempBuffer[CIPHER_BUFFER_SIZE + 32];
 	size_t		lastLen;
 	ssize_t		bytesRead;
-	size_t		outLen;
+	size_t		outLen = 0;
 	int			ret;
 
 	lastLen = 0;
@@ -134,8 +135,8 @@ static int	handleBlockCipher(int				fd,
 			break ;
 		
 		/* Combine with any leftover from previous read */
-		size_t total = lastLen + bytesRead;
-		uint8_t *temp = tempBuffer; /* Use fixed buffer, not alloca */
+		size_t	total = lastLen + bytesRead;
+		uint8_t	*temp = tempBuffer;
 		
 		if (lastLen > 0)
 		{

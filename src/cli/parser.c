@@ -73,6 +73,7 @@ static int initSslOptions(t_sslOptions *opts, int argc)
 	opts->keyHex = NULL;
 	opts->password = NULL;
 	opts->ivHex = NULL;
+	opts->wrapOutput = 0;
 	opts->flagK = 0;
 	opts->flagP = 0;
 	opts->flagQ = 0;

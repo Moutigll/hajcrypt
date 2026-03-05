@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "../../hajlib/include/hprintf.h"
 #include "../../hajlib/include/hmemory.h"

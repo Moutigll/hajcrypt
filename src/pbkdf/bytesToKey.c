@@ -57,8 +57,10 @@ int	pbkdfBytesToKeyExtended(const char		*password,
 	uint8_t			hash[PBKDF_BTK_HASH_SIZE];
 	uint8_t			defaultSalt[PBKDF_BTK_SALT_SIZE];
 	const uint8_t	*saltPtr;
-	size_t			offset;
-	size_t			remaining;
+	uint8_t			*buffer;
+	size_t			totalLen = keyLen + PBKDF_BTK_IV_SIZE_8;
+	size_t			offset = 0;
+	int				first = 1;
 
 	if (!password || !key || !iv)
 		return (-1);
@@ -67,50 +69,38 @@ int	pbkdfBytesToKeyExtended(const char		*password,
 		return (-1);
 
 	saltPtr = getSaltOrDefault(salt, defaultSalt, PBKDF_BTK_SALT_SIZE);
+	
+	buffer = ft_malloc(totalLen);
+	if (!buffer)
+		return (-1);
 
-	ft_bzero(key, keyLen);
-	offset = 0;
-	remaining = keyLen;
-
-	while (remaining > 0)
+	while (offset < totalLen)
 	{
 		md5Init(&md5Ctx);
 		
-		/* If not the first iteration, hash the previous hash to create a chain */
-		if (offset > 0)
+		/* Hash previous hash except for first iteration */
+		if (!first)
 			md5Update(&md5Ctx, hash, PBKDF_BTK_HASH_SIZE);
+		else
+			first = 0;
 		
-		/* Hash password and salt */
 		md5Update(&md5Ctx, (const uint8_t *)password, passLen);
 		md5Update(&md5Ctx, saltPtr, PBKDF_BTK_SALT_SIZE);
-		
 		md5Final(hash, &md5Ctx);
+
+		size_t to_copy = PBKDF_BTK_HASH_SIZE;
+		if (offset + to_copy > totalLen)
+			to_copy = totalLen - offset;
 		
-		/* Copy the hash output to the key buffer, handling cases where keyLen > hash size */
-		if (remaining >= PBKDF_BTK_HASH_SIZE)
-		{
-			ft_memcpy(key + offset, hash, PBKDF_BTK_HASH_SIZE);
-			offset += PBKDF_BTK_HASH_SIZE;
-			remaining -= PBKDF_BTK_HASH_SIZE;
-		}
-		else
-		{
-			ft_memcpy(key + offset, hash, remaining);
-			offset += remaining;
-			remaining = 0;
-		}
+		ft_memcpy(buffer + offset, hash, to_copy);
+		offset += to_copy;
 	}
 
-	/* For IV, we can simply hash the key and salt again */
-	md5Init(&md5Ctx);
-	md5Update(&md5Ctx, key, keyLen);
-	md5Update(&md5Ctx, (const uint8_t *)password, passLen);
-	md5Update(&md5Ctx, saltPtr, PBKDF_BTK_SALT_SIZE);
-	md5Final(hash, &md5Ctx);
+	/* Split buffer into key and IV */
+	ft_memcpy(key, buffer, keyLen);
+	ft_memcpy(iv, buffer + keyLen, PBKDF_BTK_IV_SIZE_8);
 	
-	/* Use the first 8 bytes of the final hash as IV */
-	ft_memcpy(iv, hash, PBKDF_BTK_IV_SIZE_8);
-
+	ft_free(buffer);
 	return (0);
 }
 

@@ -16,7 +16,7 @@ const t_hashDispatch g_hashTable[] = {
 
 const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_BASE64,	&g_base64Cipher },
-	{ ALGO_DES,		&g_desCipher }, /* Default to ECB for DES */
+	{ ALGO_DES,		&g_desCipher }, /* Default to CBC for DES */
 	{ ALGO_DES_ECB,	&g_desEcbCipher },
 	{ ALGO_DES_CBC,	&g_desCbcCipher },
 	{ ALGO_NONE,	NULL }
