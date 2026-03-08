@@ -3,6 +3,7 @@
 #include "../../includes/hash/md5.h"
 #include "../../includes/hash/sha256.h"
 #include "../../includes/hash/whirlpool.h"
+#include "../../includes/hash/blake2b.h"
 
 #include "../../includes/cipher/base64.h"
 #include "../../includes/cipher/des.h"
@@ -11,6 +12,7 @@ const t_hashDispatch g_hashTable[] = {
 	{ ALGO_MD5,		&g_md5Hash },
 	{ ALGO_SHA256,	&g_sha256Hash },
 	{ ALGO_WHIRLPOOL,	&g_whirlpoolHash },
+	{ ALGO_BLAKE2B,	&g_blake2bHash },
 	{ ALGO_NONE,		NULL }
 };
 

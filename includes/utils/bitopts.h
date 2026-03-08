@@ -39,4 +39,19 @@ static inline uint32_t rotateRight(uint32_t x, uint32_t n)
 	return (x >> n) | (x << (32 - n));
 }
 
+/**
+ * @brief Performs a circular right rotation (ROR) on a 64-bit integer.
+ *
+ * This function shifts the bits of x to the right by n positions.
+ * Bits that underflow on the right are wrapped around to the left.
+ * 
+ * @param x The 64-bit integer to rotate.
+ * @param n The number of bits to rotate.
+ * @return The rotated 64-bit integer.
+ */
+static inline uint64_t rotr64(uint64_t x, uint64_t n)
+{
+	return (x >> n) | (x << (64 - n));
+}
+
 #endif /* HAJCRYPT_BITOPTS_H */

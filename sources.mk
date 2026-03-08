@@ -40,7 +40,9 @@ LIB_SRC = \
 	$(SRC_DIR)/cipher/utils.c \
 	$(SRC_DIR)/cipher/blowfish/transform.c \
 	$(SRC_DIR)/kdf/pbkdf2.c \
-	$(SRC_DIR)/kdf/bcrypt.c
+	$(SRC_DIR)/kdf/bcrypt.c \
+	$(SRC_DIR)/hash/blake2b/blake2b.c \
+	$(SRC_DIR)/hash/blake2b/transform.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s
