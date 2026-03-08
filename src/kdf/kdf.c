@@ -1,7 +1,7 @@
 #include "../../hajlib/include/hstring.h"
 #include "../../hajlib/include/hmath.h"
 
-#include "../../includes/pbkdf/pbkdf.h"
+#include "../../includes/kdf/kdf.h"
 
 int	pbkdfHexToBytes(const char *hex, uint8_t *bytes, size_t maxBytes)
 {

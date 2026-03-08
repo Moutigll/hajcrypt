@@ -72,8 +72,8 @@ const t_cipher g_desEcbCipher = {
 	.final = desEcbFinal,
 	.free = desEcbFree,
 
-	.pad = desPad,
-	.unpad = desUnpad,
+	.pad = pkcs7Pad,
+	.unpad = pkcs7Unpad,
 
 	.supportsWrap = 0
 };

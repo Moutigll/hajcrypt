@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
 #include "../../hajlib/include/hmemory.h"
-#include "../../includes/pbkdf/pbkdf2.h"
+#include "../../includes/kdf/pbkdf2.h"
 
 #define PBKDF2_MAX_DIGEST 64
 

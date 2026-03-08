@@ -188,32 +188,6 @@ void	desCbcFinal(void *ctx, uint8_t *out, size_t *outLen);
  */
 void	desCbcFree(void *ctx);
 
-/* ---------- Padding functions ---------- */
-
-/**
- * @brief Applies PKCS#7 padding to a block.
- * 
- * Fills remaining bytes in block with the padding length.
- * 
- * @param block Data block to pad
- * @param len Current data length in block
- * @param blockSize Total block size (always 8 for DES)
- */
-void	desPad(uint8_t *block, size_t len, size_t blockSize);
-
-/**
- * @brief Verifies and removes PKCS#7 padding from a block.
- * 
- * Checks that all padding bytes have the correct value and returns
- * the original data length.
- * 
- * @param block Padded data block
- * @param len Pointer to block size, updated to original data length
- * @param blockSize Total block size (always 8 for DES)
- * @return 0 on success, -1 on invalid padding
- */
-int		desUnpad(uint8_t *block, size_t *len, size_t blockSize);
-
 /* ---------- Global cipher structures ---------- */
 
 /**

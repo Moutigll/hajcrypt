@@ -4,8 +4,7 @@
 #include "../../includes/hash/md5.h"
 #include "../../includes/utils/utils.h"
 
-#include "../../includes/pbkdf/pbkdf.h"
-#include "../../includes/pbkdf/bytesToKey.h"
+#include "../../includes/kdf/bytesToKey.h"
 
 static const uint8_t	*getSaltOrDefault(const uint8_t *salt, uint8_t *defaultSalt, size_t saltSize)
 {
