@@ -7,7 +7,8 @@ CONST_HEADERS = \
 	$(CONST_HDR_DIR)/sha256.h \
 	$(CONST_HDR_DIR)/whirlpool.h \
 	$(CONST_HDR_DIR)/base64.h \
-	$(CONST_HDR_DIR)/des.h
+	$(CONST_HDR_DIR)/des.h \
+	$(CONST_HDR_DIR)/blake2b.h
 
 CONST_SRC = \
 	$(CONST_DIR)/main.const.c \
@@ -15,7 +16,8 @@ CONST_SRC = \
 	$(CONST_DIR)/sha256.const.c \
 	$(CONST_DIR)/whirlpool.const.c \
 	$(CONST_DIR)/base64.const.c \
-	$(CONST_DIR)/des.const.c
+	$(CONST_DIR)/des.const.c \
+	$(CONST_DIR)/blake2b.const.c
 
 LIB_SRC = \
 	$(SRC_DIR)/hash/common/padding.c \
