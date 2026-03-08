@@ -30,12 +30,15 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/whirlpool/transform.opt.c \
 	$(SRC_DIR)/hash/hmac.c \
 	$(SRC_DIR)/cipher/base64.c \
-	$(SRC_DIR)/pbkdf/pbkdf.c \
-	$(SRC_DIR)/pbkdf/bytesToKey.c \
+	$(SRC_DIR)/kdf/kdf.c \
+	$(SRC_DIR)/kdf/bytesToKey.c \
 	$(SRC_DIR)/cipher/des/transform.c \
 	$(SRC_DIR)/cipher/des/ecb.c \
 	$(SRC_DIR)/cipher/des/cbc.c \
-	$(SRC_DIR)/pbkdf/pbkdf2.c
+	$(SRC_DIR)/cipher/utils.c \
+	$(SRC_DIR)/cipher/blowfish/transform.c \
+	$(SRC_DIR)/kdf/pbkdf2.c \
+	$(SRC_DIR)/kdf/bcrypt.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s
