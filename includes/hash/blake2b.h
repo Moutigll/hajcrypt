@@ -96,6 +96,16 @@ void	blake2bMac(const uint8_t	*key,
 				  uint8_t			*digest,
 				  size_t			digestlen);
 
+/**
+ * @brief Compute long Blake2b hash (for output lengths > 64 bytes)
+ * This function uses the tree hashing mode of Blake2b to produce a hash of arbitrary length.
+ * @param out Output buffer
+ * @param outLen Desired output length
+ * @param in Input data
+ * @param inLen Input data length
+ */
+void blake2bLong(uint8_t *out, size_t outLen, const uint8_t *in, size_t inLen);
+
 void	blake2bCompress(t_blake2bCtx *ctx, const uint8_t *block);
 
 #endif /* HAJCRYPT_BLAKE2B_H */

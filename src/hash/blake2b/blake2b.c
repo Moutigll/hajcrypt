@@ -48,7 +48,7 @@ void blake2bInitKeyed(void *ctx, const uint8_t *key, size_t keyLen, size_t outle
 	blake2bSetOutlen(ctx, outlen);
 
 	/* XOR with keyed hash parameter */
-	b2->h[0] ^= 0x20;  /* keyed hash parameter */
+	b2->h[0] ^= (uint64_t)keyLen << 8;
 
 	/* Pad key to block size and hash it as first block */
 	ft_memcpy(keyblock, key, keyLen);
@@ -163,6 +163,51 @@ void blake2bMac(const uint8_t	*key,		size_t	keyLen,
 	blake2bUpdate(&ctx, data, datalen);
 	blake2bFinal(digest, &ctx);
 }
+
+void blake2bLong(uint8_t *out, size_t outLen, const uint8_t *in, size_t inLen)
+{
+	t_blake2bCtx b2;
+	uint8_t buffer[64];
+	uint32_t outLenLe = (uint32_t)outLen;
+
+	if (outLen <= 64) {
+		blake2bInit(&b2);
+		blake2bSetOutlen(&b2, outLen);
+		blake2bUpdate(&b2, (uint8_t*)&outLenLe, 4);
+		blake2bUpdate(&b2, in, inLen);
+		blake2bFinal(out, &b2);
+		return;
+	}
+
+	/* First 64-byte hash */
+	blake2bInit(&b2);
+	blake2bSetOutlen(&b2, 64);
+	blake2bUpdate(&b2, (uint8_t*)&outLenLe, 4);
+	blake2bUpdate(&b2, in, inLen);
+	blake2bFinal(buffer, &b2);
+	ft_memcpy(out, buffer, 32);
+	out += 32;
+	uint32_t toProduce = (uint32_t)outLen - 32;
+
+	/* Intermediate steps */
+	while (toProduce > 64) {
+		ft_memcpy(buffer, buffer, 64);   /* use previous hash as input */
+		blake2bInit(&b2);
+		blake2bSetOutlen(&b2, 64);
+		blake2bUpdate(&b2, buffer, 64);
+		blake2bFinal(buffer, &b2);
+		ft_memcpy(out, buffer, 32);
+		out += 32;
+		toProduce -= 32;
+	}
+
+	/* Final step */
+	blake2bInit(&b2);
+	blake2bSetOutlen(&b2, toProduce);
+	blake2bUpdate(&b2, buffer, 64);
+	blake2bFinal(out, &b2);
+}
+
 
 const t_hash g_blake2bHash = {
 	.name = "blake2b",

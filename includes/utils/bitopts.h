@@ -54,4 +54,44 @@ static inline uint64_t rotr64(uint64_t x, uint64_t n)
 	return (x >> n) | (x << (64 - n));
 }
 
+/* Store a 32-bit integer in little-endian format */
+static inline void store32(void *dst, uint32_t w) {
+#if defined(NATIVE_LITTLE_ENDIAN)
+	memcpy(dst, &w, sizeof w);
+#else
+	uint8_t *p = (uint8_t *)dst;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+#endif
+}
+
+/* Store a 64-bit integer in little-endian format */
+static inline void store64(void *dst, uint64_t w) {
+#if defined(NATIVE_LITTLE_ENDIAN)
+	memcpy(dst, &w, sizeof w);
+#else
+	uint8_t *p = (uint8_t *)dst;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+#endif
+}
+
 #endif /* HAJCRYPT_BITOPTS_H */
