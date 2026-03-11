@@ -3,4 +3,5 @@ ft_ssl
 hajcrypt.a
 includes/consts/*
 !includes/consts/consts.h
+!includes/consts/blowfish.h
 benchmark.html

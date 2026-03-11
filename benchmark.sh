@@ -16,12 +16,12 @@ if [ ! -x "$FT_SSL" ]; then
   exit 1
 fi
 if ! command -v $OPENSSL >/dev/null 2>&1; then
-  echo "Warning: openssl not found in PATH (MD5/SHA256 will be skipped)" >&2
+  echo "Warning: openssl not found in PATH (MD5/SHA256/Blake2b will be skipped)" >&2
   OPENSSL=""
 fi
 if ! command -v $RHASH >/dev/null 2>&1; then
-  echo "Error: rhash not found in PATH (required for Whirlpool)" >&2
-  exit 1
+  echo "Warning: rhash not found in PATH (Whirlpool will be skipped)" >&2
+  RHASH=""
 fi
 
 echo "Benchmark in $TMPDIR"
@@ -31,6 +31,8 @@ md5_ft_vals=()
 md5_ssl_vals=()
 sha_ft_vals=()
 sha_ssl_vals=()
+blake2b_ft_vals=()
+blake2b_ssl_vals=()
 whirlpool_ft_vals=()
 whirlpool_rhash_vals=()
 
@@ -61,27 +63,29 @@ measure_avg_seconds() {
   local measured=0
   local i
   for i in $(seq 1 $rounds); do
-	if [ "$bin" = "$OPENSSL" ]; then
-	  if [ "$algo" = "md5" ]; then
-		ns=$(_run_once_ns $bin dgst -md5 "$file")
-	  elif [ "$algo" = "sha256" ]; then
-		ns=$(_run_once_ns $bin dgst -sha256 "$file")
-	  else
-		ns=0
-	  fi
-	elif [ "$bin" = "$RHASH" ]; then
-	  # rhash --whirlpool filename
-	  ns=$(_run_once_ns $bin --whirlpool "$file")
-	else
-	  # ft_ssl expects: ft_ssl algo filename (md5, sha256, whirlpool)
-	  ns=$(_run_once_ns "$bin" "$algo" "$file")
-	fi
+    if [ "$bin" = "$OPENSSL" ]; then
+      if [ "$algo" = "md5" ]; then
+        ns=$(_run_once_ns $bin dgst -md5 "$file")
+      elif [ "$algo" = "sha256" ]; then
+        ns=$(_run_once_ns $bin dgst -sha256 "$file")
+      elif [ "$algo" = "blake2b" ]; then
+        ns=$(_run_once_ns $bin dgst -blake2b512 "$file")
+      else
+        ns=0
+      fi
+    elif [ "$bin" = "$RHASH" ]; then
+      # rhash --whirlpool filename
+      ns=$(_run_once_ns $bin --whirlpool "$file")
+    else
+      # ft_ssl expects: ft_ssl algo filename (md5, sha256, whirlpool, blake2b)
+      ns=$(_run_once_ns "$bin" "$algo" "$file")
+    fi
 
-	# ignore first run
-	if [ "$i" -gt 1 ]; then
-	  sum_ns=$((sum_ns + ns))
-	  measured=$((measured + 1))
-	fi
+    # ignore first run
+    if [ "$i" -gt 1 ]; then
+      sum_ns=$((sum_ns + ns))
+      measured=$((measured + 1))
+    fi
   done
 
   # avoid division by zero (shouldn't happen)
@@ -134,17 +138,37 @@ for size in "${SIZES[@]}"; do
 	sha_ssl_vals+=("0")
   fi
 
+  # Blake2b ft_ssl
+  echo "  Blake2b ft_ssl..."
+  v=$(measure_avg_seconds blake2b "$file" "$FT_SSL" "$size")
+  blake2b_ft_vals+=("$v")
+  echo "    -> $v s"
+
+  # Blake2b openssl (if available)
+  if [ -n "$OPENSSL" ]; then
+    echo "  Blake2b openssl..."
+    v=$(measure_avg_seconds blake2b "$file" "$OPENSSL" "$size")
+    blake2b_ssl_vals+=("$v")
+    echo "    -> $v s"
+  else
+    blake2b_ssl_vals+=("0")
+  fi
+
   # Whirlpool ft_ssl
   echo "  Whirlpool ft_ssl..."
   v=$(measure_avg_seconds whirlpool "$file" "$FT_SSL" "$size")
   whirlpool_ft_vals+=("$v")
   echo "	-> $v s"
 
-  # Whirlpool rhash
-  echo "  Whirlpool rhash..."
-  v=$(measure_avg_seconds whirlpool "$file" "$RHASH" "$size")
-  whirlpool_rhash_vals+=("$v")
-  echo "	-> $v s"
+  # Whirlpool rhash (if available)
+  if [ -n "$RHASH" ]; then
+    echo "  Whirlpool rhash..."
+    v=$(measure_avg_seconds whirlpool "$file" "$RHASH" "$size")
+    whirlpool_rhash_vals+=("$v")
+    echo "    -> $v s"
+  else
+    whirlpool_rhash_vals+=("0")
+  fi
 done
 
 # cleanup files
@@ -172,6 +196,12 @@ shaft_js="[${shaft_js%,}]"
 shassl_js=$(printf '%s,' "${sha_ssl_vals[@]}")
 shassl_js="[${shassl_js%,}]"
 
+blake2bft_js=$(printf '%s,' "${blake2b_ft_vals[@]}")
+blake2bft_js="[${blake2bft_js%,}]"
+
+blake2bssl_js=$(printf '%s,' "${blake2b_ssl_vals[@]}")
+blake2bssl_js="[${blake2bssl_js%,}]"
+
 whirlpoolft_js=$(printf '%s,' "${whirlpool_ft_vals[@]}")
 whirlpoolft_js="[${whirlpoolft_js%,}]"
 
@@ -195,7 +225,7 @@ canvas{background:#fff;border-radius:8px;display:block;margin:20px auto}
 </style>
 </head>
 <body>
-<h1 style="text-align:center">ft_ssl vs OpenSSL/rhash — MD5, SHA256 & Whirlpool</h1>
+<h1 style="text-align:center">ft_ssl vs OpenSSL/rhash — MD5, SHA256, Blake2b & Whirlpool</h1>
 <div class="legend">
   <div><span class="box" style="background:#4CAF50"></span><span class="small">ft_ssl</span></div>
   <div><span class="box" style="background:#F44336"></span><span class="small">OpenSSL/rhash</span></div>
@@ -203,6 +233,7 @@ canvas{background:#fff;border-radius:8px;display:block;margin:20px auto}
 
 <canvas id="md5" width="900" height="400"></canvas>
 <canvas id="sha" width="900" height="400"></canvas>
+<canvas id="blake2b" width="900" height="400"></canvas>
 <canvas id="whirlpool" width="900" height="400"></canvas>
 
 <script>
@@ -211,6 +242,8 @@ const md5_ft = $md5ft_js;
 const md5_ssl = $md5ssl_js;
 const sha_ft = $shaft_js;
 const sha_ssl = $shassl_js;
+const blake2b_ft = $blake2bft_js;
+const blake2b_ssl = $blake2bssl_js;
 const whirlpool_ft = $whirlpoolft_js;
 const whirlpool_rhash = $whirlpoolrhash_js;
 
@@ -241,6 +274,7 @@ function draw(id, title, a1, a2, label1 = 'ft_ssl', label2 = 'OpenSSL') {
 
 draw('md5', 'MD5 — average (warmup ignored)', md5_ft, md5_ssl);
 draw('sha', 'SHA256 — average (warmup ignored)', sha_ft, sha_ssl);
+draw('blake2b', 'Blake2b — average (warmup ignored)', blake2b_ft, blake2b_ssl);
 draw('whirlpool', 'Whirlpool — average (warmup ignored)', whirlpool_ft, whirlpool_rhash, 'ft_ssl', 'rhash');
 </script>
 </body>

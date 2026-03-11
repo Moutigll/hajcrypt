@@ -66,4 +66,11 @@ int generateBase64Header(int fd);
  */
 int generateDesHeader(int fd);
 
+/**
+ * @brief Generate the Blake2b constants header file with IV and sigma permutations.
+ * @param fd - file descriptor to write the generated header content to
+ * @return 0 on success, 1 on failure (e.g. write error)
+ */
+int generateBlake2bHeader(int fd);
+
 #endif /* HAJCRYPT_CONSTS_H */

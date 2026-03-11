@@ -1,4 +1,5 @@
 #include "../../hajlib/include/hchar.h"
+#include "../../hajlib/include/hstring.h"
 
 #include "../../includes/cipher/cipher.h"
 #include "../../includes/cipher/base64.h"
@@ -114,6 +115,44 @@ void base64Final(void *vctx, uint8_t *out, size_t *outLen)
 		
 		*outLen = j;
 	}
+}
+
+/* ----- one-shot Base64 encoding/decoding ----- */
+
+size_t base64Encode(const uint8_t *input, size_t inputLen, char *output, size_t outputSize)
+{
+	if (outputSize < ((inputLen + 2) / 3) * 4 + 1)
+		return (0); /* Not enough space for output */
+
+	t_base64Ctx ctx;
+	base64Init(&ctx, NULL, 0, NULL, CIPHER_ENCRYPT);
+	
+	size_t outLen1 = 0;
+	base64Update(&ctx, input, inputLen, (uint8_t*)output, &outLen1);
+	
+	size_t outLen2 = 0;
+	base64Final(&ctx, (uint8_t*)(output + outLen1), &outLen2);
+	
+	size_t totalLen = outLen1 + outLen2;
+	if (totalLen < outputSize)
+		output[totalLen] = '\0';
+	else if (outputSize > 0)
+		output[outputSize - 1] = '\0';
+	return (totalLen);
+}
+
+size_t base64Decode(const char *input, uint8_t *output)
+{
+	t_base64Ctx ctx;
+	base64Init(&ctx, NULL, 0, NULL, CIPHER_DECRYPT);
+	
+	size_t outLen1 = 0;
+	base64Update(&ctx, (const uint8_t*)input, ft_strlen(input), output, &outLen1);
+	
+	size_t outLen2 = 0;
+	base64Final(&ctx, output + outLen1, &outLen2);
+	
+	return (outLen1 + outLen2);
 }
 
 void base64Free(void *vctx)

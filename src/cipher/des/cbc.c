@@ -93,7 +93,7 @@ void desCbcFinal(void *vctx, uint8_t *out, size_t *outLen)
 	if (ctx->dir == CIPHER_ENCRYPT) {
 		uint8_t block[8];
 		ft_memcpy(block, ctx->buffer, ctx->bufferLen);
-		desPad(block, ctx->bufferLen, 8);
+		pkcs7Pad(block, ctx->bufferLen, 8);
 
 		blockVal = 0;
 		for (i = 0; i < 8; i++)
@@ -122,7 +122,7 @@ void desCbcFinal(void *vctx, uint8_t *out, size_t *outLen)
 		for (i = 0; i < 8; i++)
 			block[i] = (blockVal >> (56 - i * 8)) & 0xFF;
 
-		if (desUnpad(block, &unpaddedLen, 8) != 0) {
+		if (pkcs7Unpad(block, &unpaddedLen, 8) != 0) {
 			*outLen = 0;
 			return;
 		}
@@ -154,8 +154,8 @@ const t_cipher g_desCbcCipher = {
 	.final = desCbcFinal,
 	.free = desCbcFree,
 
-	.pad = desPad,
-	.unpad = desUnpad,
+	.pad = pkcs7Pad,
+	.unpad = pkcs7Unpad,
 
 	.supportsWrap = 0
 };
@@ -175,8 +175,8 @@ const t_cipher g_desCipher = {
 	.final = desCbcFinal,
 	.free = desCbcFree,
 
-	.pad = desPad,
-	.unpad = desUnpad,
+	.pad = pkcs7Pad,
+	.unpad = pkcs7Unpad,
 
 	.supportsWrap = 0
 };

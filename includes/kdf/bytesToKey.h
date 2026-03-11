@@ -1,7 +1,7 @@
 #ifndef HAJCRYPT_PBKDF_BYTESTOKEY_H
 #define HAJCRYPT_PBKDF_BYTESTOKEY_H
 
-#include "pbkdf.h"
+#include "kdf.h"
 
 #define PBKDF_BTK_KEY_SIZE_8	8
 #define PBKDF_BTK_KEY_SIZE_24	24

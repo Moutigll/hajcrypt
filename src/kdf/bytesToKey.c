@@ -4,8 +4,7 @@
 #include "../../includes/hash/md5.h"
 #include "../../includes/utils/utils.h"
 
-#include "../../includes/pbkdf/pbkdf.h"
-#include "../../includes/pbkdf/bytesToKey.h"
+#include "../../includes/kdf/bytesToKey.h"
 
 static const uint8_t	*getSaltOrDefault(const uint8_t *salt, uint8_t *defaultSalt, size_t saltSize)
 {
@@ -70,7 +69,7 @@ int	pbkdfBytesToKeyExtended(const char		*password,
 
 	saltPtr = getSaltOrDefault(salt, defaultSalt, PBKDF_BTK_SALT_SIZE);
 	
-	buffer = ft_malloc(totalLen);
+	buffer = malloc(totalLen);
 	if (!buffer)
 		return (-1);
 
@@ -100,7 +99,7 @@ int	pbkdfBytesToKeyExtended(const char		*password,
 	ft_memcpy(key, buffer, keyLen);
 	ft_memcpy(iv, buffer + keyLen, PBKDF_BTK_IV_SIZE_8);
 	
-	ft_free(buffer);
+	free(buffer);
 	return (0);
 }
 

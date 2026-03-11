@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "../../hajlib/include/hmemory.h"
 
 /**
  * @brief Performs a circular left rotation (ROL) on a 32-bit integer.
@@ -37,6 +38,61 @@ static inline uint32_t rotateLeft(uint32_t x, uint32_t n)
 static inline uint32_t rotateRight(uint32_t x, uint32_t n)
 {
 	return (x >> n) | (x << (32 - n));
+}
+
+/**
+ * @brief Performs a circular right rotation (ROR) on a 64-bit integer.
+ *
+ * This function shifts the bits of x to the right by n positions.
+ * Bits that underflow on the right are wrapped around to the left.
+ * 
+ * @param x The 64-bit integer to rotate.
+ * @param n The number of bits to rotate.
+ * @return The rotated 64-bit integer.
+ */
+static inline uint64_t rotr64(uint64_t x, uint64_t n)
+{
+	return (x >> n) | (x << (64 - n));
+}
+
+/* Store a 32-bit integer in little-endian format */
+static inline void store32(void *dst, uint32_t w) {
+#if defined(NATIVE_LITTLE_ENDIAN)
+	ft_memcpy(dst, &w, sizeof w);
+#else
+	uint8_t *p = (uint8_t *)dst;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+#endif
+}
+
+/* Store a 64-bit integer in little-endian format */
+static inline void store64(void *dst, uint64_t w) {
+#if defined(NATIVE_LITTLE_ENDIAN)
+	ft_memcpy(dst, &w, sizeof w);
+#else
+	uint8_t *p = (uint8_t *)dst;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+	w >>= 8;
+	*p++ = (uint8_t)w;
+#endif
 }
 
 #endif /* HAJCRYPT_BITOPTS_H */

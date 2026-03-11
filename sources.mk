@@ -7,7 +7,8 @@ CONST_HEADERS = \
 	$(CONST_HDR_DIR)/sha256.h \
 	$(CONST_HDR_DIR)/whirlpool.h \
 	$(CONST_HDR_DIR)/base64.h \
-	$(CONST_HDR_DIR)/des.h
+	$(CONST_HDR_DIR)/des.h \
+	$(CONST_HDR_DIR)/blake2b.h
 
 CONST_SRC = \
 	$(CONST_DIR)/main.const.c \
@@ -15,7 +16,8 @@ CONST_SRC = \
 	$(CONST_DIR)/sha256.const.c \
 	$(CONST_DIR)/whirlpool.const.c \
 	$(CONST_DIR)/base64.const.c \
-	$(CONST_DIR)/des.const.c
+	$(CONST_DIR)/des.const.c \
+	$(CONST_DIR)/blake2b.const.c
 
 LIB_SRC = \
 	$(SRC_DIR)/hash/common/padding.c \
@@ -30,11 +32,18 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/whirlpool/transform.opt.c \
 	$(SRC_DIR)/hash/hmac.c \
 	$(SRC_DIR)/cipher/base64.c \
-	$(SRC_DIR)/pbkdf/pbkdf.c \
-	$(SRC_DIR)/pbkdf/bytesToKey.c \
+	$(SRC_DIR)/kdf/kdf.c \
+	$(SRC_DIR)/kdf/bytesToKey.c \
 	$(SRC_DIR)/cipher/des/transform.c \
 	$(SRC_DIR)/cipher/des/ecb.c \
-	$(SRC_DIR)/cipher/des/cbc.c
+	$(SRC_DIR)/cipher/des/cbc.c \
+	$(SRC_DIR)/cipher/utils.c \
+	$(SRC_DIR)/cipher/blowfish/transform.c \
+	$(SRC_DIR)/kdf/pbkdf2.c \
+	$(SRC_DIR)/kdf/bcrypt.c \
+	$(SRC_DIR)/hash/blake2b/blake2b.c \
+	$(SRC_DIR)/hash/blake2b/transform.c \
+	$(SRC_DIR)/kdf/argon2.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s

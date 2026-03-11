@@ -5,7 +5,7 @@
 #include "../../hajlib/include/hmemory.h"
 
 #include "../../includes/cli/parser.h"
-#include "../../includes/pbkdf/pbkdf.h"
+#include "../../includes/kdf/kdf.h"
 
 #define WRAP_LIMIT 64
 

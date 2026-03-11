@@ -156,6 +156,28 @@ typedef struct s_cipher
 	int		supportsWrap;
 }	t_cipher;
 
+/**
+ * @brief Applies PKCS#7 padding to a block.
+ * 
+ * Fills remaining bytes in block with the padding length.
+ * 
+ * @param block Data block to pad
+ * @param len Current data length in block
+ * @param blockSize Total block size (always 8 for DES)
+ */
+void	pkcs7Pad(uint8_t *block, size_t len, size_t blockSize);
 
+/**
+ * @brief Verifies and removes PKCS#7 padding from a block.
+ * 
+ * Checks that all padding bytes have the correct value and returns
+ * the original data length.
+ * 
+ * @param block Padded data block
+ * @param len Pointer to block size, updated to original data length
+ * @param blockSize Total block size (always 8 for DES)
+ * @return 0 on success, -1 on invalid padding
+ */
+int		pkcs7Unpad(uint8_t *block, size_t *len, size_t blockSize);
 
 #endif	/* HAJCRYPT_CIPHER_H */
