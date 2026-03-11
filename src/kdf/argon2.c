@@ -6,8 +6,52 @@
 #include "../../includes/hash/blake2b.h"
 #include "../../hajlib/include/hmemory.h"
 #include "../../includes/utils/bitopts.h"
+#include "../../includes/utils/utils.h"
 
+/**
+ * @brief Secure memory wipe that won't be optimized away by compiler
+ * 
+ * This function uses volatile pointer to prevent compiler optimizations
+ * that might remove the memory clearing operation.
+ * 
+ * @param ptr Pointer to memory to wipe
+ * @param len Number of bytes to wipe
+ */
+static void secureZeroMemory(void *ptr, size_t len)
+{
+	if (ptr == NULL || len == 0)
+		return;
+	
+	/* Utiliser explicit_bzero si disponible (plus fiable) */
+#ifdef __linux__
+	explicit_bzero(ptr, len);
+#else
+	volatile uint8_t *p = (volatile uint8_t *)ptr;
+	while (len--) {
+		*p++ = 0;
+	}
+	/* Barrière mémoire */
+	__asm__ volatile("" : : "r"(ptr) : "memory");
+#endif
+}
 
+/**
+ * @brief Secure free that wipes memory before freeing
+ * 
+ * @param ptr Pointer to memory to wipe and free
+ * @param len Number of bytes that were allocated
+ */
+static void secureFree(void *ptr, size_t len)
+{
+	if (ptr == NULL)
+		return;
+	
+	/* Wipe the memory */
+	secureZeroMemory(ptr, len);
+	
+	/* Free the memory */
+	free(ptr);
+}
 
 static void xorBlock(t_argon2Block *dst, const t_argon2Block *src)
 {
@@ -219,6 +263,116 @@ static void fillMemoryBlocks(t_argon2Ctx *ctx)
 	}
 }
 
+#ifdef ARGON2_THREADED
+
+#include <pthread.h>
+
+static void* fillSegmentThread(void *arg) {
+	t_argon2ThreadData *data = (t_argon2ThreadData*)arg;
+	t_argon2Ctx *ctx = data->ctx;
+	
+	/* Thread-local sensitive data */
+	t_argon2Block addressBlock = {0};
+	t_argon2Block inputBlock = {0};
+	t_argon2Block zeroBlock = {0};
+	
+	for (uint32_t lane = data->startLane; lane < data->endLane; ++lane) {
+		t_argon2Position pos = {data->pass, lane, (uint8_t)data->slice, 0};
+		fillSegment(ctx, pos);
+	}
+	
+	/* Clean thread-local data if secure flag is set */
+	if (ctx->flags & ARGON2_FLAG_CLEAR_MEMORY) {
+		secureZeroMemory(&addressBlock, sizeof(addressBlock));
+		secureZeroMemory(&inputBlock, sizeof(inputBlock));
+		secureZeroMemory(&zeroBlock, sizeof(zeroBlock));
+	}
+	
+	return (NULL);
+}
+
+static void fillMemoryBlocksThreaded(t_argon2Ctx *ctx)
+{
+	pthread_t			*threads = NULL;
+	t_argon2ThreadData	*threadData = NULL;
+	uint32_t			numThreads;
+	uint32_t			lanesPerThread;
+	
+	/* Adapt number of threads based on the workload and memory size */
+	numThreads = ctx->parallelism;
+	if (numThreads > ARGON2_MAX_THREADS)
+		numThreads = ARGON2_MAX_THREADS;
+	
+	/* Pour les petites charges, réduire le nombre de threads */
+	if (ctx->iterations * ARGON2_SYNC_POINTS * ctx->parallelism < 100) {
+		numThreads = (numThreads > 2) ? 2 : numThreads;
+	}
+	
+	lanesPerThread = ctx->parallelism / numThreads;
+
+	if (lanesPerThread < 2 && numThreads > 2) {
+		numThreads = ctx->parallelism / 2;
+		if (numThreads < 1) numThreads = 1;
+		lanesPerThread = ctx->parallelism / numThreads;
+	}
+
+	threads = malloc(numThreads * sizeof(pthread_t));
+	threadData = malloc(numThreads * sizeof(t_argon2ThreadData));
+	
+	if (!threads || !threadData) {
+		free(threads);
+		free(threadData);
+		fillMemoryBlocks(ctx);
+		return;
+	}
+
+	pthread_attr_t	attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	for (uint32_t pass = 0; pass < ctx->iterations; ++pass) {
+		for (uint32_t slice = 0; slice < ARGON2_SYNC_POINTS; ++slice) {
+			uint32_t lane = 0;
+			int threadsCreated = 0;
+			
+			for (uint32_t t = 0; t < numThreads; ++t) {
+				if (lane >= ctx->parallelism)
+					break;
+					
+				threadData[t].ctx = ctx;
+				threadData[t].startLane = lane;
+				threadData[t].endLane = lane + lanesPerThread;
+				threadData[t].pass = pass;
+				threadData[t].slice = slice;
+				
+				if (t == numThreads - 1 || 
+					threadData[t].endLane > ctx->parallelism) {
+					threadData[t].endLane = ctx->parallelism;
+				}
+				
+				if (pthread_create(&threads[t], &attr, 
+						fillSegmentThread, &threadData[t]) == 0) {
+					threadsCreated++;
+				} else {
+					break;
+				}
+				
+				lane = threadData[t].endLane;
+				if (lane >= ctx->parallelism)
+					break;
+			}
+			for (int t = 0; t < threadsCreated; ++t) {
+				pthread_join(threads[t], NULL);
+			}
+		}
+	}
+	
+	pthread_attr_destroy(&attr);
+	free(threads);
+	free(threadData);
+}
+#endif
+
 /**
  * @brief Initializes the first two blocks of each lane using the initial hash (H0) and fills the memory blocks.
  *
@@ -286,6 +440,100 @@ static void fillFirstBlocks(uint8_t *seed, const t_argon2Ctx *ctx)
 
 /* ---------- Public API ---------- */
 
+int argon2SetPassword(t_argon2Ctx *ctx, const uint8_t *password, size_t len)
+{
+	if (!ctx || !password || len == 0 || len > ARGON2_MAX_PWD_LENGTH)
+		return (-1);
+
+	if (ctx->flags & ARGON2_FLAG_CLEAR_MEMORY) {
+		uint8_t *copy = (uint8_t*)malloc(len);
+		if (!copy)
+			return (-1);
+		
+		ft_memcpy(copy, password, len);
+
+		if (ctx->password) {
+			secureFree((void*)ctx->password, ctx->passwordLen);
+		}
+		
+		ctx->password = copy;
+		ctx->passwordLen = (uint32_t)len;
+	} 
+	else {
+		ctx->password = password;
+		ctx->passwordLen = (uint32_t)len;
+	}
+	
+	return (0);
+}
+
+int argon2SetSalt(t_argon2Ctx *ctx, const uint8_t *salt, size_t len)
+{
+	if (!ctx || !salt || len == 0 || len > ARGON2_MAX_SALT_LEN)
+		return (-1);
+	
+	if (ctx->flags & ARGON2_FLAG_CLEAR_MEMORY) {
+		uint8_t *copy = (uint8_t*)malloc(len);
+		if (!copy)
+			return (-1);
+		
+		ft_memcpy(copy, salt, len);
+		
+		if (ctx->salt)
+			secureFree((void*)ctx->salt, ctx->saltLen);
+		
+		ctx->salt = copy;
+		ctx->saltLen = (uint32_t)len;
+	}
+	else {
+		ctx->salt = salt;
+		ctx->saltLen = (uint32_t)len;
+	}
+	
+	return (0);
+}
+
+void argon2Free(t_argon2Ctx *ctx)
+{
+	if (!ctx)
+		return;
+	
+	/* Wipe and free password if present */
+	if (ctx->password) {
+		if (ctx->flags & ARGON2_FLAG_CLEAR_MEMORY)
+			secureFree((void*)ctx->password, ctx->passwordLen);
+		ctx->password = NULL;
+	}
+	
+	/* Wipe and free salt if present */
+	if (ctx->salt) {
+		if (ctx->flags & ARGON2_FLAG_CLEAR_MEMORY)
+			secureFree((void*)ctx->salt, ctx->saltLen);
+		ctx->salt = NULL;
+	}
+	
+	/* Wipe and free secret if present */
+	if (ctx->secret) {
+		if (ctx->flags & ARGON2_FLAG_CLEAR_MEMORY)
+			secureFree((void*)ctx->secret, ctx->secretLen);
+		ctx->secret = NULL;
+	}
+	
+	/* Wipe and free associated data if present */
+	if (ctx->ad) {
+		if (ctx->flags & ARGON2_FLAG_CLEAR_MEMORY)
+			secureFree((void*)ctx->ad, ctx->adLen);
+		ctx->ad = NULL;
+	}
+	
+	/* Zero out the context structure itself */
+	if (ctx->flags & ARGON2_FLAG_CLEAR_MEMORY)
+		secureZeroMemory(ctx, sizeof(t_argon2Ctx));
+	else
+		ft_bzero(ctx, sizeof(t_argon2Ctx));
+}
+
+
 void argon2InitDefault(t_argon2Ctx *ctx) {
 	ft_bzero(ctx, sizeof(t_argon2Ctx));
 	ctx->password = NULL;
@@ -302,6 +550,10 @@ void argon2InitDefault(t_argon2Ctx *ctx) {
 	ctx->type = ARGON2_DEFAULT_TYPE;
 	ctx->version = ARGON2_VERSION;
 	ctx->outputLen = 32;
+	ctx->flags = ARGON2_FLAG_CLEAR_MEMORY;
+#if defined(ARGON2_THREADED)
+	ctx->flags |= ARGON2_FLAG_THREADING;
+#endif
 }
 
 void argon2Init(t_argon2Ctx		*ctx,
@@ -313,10 +565,13 @@ void argon2Init(t_argon2Ctx		*ctx,
 				t_argon2Type type)
 {
 	ft_bzero(ctx, sizeof(t_argon2Ctx));
-	ctx->password = password;
-	ctx->passwordLen = (uint32_t)passLen;
-	ctx->salt = salt;
-	ctx->saltLen = (uint32_t)saltLen;
+
+	if (password && passLen > 0)
+		argon2SetPassword(ctx, password, passLen);
+	
+	if (salt && saltLen > 0)
+		argon2SetSalt(ctx, salt, saltLen);
+
 	ctx->memory = memory;
 	ctx->iterations = iterations;
 	ctx->parallelism = parallelism;
@@ -326,8 +581,11 @@ void argon2Init(t_argon2Ctx		*ctx,
 	ctx->secretLen = 0;
 	ctx->ad = NULL;
 	ctx->adLen = 0;
-	ctx->flags = 0;
+	ctx->flags = ARGON2_FLAG_CLEAR_MEMORY;
 	ctx->outputLen = 32;
+#if defined(ARGON2_THREADED)
+	ctx->flags |= ARGON2_FLAG_THREADING;
+#endif
 }
 
 int argon2Hash(const t_argon2Ctx *ctx, uint8_t *output, size_t outputLen)
@@ -349,14 +607,29 @@ int argon2Hash(const t_argon2Ctx *ctx, uint8_t *output, size_t outputLen)
 	ft_memcpy(seed, h0, ARGON2_PREHASH_DIGEST_LENGTH);
 	ft_memcpy(seed + ARGON2_PREHASH_DIGEST_LENGTH, h0, 8);
 
-	local.memoryArray = (t_argon2Block*)calloc(totalBlocks, sizeof(t_argon2Block));
+	local.memoryArraySize = totalBlocks * sizeof(t_argon2Block);
+	local.memoryArray = (t_argon2Block*) malloc(local.memoryArraySize);
 	if (!local.memoryArray) return (-1);
 
 	local.blocksPerLane = blocksPerLane;
 	local.segmentLength = blocksPerLane / ARGON2_SYNC_POINTS;
 
 	fillFirstBlocks(seed, &local);
+#ifdef ARGON2_THREADED
+	int use_threading = 0;
+	if (local.flags & ARGON2_FLAG_THREADING) {
+		if (local.memory >= ARGON2_MIN_MEMORY_FOR_THREADING && 
+				local.parallelism > 1 &&
+				local.iterations >= 2)
+			use_threading = 1;
+	}
+	if (use_threading)
+		fillMemoryBlocksThreaded(&local);
+	else
+		fillMemoryBlocks(&local);
+#else
 	fillMemoryBlocks(&local);
+#endif
 
 	/* Combine last blocks of each lane */
 	t_argon2Block finalBlock;
@@ -372,20 +645,44 @@ int argon2Hash(const t_argon2Ctx *ctx, uint8_t *output, size_t outputLen)
 		store64((uint8_t *)blockBytes + i * sizeof(finalBlock.v[i]), finalBlock.v[i]);
 	blake2bLong(output, outputLen, blockBytes, ARGON2_BLOCK_SIZE);
 
-	free(local.memoryArray);
+	if (local.flags & ARGON2_FLAG_CLEAR_MEMORY)
+	{
+		/* Securely wipe all sensitive data */
+		if (local.memoryArray) {
+			secureZeroMemory(local.memoryArray, local.memoryArraySize);
+		}
+		
+		/* Wipe temporary buffers */
+		secureZeroMemory(h0, sizeof(h0));
+		secureZeroMemory(seed, sizeof(seed));
+		secureZeroMemory(blockBytes, sizeof(blockBytes));
+		
+		/* Wipe the final block structure */
+		secureZeroMemory(&finalBlock, sizeof(finalBlock));
+	}
+
+	secureFree(local.memoryArray, local.memoryArraySize);
 	return (0);
 }
 
 int argon2id(const uint8_t	*password,	size_t	passLen,
 			 uint8_t		*output,	size_t	outputLen)
 {
-	t_argon2Ctx ctx;
+	t_argon2Ctx	ctx;
 	argon2InitDefault(&ctx);
-	ctx.password = password;
-	ctx.passwordLen = (uint32_t)passLen;
+
+	if (password && passLen > 0)
+		argon2SetPassword(&ctx, password, passLen);
+
+
+	uint8_t	salt[16];
+	hajSecRandBytes(salt, sizeof(salt));
+	argon2SetSalt(&ctx, salt, 16);
+	
 	ctx.outputLen = (uint32_t)outputLen;
-	static const uint8_t dummySalt[16] = {0};
-	ctx.salt = dummySalt;
-	ctx.saltLen = 16;
-	return argon2Hash(&ctx, output, outputLen);
+	
+	int ret = argon2Hash(&ctx, output, outputLen);
+	argon2Free(&ctx);
+	secureZeroMemory(salt, sizeof(salt));
+	return (ret);
 }

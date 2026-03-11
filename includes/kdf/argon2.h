@@ -37,6 +37,16 @@
 #define ARGON2_MAX_SECRET		  0xFFFFFFFF
 #define ARGON2_MAX_AD			  0xFFFFFFFF
 
+#define ARGON2_MAX_PWD_LENGTH	0xFFFFFFFF
+
+#define ARGON2_MAX_THREADS 16
+#define ARGON2_MIN_MEMORY_FOR_THREADING 1024
+#define ARGON2_THREADED
+
+#define ARGON2_FLAG_THREADING 0x01
+#define ARGON2_FLAG_CLEAR_MEMORY 0x02
+
+
 typedef enum {
 	ARGON2_D = 0,
 	ARGON2_I = 1,
@@ -70,6 +80,8 @@ typedef struct {
 	t_argon2Block	*memoryArray;	/* array of memory blocks */
 	uint32_t		segmentLength;	/* blocks per segment */
 	uint32_t		blocksPerLane;	/* blocks per lane */
+	/* For secure memory management */
+    size_t          memoryArraySize;  /* size of memoryArray in bytes */
 } t_argon2Ctx;
 
 /* Position within a segment (used internally) */
@@ -80,6 +92,14 @@ typedef struct s_argon2Position
 	uint8_t  slice;
 	uint32_t index;
 } t_argon2Position;
+
+typedef struct s_argon2ThreadData {
+	t_argon2Ctx	*ctx;
+	uint32_t	startLane;
+	uint32_t	endLane;
+	uint32_t	pass;
+	uint32_t	slice;
+} t_argon2ThreadData;
 
 /**
  * @brief Initializes an Argon2 context with default recommended parameters.
@@ -110,7 +130,25 @@ void argon2Init(t_argon2Ctx		*ctx,
 				uint32_t		parallelism,
 				t_argon2Type	type);
 
-/*
+/**
+ * @brief Sets the password for the Argon2 context.
+ * @param ctx The Argon2 context.
+ * @param password The input password.
+ * @param len The length of the password.
+ * @return 0 on success, non-zero on failure.
+ */
+int	argon2setPassword(t_argon2Ctx *ctx, const uint8_t *password, size_t len);
+
+/**
+ * @brief Sets the salt for the Argon2 context.
+ * @param ctx The Argon2 context.
+ * @param salt The input salt.
+ * @param len The length of the salt.
+ * @return 0 on success, non-zero on failure.
+ */
+int	argon2setSalt(t_argon2Ctx *ctx, const uint8_t *salt, size_t len);
+
+/**
  * @brief Hashes a password using Argon2.
  * @param ctx The Argon2 context.
  * @param output The output buffer for the hash.
@@ -130,6 +168,12 @@ int argon2Hash(const t_argon2Ctx *ctx, uint8_t *output, size_t outputLen);
 int argon2id(const uint8_t	*password,	size_t	passLen,
 			 uint8_t		*output,	size_t	outputLen);
 
+/**
+ * @brief Securely frees all memory associated with the Argon2 context.
+ * This function securely wipes and frees all memory allocated for the password, salt, secret, associated data, and the memory array. It also resets all context fields to zero.
+ * @param ctx The Argon2 context to free.
+ */
+void argon2Free(t_argon2Ctx *ctx);
 
 
 /* BLAKE2 round function (used internally):
