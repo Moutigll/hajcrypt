@@ -1,6 +1,8 @@
-#include "../../../includes/hash/blake2b.h"
-#include "../../../includes/consts/blake2b.h"
+#include "../../../includes/utils/bitopts.h"
 #include "../../../hajlib/include/hmemory.h"
+
+#include "../../../includes/consts/blake2b.h"
+#include "../../../includes/hash/blake2b.h"
 
 void blake2bInit(void *ctx)
 {
@@ -166,9 +168,11 @@ void blake2bMac(const uint8_t	*key,		size_t	keyLen,
 
 void blake2bLong(uint8_t *out, size_t outLen, const uint8_t *in, size_t inLen)
 {
-	t_blake2bCtx b2;
-	uint8_t buffer[64];
-	uint32_t outLenLe = (uint32_t)outLen;
+	t_blake2bCtx	b2;
+	uint8_t			buffer[64];
+	uint32_t		outLenLe;
+
+	store32(&outLenLe, (uint32_t)outLen);
 
 	if (outLen <= 64) {
 		blake2bInit(&b2);

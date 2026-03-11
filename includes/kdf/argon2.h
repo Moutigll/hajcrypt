@@ -215,7 +215,7 @@ int argon2Decode(const char *encoded,
  * @param encoded The encoded Argon2 hash
  * @param password The password to verify
  * @param passLen The length of the password
- * @return 0 on success, -1 on failure
+ * @return 1 on match, 0 on mismatch, -1 on error
  */
 int argon2Verify(const char *encoded, const uint8_t *password, size_t passLen);
 

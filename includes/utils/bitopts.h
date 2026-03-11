@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "../../hajlib/include/hmemory.h"
 
 /**
  * @brief Performs a circular left rotation (ROL) on a 32-bit integer.
@@ -57,7 +58,7 @@ static inline uint64_t rotr64(uint64_t x, uint64_t n)
 /* Store a 32-bit integer in little-endian format */
 static inline void store32(void *dst, uint32_t w) {
 #if defined(NATIVE_LITTLE_ENDIAN)
-	memcpy(dst, &w, sizeof w);
+	ft_memcpy(dst, &w, sizeof w);
 #else
 	uint8_t *p = (uint8_t *)dst;
 	*p++ = (uint8_t)w;
@@ -73,7 +74,7 @@ static inline void store32(void *dst, uint32_t w) {
 /* Store a 64-bit integer in little-endian format */
 static inline void store64(void *dst, uint64_t w) {
 #if defined(NATIVE_LITTLE_ENDIAN)
-	memcpy(dst, &w, sizeof w);
+	ft_memcpy(dst, &w, sizeof w);
 #else
 	uint8_t *p = (uint8_t *)dst;
 	*p++ = (uint8_t)w;

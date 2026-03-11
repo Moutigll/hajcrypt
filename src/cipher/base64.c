@@ -121,6 +121,9 @@ void base64Final(void *vctx, uint8_t *out, size_t *outLen)
 
 size_t base64Encode(const uint8_t *input, size_t inputLen, char *output, size_t outputSize)
 {
+	if (outputSize < ((inputLen + 2) / 3) * 4 + 1)
+		return (0); /* Not enough space for output */
+
 	t_base64Ctx ctx;
 	base64Init(&ctx, NULL, 0, NULL, CIPHER_ENCRYPT);
 	

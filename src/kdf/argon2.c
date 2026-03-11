@@ -204,8 +204,8 @@ static void fillSegment(t_argon2Ctx *ctx, t_argon2Position pos)
 					   pos.slice < ARGON2_SYNC_POINTS / 2);
 
 	if (dataIndependent) {
-		ft_memset(zeroBlock.v, 0, sizeof(zeroBlock.v));
-		ft_memset(inputBlock.v, 0, sizeof(inputBlock.v));
+		ft_bzero(&zeroBlock, sizeof(zeroBlock));
+		ft_bzero(&inputBlock, sizeof(inputBlock));
 		inputBlock.v[0] = pos.pass;
 		inputBlock.v[1] = pos.lane;
 		inputBlock.v[2] = pos.slice;
@@ -612,7 +612,7 @@ void argon2Init(t_argon2Ctx		*ctx,
 	ctx->secretLen = 0;
 	ctx->ad = NULL;
 	ctx->adLen = 0;
-	ctx->flags = ARGON2_FLAG_CLEAR_MEMORY;
+	ctx->flags = 0;
 	ctx->outputLen = 32;
 #if defined(ARGON2_THREADED)
 	ctx->flags |= ARGON2_FLAG_THREADING;
@@ -633,11 +633,12 @@ int argon2Hash(const t_argon2Ctx *ctx, uint8_t *output, size_t outputLen)
 
 	uint32_t	totalBlocks = local.memory;		  /* memory in KiB = number of blocks */
 	uint32_t	lanes = local.parallelism;
-	uint32_t	blocksPerLane = totalBlocks / lanes;
+	uint32_t	blocksPerLane;
 
 	if (outputLen != local.outputLen) return (-1);
-	if (lanes == 0 || blocksPerLane < 2) return (-1);
-	if (local.iterations == 0) return (-1);
+	if (lanes == 0) return (-1);
+	blocksPerLane = totalBlocks / lanes;
+	if (local.iterations == 0 || blocksPerLane < 2) return (-1);
 
 	initialHash(&local, h0);
 

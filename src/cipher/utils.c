@@ -10,6 +10,9 @@ void pkcs7Pad(uint8_t *block, size_t len, size_t blockSize)
 
 int pkcs7Unpad(uint8_t *block, size_t *len, size_t blockSize)
 {
+	if (!block || !len)
+		return (-1);
+
 	uint8_t pad = block[blockSize - 1];
 	
 	/* Check that the padding value is valid */
