@@ -73,4 +73,11 @@ int generateDesHeader(int fd);
  */
 int generateBlake2bHeader(int fd);
 
+/**
+ * @brief Generate the AES constants header file with S-box, inverse S-box, Rcon, and T-tables.
+ * @param fd - file descriptor to write the generated header content to
+ * @return 0 on success, 1 on failure (e.g. write error)
+ */
+int generateAesHeader(int fd);
+
 #endif /* HAJCRYPT_CONSTS_H */
