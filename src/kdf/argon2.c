@@ -2,11 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../includes/kdf/argon2.h"
-#include "../../includes/hash/blake2b.h"
+#include "../../hajlib/include/hmath.h"
 #include "../../hajlib/include/hmemory.h"
+#include "../../hajlib/include/hprintf.h"
+#include "../../hajlib/include/hstring.h"
 #include "../../includes/utils/bitopts.h"
 #include "../../includes/utils/utils.h"
+
+#include "../../includes/hash/blake2b.h"
+#include "../../includes/cipher/base64.h"
+
+#include "../../includes/kdf/argon2.h"
 
 /**
  * @brief Secure memory wipe that won't be optimized away by compiler
@@ -53,12 +59,6 @@ static void secureFree(void *ptr, size_t len)
 	free(ptr);
 }
 
-static void xorBlock(t_argon2Block *dst, const t_argon2Block *src)
-{
-	for (int i = 0; i < ARGON2_QWORDS_PER_BLOCK; ++i)
-		dst->v[i] ^= src->v[i];
-}
-
 /**
  * @brief Fills a memory block using the previous block and a reference block.
  * @param prevBlock The previous block in the lane (or the last block of the previous segment)
@@ -71,40 +71,49 @@ static void fillBlock(const t_argon2Block	*prevBlock,
 					  t_argon2Block			*nextBlock,
 					  int					withXor)
 {
-	t_argon2Block	blockR, blockTmp;
+	t_argon2Block	blockR;
+	uint64_t		*blockR_v = blockR.v;
+	const uint64_t	*prev_v = prevBlock->v;
+	const uint64_t	*ref_v = refBlock->v;
+	uint64_t		*next_v = nextBlock->v;
 
-	ft_memcpy(blockR.v, refBlock->v, sizeof(uint64_t) * ARGON2_QWORDS_PER_BLOCK);
-	xorBlock(&blockR, prevBlock);
-	ft_memcpy(blockTmp.v, &blockR.v, sizeof(uint64_t) * ARGON2_QWORDS_PER_BLOCK);
-	if (withXor)
-		xorBlock(&blockTmp, nextBlock);
+	for (int i = 0; i < ARGON2_QWORDS_PER_BLOCK; ++i)
+		blockR_v[i] = ref_v[i] ^ prev_v[i];
+
+	uint64_t blockTmp[ARGON2_QWORDS_PER_BLOCK];
+	for (int i = 0; i < ARGON2_QWORDS_PER_BLOCK; ++i)
+		blockTmp[i] = blockR_v[i];
+	
+	if (withXor) {
+		for (int i = 0; i < ARGON2_QWORDS_PER_BLOCK; ++i)
+			blockTmp[i] ^= next_v[i];
+	}
 
 	/* Apply Blake2 on columns */
 	for (unsigned i = 0; i < 8; ++i) {
 		BLAKE2_ROUND_NOMSG(
-			blockR.v[16 * i], blockR.v[16 * i + 1], blockR.v[16 * i + 2],
-			blockR.v[16 * i + 3], blockR.v[16 * i + 4], blockR.v[16 * i + 5],
-			blockR.v[16 * i + 6], blockR.v[16 * i + 7], blockR.v[16 * i + 8],
-			blockR.v[16 * i + 9], blockR.v[16 * i + 10], blockR.v[16 * i + 11],
-			blockR.v[16 * i + 12], blockR.v[16 * i + 13], blockR.v[16 * i + 14],
-			blockR.v[16 * i + 15]);
+			blockR_v[16 * i], blockR_v[16 * i + 1], blockR_v[16 * i + 2],
+			blockR_v[16 * i + 3], blockR_v[16 * i + 4], blockR_v[16 * i + 5],
+			blockR_v[16 * i + 6], blockR_v[16 * i + 7], blockR_v[16 * i + 8],
+			blockR_v[16 * i + 9], blockR_v[16 * i + 10], blockR_v[16 * i + 11],
+			blockR_v[16 * i + 12], blockR_v[16 * i + 13], blockR_v[16 * i + 14],
+			blockR_v[16 * i + 15]);
 	}
 
 	/* Apply Blake2 on rows */
 	for (unsigned i = 0; i < 8; ++i) {
 		BLAKE2_ROUND_NOMSG(
-			blockR.v[2 * i], blockR.v[2 * i + 1], blockR.v[2 * i + 16],
-			blockR.v[2 * i + 17], blockR.v[2 * i + 32], blockR.v[2 * i + 33],
-			blockR.v[2 * i + 48], blockR.v[2 * i + 49], blockR.v[2 * i + 64],
-			blockR.v[2 * i + 65], blockR.v[2 * i + 80], blockR.v[2 * i + 81],
-			blockR.v[2 * i + 96], blockR.v[2 * i + 97], blockR.v[2 * i + 112],
-			blockR.v[2 * i + 113]);
+			blockR_v[2 * i], blockR_v[2 * i + 1], blockR_v[2 * i + 16],
+			blockR_v[2 * i + 17], blockR_v[2 * i + 32], blockR_v[2 * i + 33],
+			blockR_v[2 * i + 48], blockR_v[2 * i + 49], blockR_v[2 * i + 64],
+			blockR_v[2 * i + 65], blockR_v[2 * i + 80], blockR_v[2 * i + 81],
+			blockR_v[2 * i + 96], blockR_v[2 * i + 97], blockR_v[2 * i + 112],
+			blockR_v[2 * i + 113]);
 	}
 
-	ft_memcpy(nextBlock->v, blockTmp.v, sizeof(uint64_t) * ARGON2_QWORDS_PER_BLOCK);
-	xorBlock(nextBlock, &blockR);
+	for (int i = 0; i < ARGON2_QWORDS_PER_BLOCK; ++i)
+		next_v[i] = blockTmp[i] ^ blockR_v[i];
 }
-
 /**
  * @brief Generates the next addresses for data-independent addressing.
  *
@@ -438,6 +447,27 @@ static void fillFirstBlocks(uint8_t *seed, const t_argon2Ctx *ctx)
 	}
 }
 
+/**
+ * @brief Constant-time comparison of two memory buffers
+ * @param buf1 First buffer
+ * @param len1 Length of first buffer
+ * @param buf2 Second buffer
+ * @param len2 Length of second buffer
+ * @return 0 if buffers are equal, -1 otherwise
+ */
+static int argon2SecureCompare(const uint8_t *buf1, size_t len1,
+							   const uint8_t *buf2, size_t len2)
+{
+	if (len1 != len2)
+		return (-1);
+	
+	volatile uint8_t result = 0;
+	for (size_t i = 0; i < len1; ++i)
+		result |= buf1[i] ^ buf2[i];
+	
+	return (result != 0 ? -1 : 0);
+}
+
 /* ---------- Public API ---------- */
 
 int argon2SetPassword(t_argon2Ctx *ctx, const uint8_t *password, size_t len)
@@ -453,7 +483,10 @@ int argon2SetPassword(t_argon2Ctx *ctx, const uint8_t *password, size_t len)
 		ft_memcpy(copy, password, len);
 
 		if (ctx->password) {
-			secureFree((void*)ctx->password, ctx->passwordLen);
+			if (ctx->flags & ARGON2_FLAG_CLEAR_MEMORY)
+				secureFree((void*)ctx->password, ctx->passwordLen);
+			else
+				free((void*)ctx->password);
 		}
 		
 		ctx->password = copy;
@@ -479,8 +512,12 @@ int argon2SetSalt(t_argon2Ctx *ctx, const uint8_t *salt, size_t len)
 		
 		ft_memcpy(copy, salt, len);
 		
-		if (ctx->salt)
-			secureFree((void*)ctx->salt, ctx->saltLen);
+		if (ctx->salt) {
+			if (ctx->flags & ARGON2_FLAG_CLEAR_MEMORY)
+				secureFree((void*)ctx->salt, ctx->saltLen);
+			else
+				free((void*)ctx->salt);
+		}
 		
 		ctx->salt = copy;
 		ctx->saltLen = (uint32_t)len;
@@ -550,7 +587,7 @@ void argon2InitDefault(t_argon2Ctx *ctx) {
 	ctx->type = ARGON2_DEFAULT_TYPE;
 	ctx->version = ARGON2_VERSION;
 	ctx->outputLen = 32;
-	ctx->flags = ARGON2_FLAG_CLEAR_MEMORY;
+	ctx->flags = 0;
 #if defined(ARGON2_THREADED)
 	ctx->flags |= ARGON2_FLAG_THREADING;
 #endif
@@ -566,12 +603,6 @@ void argon2Init(t_argon2Ctx		*ctx,
 {
 	ft_bzero(ctx, sizeof(t_argon2Ctx));
 
-	if (password && passLen > 0)
-		argon2SetPassword(ctx, password, passLen);
-	
-	if (salt && saltLen > 0)
-		argon2SetSalt(ctx, salt, saltLen);
-
 	ctx->memory = memory;
 	ctx->iterations = iterations;
 	ctx->parallelism = parallelism;
@@ -586,6 +617,12 @@ void argon2Init(t_argon2Ctx		*ctx,
 #if defined(ARGON2_THREADED)
 	ctx->flags |= ARGON2_FLAG_THREADING;
 #endif
+
+	if (password && passLen > 0)
+		argon2SetPassword(ctx, password, passLen);
+	
+	if (salt && saltLen > 0)
+		argon2SetSalt(ctx, salt, saltLen);
 }
 
 int argon2Hash(const t_argon2Ctx *ctx, uint8_t *output, size_t outputLen)
@@ -685,4 +722,199 @@ int argon2id(const uint8_t	*password,	size_t	passLen,
 	argon2Free(&ctx);
 	secureZeroMemory(salt, sizeof(salt));
 	return (ret);
+}
+
+int argon2Encode(const t_argon2Ctx	*ctx,
+				 const uint8_t		*hash,
+				 size_t				hashLen,
+				 char				*output,
+				 size_t				outputSize)
+{
+	const char *type_str;
+	char salt_b64[256];
+	char hash_b64[256];
+	
+	if (!ctx || !hash || !output || outputSize == 0)
+		return (-1);
+	
+	/* Get type string */
+	switch (ctx->type) {
+		case ARGON2_D:  type_str = "argon2d"; break;
+		case ARGON2_I:  type_str = "argon2i"; break;
+		case ARGON2_ID: type_str = "argon2id"; break;
+		default: return (-1);
+	}
+	
+	/* Base64 encode salt */
+	if (ctx->salt && ctx->saltLen > 0)
+		base64Encode(ctx->salt, ctx->saltLen, salt_b64, sizeof(salt_b64));
+	else
+		salt_b64[0] = '\0';
+	
+	/* Base64 encode hash */
+	base64Encode(hash, hashLen, hash_b64, sizeof(hash_b64));
+	
+	/* Write encoded string */
+	if (ft_snprintf(output, outputSize, "$%s$v=%u$m=%u,t=%u,p=%u$%s$%s",
+				 type_str, ctx->version, ctx->memory, 
+				 ctx->iterations, ctx->parallelism,
+				 salt_b64, hash_b64) >= (int)outputSize) {
+		return (-1);
+	}
+	
+	return (0);
+}
+
+
+static int parseUint(const char **ptr, unsigned int *result)
+{
+	char	*endptr;
+	
+	if (!ptr || !*ptr || !result)
+		return (-1);
+	
+	*result = ft_strtoul(*ptr, &endptr, 10);
+	if (endptr == *ptr)  // Pas de chiffres trouvés
+		return (-1);
+	
+	*ptr = endptr;
+	return (0);
+}
+
+int argon2Decode(const char		*encoded,
+				 t_argon2Ctx	*ctx,
+				 uint8_t		*hash,
+				 size_t			*hashLen)
+{
+	char			type_str[16];
+	char			salt_b64[256];
+	char			hash_b64[256];
+	uint8_t			salt[64];
+	size_t			salt_len;
+	unsigned int	v, m, t, p;
+	const char		*ptr;
+	const char		*next;
+	t_argon2Type	type;
+	
+	if (!encoded || !ctx || !hash || !hashLen)
+		return (-1);
+
+	if (encoded[0] != '$')
+		return (-1);
+	ptr = encoded + 1;
+	
+	next = ft_strchr(ptr, '$');
+	if (!next) return (-1);
+	ft_strlcpy(type_str, ptr, next - ptr + 1);
+	ptr = next + 1;
+	
+	/* Convert type string */
+	if (ft_strcmp(type_str, "argon2d") == 0)
+		type = ARGON2_D;
+	else if (ft_strcmp(type_str, "argon2i") == 0)
+		type = ARGON2_I;
+	else if (ft_strcmp(type_str, "argon2id") == 0)
+		type = ARGON2_ID;
+	else
+		return (-1);
+	
+	/* Extract v= (version) */
+	if (ft_strncmp(ptr, "v=", 2) != 0) return (-1);
+	ptr += 2;
+	if (parseUint(&ptr, &v) < 0) return (-1);
+	if (*ptr != '$') return (-1);
+	ptr++;
+	
+	/* Extract m= (memory) */
+	if (ft_strncmp(ptr, "m=", 2) != 0) return (-1);
+	ptr += 2;
+	if (parseUint(&ptr, &m) < 0) return (-1);
+	if (*ptr != ',') return (-1);
+	ptr++;
+	
+	/* Extract t= (iterations) */
+	if (ft_strncmp(ptr, "t=", 2) != 0) return (-1);
+	ptr += 2;
+	if (parseUint(&ptr, &t) < 0) return (-1);
+	if (*ptr != ',') return (-1);
+	ptr++;
+	
+	/* Extract p= (parallelism) */
+	if (ft_strncmp(ptr, "p=", 2) != 0) return (-1);
+	ptr += 2;
+	if (parseUint(&ptr, &p) < 0) return (-1);
+	if (*ptr != '$') return (-1);
+	ptr++;
+	
+	/* Extract the salt */
+	next = ft_strchr(ptr, '$');
+	if (!next) return (-1);
+	ft_strlcpy(salt_b64, ptr, next - ptr + 1);
+	ptr = next + 1;
+	
+	/* Extract the hash (the rest) */
+	ft_strlcpy(hash_b64, ptr, sizeof(hash_b64));
+	
+	/* Decode salt */
+	salt_len = base64Decode(salt_b64, salt);
+	if (salt_len < 0)
+		return (-1);
+	
+	/* Decode hash */
+	*hashLen = base64Decode(hash_b64, hash);
+	if (*hashLen < 0)
+		return (-1);
+	
+	/* Initialize context with parsed parameters */
+	ft_bzero(ctx, sizeof(t_argon2Ctx));
+	ctx->memory = m;
+	ctx->iterations = t;
+	ctx->parallelism = p;
+	ctx->type = type;
+	ctx->version = v;
+	ctx->outputLen = 32;
+	ctx->flags = ARGON2_FLAG_CLEAR_MEMORY;
+
+	if (argon2SetSalt(ctx, salt, salt_len) != 0)
+		return (-1);
+	
+	return (0);
+}
+
+int argon2Verify(const char *encoded, const uint8_t *password, size_t passLen)
+{
+	t_argon2Ctx	ctx;
+	uint8_t		expected_hash[64];
+	uint8_t		computed_hash[64];
+	size_t		expected_len = sizeof(expected_hash);
+	int			ret;
+	
+	if (!encoded || !password || passLen == 0)
+		return (-1);
+	
+	if (argon2Decode(encoded, &ctx, expected_hash, &expected_len) != 0) {
+		return (-1);
+	}
+
+	if (argon2SetPassword(&ctx, password, passLen) != 0) {
+		argon2Free(&ctx);
+		return (-1);
+	}
+
+	if (argon2Hash(&ctx, computed_hash, expected_len) != 0) {
+		argon2Free(&ctx);
+		return (-1);
+	}
+
+	ret = argon2SecureCompare(computed_hash, expected_len,
+							  expected_hash, expected_len);
+	
+	argon2Free(&ctx);
+
+	if (ret == 0)
+		return (1);
+	else if (ret == -1)
+		return (0);
+	else
+		return (-1);
 }

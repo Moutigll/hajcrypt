@@ -137,7 +137,7 @@ void argon2Init(t_argon2Ctx		*ctx,
  * @param len The length of the password.
  * @return 0 on success, non-zero on failure.
  */
-int	argon2setPassword(t_argon2Ctx *ctx, const uint8_t *password, size_t len);
+int	argon2SetPassword(t_argon2Ctx *ctx, const uint8_t *password, size_t len);
 
 /**
  * @brief Sets the salt for the Argon2 context.
@@ -146,7 +146,7 @@ int	argon2setPassword(t_argon2Ctx *ctx, const uint8_t *password, size_t len);
  * @param len The length of the salt.
  * @return 0 on success, non-zero on failure.
  */
-int	argon2setSalt(t_argon2Ctx *ctx, const uint8_t *salt, size_t len);
+int	argon2SetSalt(t_argon2Ctx *ctx, const uint8_t *salt, size_t len);
 
 /**
  * @brief Hashes a password using Argon2.
@@ -174,6 +174,50 @@ int argon2id(const uint8_t	*password,	size_t	passLen,
  * @param ctx The Argon2 context to free.
  */
 void argon2Free(t_argon2Ctx *ctx);
+
+/**
+ * @brief Encode Argon2 context into standard string format
+ * 
+ * Format: $argon2<type>$v=<version>$m=<memory>,t=<iterations>,p=<parallelism>$<salt>$<hash>
+ * 
+ * @param ctx Argon2 context (must have been used for hashing)
+ * @param hash The computed hash bytes
+ * @param hashLen Length of hash
+ * @param output Output buffer for encoded string
+ * @param outputSize Size of output buffer
+ * @return 0 on success, -1 on error
+ */
+int argon2Encode(const t_argon2Ctx	*ctx,
+				 const uint8_t		*hash,
+				 size_t				hashLen,
+				 char				*output,
+				 size_t				outputSize);
+
+/**
+ * @brief Decode encoded string into Argon2 context and hash
+ * 
+ * @param encoded Encoded string
+ * @param ctx Output context (will be initialized with decoded parameters)
+ * @param hash Output buffer for decoded hash
+ * @param hashLen Input: max hash size, Output: actual hash length
+ * @return 0 on success, -1 on error
+ */
+int argon2Decode(const char *encoded,
+				 t_argon2Ctx *ctx,
+				 uint8_t *hash,
+				 size_t *hashLen);
+
+/**
+ * @brief Verify a password against an encoded Argon2 hash
+ * This function decodes the encoded Argon2 hash to extract the parameters and expected hash,
+ * then computes the hash of the provided password using those parameters and compares it to the expected hash.
+ *
+ * @param encoded The encoded Argon2 hash
+ * @param password The password to verify
+ * @param passLen The length of the password
+ * @return 0 on success, -1 on failure
+ */
+int argon2Verify(const char *encoded, const uint8_t *password, size_t passLen);
 
 
 /* BLAKE2 round function (used internally):
