@@ -2,7 +2,7 @@
 #include "../../hajlib/include/hstring.h"
 
 #include "../../includes/hash/md5.h"
-#include "../../includes/utils/utils.h"
+#include "../../includes/utils/random.h"
 
 #include "../../includes/kdf/bytesToKey.h"
 

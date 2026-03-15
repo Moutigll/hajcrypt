@@ -5,7 +5,7 @@
 #include "../../includes/cipher/base64.h"
 #include "../../includes/consts/base64.h"
 
-void base64Init(void				*vctx,
+int base64Init(void				*vctx,
 				const uint8_t		*key,
 				size_t				keyLen,
 				const uint8_t		*iv,
@@ -23,6 +23,7 @@ void base64Init(void				*vctx,
 	ctx->dir = dir;
 	ctx->outCount = 0;
 	ctx->error = 0;
+	return (0);
 }
 
 void base64Update(void			*vctx,

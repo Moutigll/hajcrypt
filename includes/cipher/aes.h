@@ -9,6 +9,8 @@
 /* AES block size in bytes */
 #define AES_BLOCK_SIZE 16
 
+#define AES_MAX_ROUNDS 14
+
 /* AES key sizes in bytes */
 #define AES_KEY_SIZE_128 16
 #define AES_KEY_SIZE_192 24
@@ -29,7 +31,7 @@ typedef struct s_aesEcbCtx
 {
 	uint32_t			roundKeys[60];			/* Expanded key schedule (max for AES-256) */
 	uint32_t			nbRounds;				/* Number of rounds (10/12/14) */
-	uint8_t				buffer[AES_BLOCK_SIZE];	/* Buffer for partial block */
+	uint8_t				buffer[AES_BLOCK_SIZE] __attribute__((aligned(16)));	/* Buffer for partial block */
 	size_t				bufferLen;				/* Number of bytes in buffer */
 	t_cipherDirection	dir;					/* Encryption or decryption mode */
 }	t_aesEcbCtx;
@@ -44,8 +46,8 @@ typedef struct s_aesCbcCtx
 {
 	uint32_t			roundKeys[60];			/* Expanded key schedule (max for AES-256) */
 	uint32_t			nbRounds;				/* Number of rounds (10/12/14) */
-	uint8_t				iv[AES_BLOCK_SIZE];		/* Initialization vector */
-	uint8_t				buffer[AES_BLOCK_SIZE];	/* Buffer for partial block */
+	uint8_t				iv[AES_BLOCK_SIZE] __attribute__((aligned(16)));		/* Initialization vector */
+	uint8_t				buffer[AES_BLOCK_SIZE] __attribute__((aligned(16)));	/* Buffer for partial block */
 	size_t				bufferLen;				/* Number of bytes in buffer */
 	t_cipherDirection	dir;					/* Encryption or decryption mode */
 }	t_aesCbcCtx;
@@ -71,8 +73,7 @@ uint32_t	aesGetRounds(size_t keyLen);
  * @param nbRounds Number of rounds (for verification)
  * @return 0 on success, -1 on error
  */
-int		aesExpandKey(const uint8_t	*key,		size_t		keyLen,
-					 uint32_t		*roundKeys,	uint32_t	nbRounds);
+uint32_t	aesExpandKey(const uint8_t *key, size_t keyLen, uint32_t roundKeys[60]);
 
 /**
  * @brief Expand a cipher key for decryption (inverse key schedule).
@@ -120,11 +121,11 @@ void	aesDecryptBlock(uint8_t block[AES_BLOCK_SIZE], const uint32_t *roundKeys, u
  * @param iv Initialization vector (unused in ECB, kept for interface)
  * @param dir Encryption or decryption direction
  */
-void	aesEcbInit(void					*ctx,
-				   const uint8_t		*key,
-				   size_t				keyLen,
-				   const uint8_t		*iv,
-				   t_cipherDirection	dir);
+int	aesEcbInit(void					*ctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
 
 /**
  * @brief Updates AES ECB context with input data.
@@ -173,11 +174,11 @@ void	aesEcbFree(void *ctx);
  * @param iv Initialization vector (16 bytes, NULL for zeros)
  * @param dir Encryption or decryption direction
  */
-void	aesCbcInit(void					*ctx,
-				   const uint8_t		*key,
-				   size_t				keyLen,
-				   const uint8_t		*iv,
-				   t_cipherDirection	dir);
+int	aesCbcInit(void					*ctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
 /**
  * @brief Updates AES CBC context with input data.
  * 
@@ -214,21 +215,39 @@ void	aesCbcFinal(void *ctx, uint8_t *out, size_t *outLen);
  */
 void	aesCbcFree(void *ctx);
 
+/* ---------- ARM64 optimized functions ---------- */
+
+/**
+ * @brief Processes multiple AES blocks using ARM NEON instructions.
+ *
+ * This function performs AES encryption or decryption on a batch of blocks,
+ * leveraging NEON SIMD acceleration for improved performance on supported hardware.
+ *
+ * @param in         Pointer to the input data buffer containing blocks to process.
+ * @param out        Pointer to the output data buffer where processed blocks will be written.
+ * @param roundKeys  Pointer to the expanded AES round keys.
+ * @param blocks     Number of blocks to process.
+ * @param nbRounds   Number of AES rounds (depends on key size).
+ * @param encrypt    Set to non-zero for encryption, zero for decryption.
+ */
+void	aesProcessBlocksNeon(const uint8_t	*in,
+							 uint8_t		*out,
+							 const uint32_t	*roundKeys,
+							 size_t			blocks,
+							 int			nbRounds,
+							 int			encrypt);
 /* ---------- Global cipher structures ---------- */
 
-/**
- * @brief AES ECB cipher structure for dispatch table.
- */
-extern const t_cipher	g_aesEcbCipher;
+extern const t_cipher g_aes128EcbCipher;
+extern const t_cipher g_aes192EcbCipher;
+extern const t_cipher g_aes256EcbCipher;
 
-/**
- * @brief AES CBC cipher structure for dispatch table.
- */
-extern const t_cipher	g_aesCbcCipher;
+extern const t_cipher g_aes128CbcCipher;
+extern const t_cipher g_aes192CbcCipher;
+extern const t_cipher g_aes256CbcCipher;
 
-/**
- * @brief AES alias cipher structure (points to CBC mode).
- */
-extern const t_cipher	g_aesCipher;
+extern const t_cipher g_aes128Cipher;
+extern const t_cipher g_aes192Cipher;
+extern const t_cipher g_aes256Cipher;
 
 #endif /* HAJCRYPT_AES_H */

@@ -3,15 +3,18 @@
 #include "../../../includes/cipher/des.h"
 
 
-void desCbcInit(void				*vctx,
-				const uint8_t		*key,
-				size_t				keyLen,
-				const uint8_t		*iv,
-				t_cipherDirection	dir)
+int desCbcInit(void					*vctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir)
 {
 	t_desCbcCtx	*ctx = vctx;
 	uint64_t	k = 0;
 	int			i;
+
+	if (keyLen == 0 || keyLen > 8)
+		return (-1);
 
 	/* Convert the key (max 8 bytes) */
 	for (i = 0; i < 8 && i < (int)keyLen; i++)
@@ -29,6 +32,7 @@ void desCbcInit(void				*vctx,
 	
 	ctx->bufferLen = 0;
 	ctx->dir = dir;
+	return (0);
 }
 
 void desCbcUpdate(void			*vctx,

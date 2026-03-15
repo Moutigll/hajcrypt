@@ -149,8 +149,16 @@ static void writeMixColumnsMatrices(int fd)
 static void generateTtables(int fd, const uint8_t sbox[256])
 {
 	uint32_t T0[256], T1[256], T2[256], T3[256];
+	uint32_t Ti0[256], Ti1[256], Ti2[256], Ti3[256];
+	uint8_t inv_sbox[256];
+	uint8_t is, is9, isB, isD, isE;
+	int i;
 
-	for (int i = 0; i < 256; i++) {
+	/* Generate inverse S-box first */
+	generateInvSbox(inv_sbox, sbox);
+
+	/* Forward T-tables (encryption) */
+	for (i = 0; i < 256; i++) {
 		uint8_t s = sbox[i];
 		uint8_t s2 = (uint8_t)ft_gf2nMul(s, 0x02, 0x11B, 8);
 		uint8_t s3 = (uint8_t)ft_gf2nMul(s, 0x03, 0x11B, 8);
@@ -161,13 +169,36 @@ static void generateTtables(int fd, const uint8_t sbox[256])
 		T3[i] = ((uint32_t)s << 24) | ((uint32_t)s << 16) | ((uint32_t)s3 << 8) | s2;
 	}
 
+	/**
+	 * @brief Generate the inverse T-tables for optimized AES decryption.
+	 * These combine InvSubBytes, InvShiftRows, and InvMixColumns.
+	 */
+	for (i = 0; i < 256; i++) {
+		is = inv_sbox[i];
+		is9  = (uint8_t)ft_gf2nMul(is, 0x09, 0x11B, 8);
+		isB  = (uint8_t)ft_gf2nMul(is, 0x0B, 0x11B, 8);
+		isD  = (uint8_t)ft_gf2nMul(is, 0x0D, 0x11B, 8);
+		isE  = (uint8_t)ft_gf2nMul(is, 0x0E, 0x11B, 8);
+
+		Ti0[i] = ((uint32_t)isE << 24) | ((uint32_t)is9 << 16) | 
+				 ((uint32_t)isD <<  8) | isB;
+		Ti1[i] = ((uint32_t)isB << 24) | ((uint32_t)isE << 16) | 
+				 ((uint32_t)is9 <<  8) | isD;
+		Ti2[i] = ((uint32_t)isD << 24) | ((uint32_t)isB << 16) | 
+				 ((uint32_t)isE <<  8) | is9;
+		Ti3[i] = ((uint32_t)is9 << 24) | ((uint32_t)isD << 16) | 
+				 ((uint32_t)isB <<  8) | isE;
+	}
+
+	/* Write all tables... */
 	ft_dprintf(fd, "/*\n");
 	ft_dprintf(fd, " * T-tables for optimized AES encryption.\n");
 	ft_dprintf(fd, " * Each table maps an input byte to a 32-bit output.\n");
 	ft_dprintf(fd, " */\n");
 
+	/* Forward tables */
 	ft_dprintf(fd, "static const uint32_t g_aes_T0[256] = {\n\t");
-	for (int i = 0; i < 256; i++) {
+	for (i = 0; i < 256; i++) {
 		ft_dprintf(fd, "0x%08X", T0[i]);
 		if (i < 255) ft_dprintf(fd, ",");
 		if ((i + 1) % 8 == 0 && i < 255)
@@ -178,7 +209,7 @@ static void generateTtables(int fd, const uint8_t sbox[256])
 	ft_dprintf(fd, "\n};\n\n");
 
 	ft_dprintf(fd, "static const uint32_t g_aes_T1[256] = {\n\t");
-	for (int i = 0; i < 256; i++) {
+	for (i = 0; i < 256; i++) {
 		ft_dprintf(fd, "0x%08X", T1[i]);
 		if (i < 255) ft_dprintf(fd, ",");
 		if ((i + 1) % 8 == 0 && i < 255)
@@ -189,7 +220,7 @@ static void generateTtables(int fd, const uint8_t sbox[256])
 	ft_dprintf(fd, "\n};\n\n");
 
 	ft_dprintf(fd, "static const uint32_t g_aes_T2[256] = {\n\t");
-	for (int i = 0; i < 256; i++) {
+	for (i = 0; i < 256; i++) {
 		ft_dprintf(fd, "0x%08X", T2[i]);
 		if (i < 255) ft_dprintf(fd, ",");
 		if ((i + 1) % 8 == 0 && i < 255)
@@ -200,8 +231,58 @@ static void generateTtables(int fd, const uint8_t sbox[256])
 	ft_dprintf(fd, "\n};\n\n");
 
 	ft_dprintf(fd, "static const uint32_t g_aes_T3[256] = {\n\t");
-	for (int i = 0; i < 256; i++) {
+	for (i = 0; i < 256; i++) {
 		ft_dprintf(fd, "0x%08X", T3[i]);
+		if (i < 255) ft_dprintf(fd, ",");
+		if ((i + 1) % 8 == 0 && i < 255)
+			ft_dprintf(fd, "\n\t");
+		else if (i < 255)
+			ft_dprintf(fd, " ");
+	}
+	ft_dprintf(fd, "\n};\n\n");
+
+	/* Inverse tables */
+	ft_dprintf(fd, "/*\n");
+	ft_dprintf(fd, " * Inverse T-tables for optimized AES decryption.\n");
+	ft_dprintf(fd, " * These combine InvSubBytes, InvShiftRows, and InvMixColumns.\n");
+	ft_dprintf(fd, " */\n");
+
+	ft_dprintf(fd, "static const uint32_t g_aes_Ti0[256] = {\n\t");
+	for (i = 0; i < 256; i++) {
+		ft_dprintf(fd, "0x%08X", Ti0[i]);
+		if (i < 255) ft_dprintf(fd, ",");
+		if ((i + 1) % 8 == 0 && i < 255)
+			ft_dprintf(fd, "\n\t");
+		else if (i < 255)
+			ft_dprintf(fd, " ");
+	}
+	ft_dprintf(fd, "\n};\n\n");
+
+	ft_dprintf(fd, "static const uint32_t g_aes_Ti1[256] = {\n\t");
+	for (i = 0; i < 256; i++) {
+		ft_dprintf(fd, "0x%08X", Ti1[i]);
+		if (i < 255) ft_dprintf(fd, ",");
+		if ((i + 1) % 8 == 0 && i < 255)
+			ft_dprintf(fd, "\n\t");
+		else if (i < 255)
+			ft_dprintf(fd, " ");
+	}
+	ft_dprintf(fd, "\n};\n\n");
+
+	ft_dprintf(fd, "static const uint32_t g_aes_Ti2[256] = {\n\t");
+	for (i = 0; i < 256; i++) {
+		ft_dprintf(fd, "0x%08X", Ti2[i]);
+		if (i < 255) ft_dprintf(fd, ",");
+		if ((i + 1) % 8 == 0 && i < 255)
+			ft_dprintf(fd, "\n\t");
+		else if (i < 255)
+			ft_dprintf(fd, " ");
+	}
+	ft_dprintf(fd, "\n};\n\n");
+
+	ft_dprintf(fd, "static const uint32_t g_aes_Ti3[256] = {\n\t");
+	for (i = 0; i < 256; i++) {
+		ft_dprintf(fd, "0x%08X", Ti3[i]);
 		if (i < 255) ft_dprintf(fd, ",");
 		if ((i + 1) % 8 == 0 && i < 255)
 			ft_dprintf(fd, "\n\t");
@@ -213,12 +294,6 @@ static void generateTtables(int fd, const uint8_t sbox[256])
 
 /* ---------- Main generator entry point ---------- */
 
-/**
- * @brief Generate the AES constants header file.
- * This function is called by the constants generation system.
- * @param fd File descriptor to write the header to.
- * @return 0 on success, -1 on error.
- */
 int generateAesHeader(int fd)
 {
 	uint8_t inv_sbox[256];

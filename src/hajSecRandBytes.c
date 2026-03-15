@@ -14,7 +14,7 @@
 # error "Unsupported OS"
 #endif
 
-#include "../../includes/utils/utils.h"
+#include "../includes/utils/random.h"
 
 int	hajSecRandBytes(uint8_t *buf, size_t len)
 {

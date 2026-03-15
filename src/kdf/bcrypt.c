@@ -6,7 +6,7 @@
 
 #include "../../includes/kdf/bcrypt.h"
 #include "../../includes/cipher/blowfish.h"
-#include "../../includes/utils/utils.h"
+#include "../../includes/utils/random.h"
 
 #include "../../includes/kdf/bcrypt.h"
 

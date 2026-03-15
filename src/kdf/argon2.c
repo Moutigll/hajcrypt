@@ -6,58 +6,15 @@
 #include "../../hajlib/include/hmemory.h"
 #include "../../hajlib/include/hprintf.h"
 #include "../../hajlib/include/hstring.h"
+
 #include "../../includes/utils/bitopts.h"
+#include "../../includes/utils/random.h"
 #include "../../includes/utils/utils.h"
 
 #include "../../includes/hash/blake2b.h"
 #include "../../includes/cipher/base64.h"
 
 #include "../../includes/kdf/argon2.h"
-
-/**
- * @brief Secure memory wipe that won't be optimized away by compiler
- * 
- * This function uses volatile pointer to prevent compiler optimizations
- * that might remove the memory clearing operation.
- * 
- * @param ptr Pointer to memory to wipe
- * @param len Number of bytes to wipe
- */
-static void secureZeroMemory(void *ptr, size_t len)
-{
-	if (ptr == NULL || len == 0)
-		return;
-	
-	/* Utiliser explicit_bzero si disponible (plus fiable) */
-#ifdef __linux__
-	explicit_bzero(ptr, len);
-#else
-	volatile uint8_t *p = (volatile uint8_t *)ptr;
-	while (len--) {
-		*p++ = 0;
-	}
-	/* Barrière mémoire */
-	__asm__ volatile("" : : "r"(ptr) : "memory");
-#endif
-}
-
-/**
- * @brief Secure free that wipes memory before freeing
- * 
- * @param ptr Pointer to memory to wipe and free
- * @param len Number of bytes that were allocated
- */
-static void secureFree(void *ptr, size_t len)
-{
-	if (ptr == NULL)
-		return;
-	
-	/* Wipe the memory */
-	secureZeroMemory(ptr, len);
-	
-	/* Free the memory */
-	free(ptr);
-}
 
 /**
  * @brief Fills a memory block using the previous block and a reference block.

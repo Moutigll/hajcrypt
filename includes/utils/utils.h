@@ -5,11 +5,22 @@
 #include <stdint.h>
 
 /**
- * @brief Generate secure random bytes and fill the provided buffer.
- * @param buf The buffer to fill with random bytes. Must be allocated by the caller and have at least `len` bytes of space.
- * @param len The number of random bytes to generate and write into `buf`.
- * @return 0 on success, -1 on failure (e.g., if `buf` is NULL, `len` is 0, or if there was an error reading random bytes).
+ * @brief Secure memory wipe that won't be optimized away by compiler
+ * 
+ * This function uses volatile pointer to prevent compiler optimizations
+ * that might remove the memory clearing operation.
+ * 
+ * @param ptr Pointer to memory to wipe
+ * @param len Number of bytes to wipe
  */
-int	hajSecRandBytes(uint8_t *buf, size_t len);
+void secureZeroMemory(void *ptr, size_t len);
+
+/**
+ * @brief Secure free that wipes memory before freeing
+ * 
+ * @param ptr Pointer to memory to wipe and free
+ * @param len Number of bytes that were allocated
+ */
+void secureFree(void *ptr, size_t len);
 
 #endif /* HACRYPT_UTILS_H */

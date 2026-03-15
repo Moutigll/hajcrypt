@@ -44,11 +44,11 @@ typedef struct s_base64Ctx {
  * @param iv Initialization vector (not used in Base64)
  * @param dir Direction of operation (encryption for encoding, decryption for decoding)
  */
-void base64Init(void				*vctx,
-				const uint8_t		*key,
-				size_t				keyLen,
-				const uint8_t		*iv,
-				t_cipherDirection	dir);
+int base64Init(void					*vctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
 
 /**
  * @brief Updates the Base64 context with input data for encoding or decoding

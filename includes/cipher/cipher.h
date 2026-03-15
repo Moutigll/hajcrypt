@@ -47,7 +47,10 @@ typedef enum e_cipherMode
 	CIPHER_MODE_CBC,		/* Cipher Block Chaining */
 	CIPHER_MODE_CFB,		/* Cipher Feedback */
 	CIPHER_MODE_OFB,		/* Output Feedback */
-	CIPHER_MODE_CTR			/* Counter */
+	CIPHER_MODE_CTR,		/* Counter */
+	CIPHER_MODE_GCM,		/* Galois/Counter Mode */
+	CIPHER_MODE_CCM,		/* Counter with CBC-MAC */
+	CIPHER_MODE_MAX
 }	t_cipherMode;
 
 typedef enum e_cipherDirection
@@ -138,9 +141,10 @@ typedef struct s_cipher
 	size_t			blockSize;
 	size_t			keySize;
 	size_t			ivSize;
+	size_t			tagSize;	/* For AEAD modes like GCM/CCM */
 	size_t			ctxSize;
 
-	void	(*init)(void				*ctx,
+	int		(*init)(void				*ctx,
 					const uint8_t		*key,
 					size_t				keyLen,
 					const uint8_t		*iv,
@@ -155,6 +159,8 @@ typedef struct s_cipher
 	
 	int		supportsWrap;
 }	t_cipher;
+
+/* ---------- Padding Functions ---------- */
 
 /**
  * @brief Applies PKCS#7 padding to a block.
