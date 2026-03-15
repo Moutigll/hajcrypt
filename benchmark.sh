@@ -7,16 +7,20 @@ RHASH=rhash
 OUTPUT=benchmark.html
 TMPDIR=$(mktemp -d /tmp/ft_ssl_bench_XXXXXX)
 
-# sizes: 1MB, 10MB, 100MB, 1GB, 2GB, 5GB
-SIZES=(1048576 10485760 104857600 1073741824 2147483648 5368709120)
+# Single large file size: 2GB (enough to reach max speed)
+SIZE=2147483648
+FILE="$TMPDIR/test.bin"
 
-# quick checks
+# Fixed key for AES-128-ECB
+AES_KEY="00112233445566778899aabbccddeeff"
+
+# Quick checks
 if [ ! -x "$FT_SSL" ]; then
   echo "Error: $FT_SSL not found or not executable" >&2
   exit 1
 fi
 if ! command -v $OPENSSL >/dev/null 2>&1; then
-  echo "Warning: openssl not found in PATH (MD5/SHA256/Blake2b will be skipped)" >&2
+  echo "Warning: openssl not found in PATH (MD5/SHA256/Blake2b/AES will be skipped)" >&2
   OPENSSL=""
 fi
 if ! command -v $RHASH >/dev/null 2>&1; then
@@ -25,196 +29,121 @@ if ! command -v $RHASH >/dev/null 2>&1; then
 fi
 
 echo "Benchmark in $TMPDIR"
+echo "Creating sparse file $FILE (${SIZE} bytes)..."
+truncate -s "$SIZE" "$FILE"
 
-labels=()
-md5_ft_vals=()
-md5_ssl_vals=()
-sha_ft_vals=()
-sha_ssl_vals=()
-blake2b_ft_vals=()
-blake2b_ssl_vals=()
-whirlpool_ft_vals=()
-whirlpool_rhash_vals=()
-
-# measure single run: returns elapsed nanoseconds
+# Measure single run: returns elapsed nanoseconds
 _run_once_ns() {
-  # $@ = command... (full command as array)
   local start end
   start=$(date +%s%N)
-  # run the command (stdout discarded)
   "$@" > /dev/null 2>&1
   end=$(date +%s%N)
   echo $((end - start))
 }
 
-# measure avg seconds for given algo/bin/file with appropriate number of rounds
-measure_avg_seconds() {
-  local algo="$1" file="$2" bin="$3" size="$4"
-  local rounds
-  if [ "$size" -lt 1073741824 ]; then
-	rounds=6		# 1 warmup + 5 measured
-  elif [ "$size" -lt 5368709120 ]; then
-	rounds=3		# 1 warmup + 2 measured
-  else
-	rounds=2		# 1 warmup + 1 measured
-  fi
-
+# Measure average MB/s for given algo/bin/file
+# Runs: 1 warmup + 3 measured runs
+measure_avg_mbps() {
+  local algo="$1" file="$2" bin="$3"
+  local rounds=4  # 1 warmup + 3 measured
   local sum_ns=0
   local measured=0
   local i
+  
   for i in $(seq 1 $rounds); do
-    if [ "$bin" = "$OPENSSL" ]; then
-      if [ "$algo" = "md5" ]; then
-        ns=$(_run_once_ns $bin dgst -md5 "$file")
-      elif [ "$algo" = "sha256" ]; then
-        ns=$(_run_once_ns $bin dgst -sha256 "$file")
-      elif [ "$algo" = "blake2b" ]; then
-        ns=$(_run_once_ns $bin dgst -blake2b512 "$file")
-      else
-        ns=0
-      fi
-    elif [ "$bin" = "$RHASH" ]; then
-      # rhash --whirlpool filename
+    if [ "$bin" = "$OPENSSL" ] && [ -n "$OPENSSL" ]; then
+      case "$algo" in
+        md5)      ns=$(_run_once_ns $bin dgst -md5 "$file") ;;
+        sha256)   ns=$(_run_once_ns $bin dgst -sha256 "$file") ;;
+        blake2b)  ns=$(_run_once_ns $bin dgst -blake2b512 "$file") ;;
+        aes128)   ns=$(_run_once_ns $bin enc -aes-128-ecb -K "$AES_KEY" -nosalt -in "$file" -out /dev/null) ;;
+        *)        ns=0 ;;
+      esac
+    elif [ "$bin" = "$RHASH" ] && [ -n "$RHASH" ]; then
       ns=$(_run_once_ns $bin --whirlpool "$file")
+    elif [ "$bin" = "$FT_SSL" ]; then
+      case "$algo" in
+        md5|sha256|whirlpool|blake2b)
+          ns=$(_run_once_ns "$bin" "$algo" "$file") ;;
+        aes128)
+          ns=$(_run_once_ns "$bin" aes-128-ecb -k "$AES_KEY" -i "$file" -o /dev/null) ;;
+        *)
+          ns=0 ;;
+      esac
     else
-      # ft_ssl expects: ft_ssl algo filename (md5, sha256, whirlpool, blake2b)
-      ns=$(_run_once_ns "$bin" "$algo" "$file")
+      ns=0  # tool not available
     fi
 
-    # ignore first run
+    # Ignore first run (warmup)
     if [ "$i" -gt 1 ]; then
       sum_ns=$((sum_ns + ns))
       measured=$((measured + 1))
     fi
   done
 
-  # avoid division by zero (shouldn't happen)
   if [ "$measured" -eq 0 ]; then
-	echo "0.000000"
-	return
+    echo "0.00"
+    return
   fi
 
-  # compute average in seconds with 6 decimals using awk
-  awk -v s="$sum_ns" -v m="$measured" 'BEGIN { printf "%.6f", (s / m) / 1e9 }'
+  # Compute average MB/s (1 MB = 1048576 bytes)
+  awk -v size="$SIZE" -v sum_ns="$sum_ns" -v m="$measured" '
+    BEGIN {
+      time_s = (sum_ns / m) / 1e9;
+      if (time_s > 0)
+        printf "%.2f", size / time_s / 1048576;
+      else
+        printf "0.00";
+    }'
 }
 
-# main loop
-for size in "${SIZES[@]}"; do
-  file="$TMPDIR/test_$size.bin"
-  echo "Creating sparse file $file (${size} bytes)..."
-  truncate -s "$size" "$file"
+# Declare associative arrays
+declare -A ft_vals
+declare -A other_vals
+ALGOS=("md5" "sha256" "blake2b" "whirlpool" "aes128")
+ALGO_NAMES=("MD5" "SHA256" "Blake2b" "Whirlpool" "AES-128-ECB")
 
-  labels+=("$size")
-
-  # MD5 ft_ssl
-  echo "  MD5 ft_ssl..."
-  v=$(measure_avg_seconds md5 "$file" "$FT_SSL" "$size")
-  md5_ft_vals+=("$v")
-  echo "	-> $v s"
-
-  # MD5 openssl (if available)
-  if [ -n "$OPENSSL" ]; then
-	echo "  MD5 openssl..."
-	v=$(measure_avg_seconds md5 "$file" "$OPENSSL" "$size")
-	md5_ssl_vals+=("$v")
-	echo "	-> $v s"
+# Run benchmarks for each algorithm
+for idx in "${!ALGOS[@]}"; do
+  algo="${ALGOS[$idx]}"
+  name="${ALGO_NAMES[$idx]}"
+  echo -e "\n--- $name ---"
+  
+  # ft_ssl
+  echo "  ft_ssl..."
+  v=$(measure_avg_mbps "$algo" "$FILE" "$FT_SSL")
+  ft_vals["$algo"]="$v"
+  echo "    -> $v MB/s"
+  
+  # Other tool (openssl or rhash)
+  other_tool=""
+  if [ "$algo" = "whirlpool" ]; then
+    other_tool="$RHASH"
   else
-	md5_ssl_vals+=("0")
+    other_tool="$OPENSSL"
   fi
-
-  # SHA256 ft_ssl
-  echo "  SHA256 ft_ssl..."
-  v=$(measure_avg_seconds sha256 "$file" "$FT_SSL" "$size")
-  sha_ft_vals+=("$v")
-  echo "	-> $v s"
-
-  # SHA256 openssl (if available)
-  if [ -n "$OPENSSL" ]; then
-	echo "  SHA256 openssl..."
-	v=$(measure_avg_seconds sha256 "$file" "$OPENSSL" "$size")
-	sha_ssl_vals+=("$v")
-	echo "	-> $v s"
+  
+  if [ -n "$other_tool" ]; then
+    echo "  ${other_tool}..."
+    v=$(measure_avg_mbps "$algo" "$FILE" "$other_tool")
+    other_vals["$algo"]="$v"
+    echo "    -> $v MB/s"
   else
-	sha_ssl_vals+=("0")
-  fi
-
-  # Blake2b ft_ssl
-  echo "  Blake2b ft_ssl..."
-  v=$(measure_avg_seconds blake2b "$file" "$FT_SSL" "$size")
-  blake2b_ft_vals+=("$v")
-  echo "    -> $v s"
-
-  # Blake2b openssl (if available)
-  if [ -n "$OPENSSL" ]; then
-    echo "  Blake2b openssl..."
-    v=$(measure_avg_seconds blake2b "$file" "$OPENSSL" "$size")
-    blake2b_ssl_vals+=("$v")
-    echo "    -> $v s"
-  else
-    blake2b_ssl_vals+=("0")
-  fi
-
-  # Whirlpool ft_ssl
-  echo "  Whirlpool ft_ssl..."
-  v=$(measure_avg_seconds whirlpool "$file" "$FT_SSL" "$size")
-  whirlpool_ft_vals+=("$v")
-  echo "	-> $v s"
-
-  # Whirlpool rhash (if available)
-  if [ -n "$RHASH" ]; then
-    echo "  Whirlpool rhash..."
-    v=$(measure_avg_seconds whirlpool "$file" "$RHASH" "$size")
-    whirlpool_rhash_vals+=("$v")
-    echo "    -> $v s"
-  else
-    whirlpool_rhash_vals+=("0")
+    other_vals["$algo"]="0.00"
+    echo "    -> (tool not available)"
   fi
 done
 
-# cleanup files
+# Cleanup
 rm -rf "$TMPDIR"
 
-# helper to join array with commas
-join_commas() {
-  local IFS=,
-  printf '%s' "$*"
-}
-
-# prepare JS arrays
-labels_js=$(printf '"%s",' "${labels[@]}")
-labels_js="[${labels_js%,}]"
-
-md5ft_js=$(printf '%s,' "${md5_ft_vals[@]}")
-md5ft_js="[${md5ft_js%,}]"
-
-md5ssl_js=$(printf '%s,' "${md5_ssl_vals[@]}")
-md5ssl_js="[${md5ssl_js%,}]"
-
-shaft_js=$(printf '%s,' "${sha_ft_vals[@]}")
-shaft_js="[${shaft_js%,}]"
-
-shassl_js=$(printf '%s,' "${sha_ssl_vals[@]}")
-shassl_js="[${shassl_js%,}]"
-
-blake2bft_js=$(printf '%s,' "${blake2b_ft_vals[@]}")
-blake2bft_js="[${blake2bft_js%,}]"
-
-blake2bssl_js=$(printf '%s,' "${blake2b_ssl_vals[@]}")
-blake2bssl_js="[${blake2bssl_js%,}]"
-
-whirlpoolft_js=$(printf '%s,' "${whirlpool_ft_vals[@]}")
-whirlpoolft_js="[${whirlpoolft_js%,}]"
-
-whirlpoolrhash_js=$(printf '%s,' "${whirlpool_rhash_vals[@]}")
-whirlpoolrhash_js="[${whirlpoolrhash_js%,}]"
-
-# generate HTML
+# Generate HTML with grouped bar chart
 cat > "$OUTPUT" <<EOF
 <!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>ft_ssl Benchmark</title>
+<title>ft_ssl Benchmark - Speed Comparison (MB/s)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 body{font-family:Arial;background:#111;color:#fff;padding:20px}
@@ -222,63 +151,89 @@ canvas{background:#fff;border-radius:8px;display:block;margin:20px auto}
 .legend{position:fixed;top:12px;right:12px;background:#222;padding:8px;border-radius:6px}
 .box{width:12px;height:12px;display:inline-block;margin-right:8px}
 .small{font-size:12px;color:#ccc}
+table{width:80%;margin:20px auto;border-collapse:collapse;background:#222}
+th,td{padding:10px;text-align:center;border:1px solid #444}
+th{background:#333}
 </style>
 </head>
 <body>
-<h1 style="text-align:center">ft_ssl vs OpenSSL/rhash — MD5, SHA256, Blake2b & Whirlpool</h1>
+<h1 style="text-align:center">ft_ssl vs OpenSSL/rhash — Speed Comparison (MB/s)</h1>
 <div class="legend">
   <div><span class="box" style="background:#4CAF50"></span><span class="small">ft_ssl</span></div>
   <div><span class="box" style="background:#F44336"></span><span class="small">OpenSSL/rhash</span></div>
 </div>
 
-<canvas id="md5" width="900" height="400"></canvas>
-<canvas id="sha" width="900" height="400"></canvas>
-<canvas id="blake2b" width="900" height="400"></canvas>
-<canvas id="whirlpool" width="900" height="400"></canvas>
+<canvas id="benchmark" width="900" height="500"></canvas>
+
+<table>
+  <tr><th>Algorithm</th><th>ft_ssl (MB/s)</th><th>OpenSSL/rhash (MB/s)</th><th>Ratio</th></tr>
+EOF
+
+# Add table rows with ratio (using awk for floating point)
+for i in "${!ALGOS[@]}"; do
+  algo="${ALGOS[$i]}"
+  name="${ALGO_NAMES[$i]}"
+  ft="${ft_vals[$algo]:-0.00}"
+  other="${other_vals[$algo]:-0.00}"
+  
+  # Calculate ratio (ft_ssl / other) safely with awk
+  ratio=$(awk -v ft="$ft" -v other="$other" 'BEGIN {
+    if (other > 0) printf "%.2fx", ft/other; else print "N/A"
+  }')
+  
+  cat >> "$OUTPUT" <<EOF
+  <tr><td>$name</td><td>$ft</td><td>$other</td><td>$ratio</td></tr>
+EOF
+done
+
+cat >> "$OUTPUT" <<EOF
+</table>
 
 <script>
-const labels = $labels_js;
-const md5_ft = $md5ft_js;
-const md5_ssl = $md5ssl_js;
-const sha_ft = $shaft_js;
-const sha_ssl = $shassl_js;
-const blake2b_ft = $blake2bft_js;
-const blake2b_ssl = $blake2bssl_js;
-const whirlpool_ft = $whirlpoolft_js;
-const whirlpool_rhash = $whirlpoolrhash_js;
-
-// draw function (time in seconds)
-function draw(id, title, a1, a2, label1 = 'ft_ssl', label2 = 'OpenSSL') {
-  new Chart(document.getElementById(id), {
-	type: 'line',
-	data: {
-	  labels: labels,
-	  datasets: [
-		{ label: label1, data: a1, borderColor: '#4CAF50', fill:false, tension:0.1 },
-		{ label: label2, data: a2, borderColor: '#F44336', fill:false, tension:0.1 },
-	  ]
-	},
-	options: {
-	  plugins: { title: { display:true, text: title } },
-	  scales: {
-		x: { 
-		  title: { display:true, text:'File size (bytes)' }, 
-		  type:'linear',
-		  ticks: { callback: function(v) { return v.toExponential(); } }
-		},
-		y: { title: { display:true, text:'Time (s)' } }
-	  }
-	}
-  });
-}
-
-draw('md5', 'MD5 — average (warmup ignored)', md5_ft, md5_ssl);
-draw('sha', 'SHA256 — average (warmup ignored)', sha_ft, sha_ssl);
-draw('blake2b', 'Blake2b — average (warmup ignored)', blake2b_ft, blake2b_ssl);
-draw('whirlpool', 'Whirlpool — average (warmup ignored)', whirlpool_ft, whirlpool_rhash, 'ft_ssl', 'rhash');
+const ctx = document.getElementById('benchmark').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: [$(printf '"%s",' "${ALGO_NAMES[@]}" | sed 's/,$//')],
+    datasets: [
+      {
+        label: 'ft_ssl',
+        data: [${ft_vals[md5]:-0.00}, ${ft_vals[sha256]:-0.00}, ${ft_vals[blake2b]:-0.00}, ${ft_vals[whirlpool]:-0.00}, ${ft_vals[aes128]:-0.00}],
+        backgroundColor: '#4CAF50',
+      },
+      {
+        label: 'OpenSSL / rhash',
+        data: [${other_vals[md5]:-0.00}, ${other_vals[sha256]:-0.00}, ${other_vals[blake2b]:-0.00}, ${other_vals[whirlpool]:-0.00}, ${other_vals[aes128]:-0.00}],
+        backgroundColor: '#F44336',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Processing Speed (MB/s) on 2GB file (1 warmup + 3 runs average)'
+      },
+      legend: { display: false }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: 'MB/s' }
+      }
+    }
+  }
+});
 </script>
+
+<p style="text-align:center; color:#ccc">
+  File size: 2GB (2147483648 bytes)<br>
+  1 warmup run + 3 measured runs per algorithm<br>
+  Values 0.00 indicate the tool was not available or measurement failed.
+</p>
 </body>
 </html>
 EOF
 
-echo "Done -> $OUTPUT"
+echo -e "\nDone! Results saved to $OUTPUT"

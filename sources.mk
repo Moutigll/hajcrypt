@@ -24,7 +24,7 @@ CONST_SRC = \
 LIB_SRC = \
 	$(SRC_DIR)/hash/common/padding.c \
 	$(SRC_DIR)/hash/common/endian.c \
-	$(SRC_DIR)/random/hajSecRandBytes.c \
+	$(SRC_DIR)/hajSecRandBytes.c \
 	$(SRC_DIR)/hash/md5/md5.c \
 	$(SRC_DIR)/hash/md5/transform.c \
 	$(SRC_DIR)/hash/sha256/sha256.c \
@@ -45,7 +45,13 @@ LIB_SRC = \
 	$(SRC_DIR)/kdf/bcrypt.c \
 	$(SRC_DIR)/hash/blake2b/blake2b.c \
 	$(SRC_DIR)/hash/blake2b/transform.c \
-	$(SRC_DIR)/kdf/argon2.c
+	$(SRC_DIR)/kdf/argon2.c \
+	$(SRC_DIR)/cipher/aes/transform.c \
+	$(SRC_DIR)/cipher/aes/ecb.c \
+	$(SRC_DIR)/cipher/aes/cbc.c \
+	$(SRC_DIR)/cli/prompt.c \
+	$(SRC_DIR)/utils.c \
+	$(SRC_DIR)/cipher/aes/transform_arm64.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s
@@ -67,6 +73,5 @@ TEST_SRC = \
 
 CONST_OBJ = $(patsubst $(CONST_DIR)/%.c, $(BUILD_DIR)/consts/%.o, $(CONST_SRC))
 LIB_SRC_OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(LIB_SRC))
-LIB_ASM_ARM_OBJ = $(patsubst $(SRC_DIR)/hash/sha256/transform_arm64.s, $(BUILD_DIR)/hash/sha256/transform_arm64.o, $(LIB_ASM_ARM_SRC))
-LIB_ASM_X86_OBJ = $(patsubst $(SRC_DIR)/hash/sha256/transform_x86_64.s, $(BUILD_DIR)/hash/sha256/transform_x86_64.o, $(LIB_ASM_X86_SRC))
+LIB_ASM_ARM_OBJ = $(patsubst $(SRC_DIR)/%.s, $(BUILD_DIR)/%.o, $(LIB_ASM_ARM_SRC))
 CLI_OBJ = $(patsubst $(SRC_DIR)/cli/%.c, $(BUILD_DIR)/cli/%.o, $(CLI_SRC))
