@@ -1,6 +1,7 @@
 #include "../../hajlib/include/hajlib.h" /* IWYU pragma: keep */
 
 #include "../../includes/utils/random.h"
+#include "../../includes/utils/utils.h"
 
 #include "../../includes/hash/sha256.h"
 #include "../../includes/kdf/bytesToKey.h"
@@ -106,10 +107,12 @@ char *promptPassword(const char *promptMsg)
 
 		len2 = ft_strlen(pass2);
 		if (len1 == len2 && ft_memcmp(pass1, pass2, len1) == 0) {
-			return ft_strdup(pass1);
+			return (ft_strdup(pass1));
 		}
 
 		ft_printf("Passwords don't match. Try again.\n");
+		secureZeroMemory(pass1, len1);
+		secureZeroMemory(pass2, len2);
 	}
 }
 

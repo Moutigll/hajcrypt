@@ -177,6 +177,16 @@ int prepareKeyAndIv(t_sslOptions	*opts,
 		return (-1);
 	}
 
+	/* If IV hex provided, override the derived IV */
+	if (ivLen > 0 && opts->ivHex)
+ 	{
+ 		if (pbkdfHexToBytes(opts->ivHex, iv, ivLen) < 0)
+ 		{
+ 			ft_dprintf(STDERR_FILENO, "ft_ssl: invalid IV hex\n");
+ 			return (-1);
+ 		}
+ 	}
+
 	/* Display the derived key */
 	ft_dprintf(STDERR_FILENO, "key=");
 	for (size_t i = 0; i < keyLen; i++)

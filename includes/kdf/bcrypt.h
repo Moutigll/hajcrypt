@@ -6,6 +6,7 @@
 
 #include "../cipher/blowfish.h"
 
+#define BCRYPT_OUTPUT_SIZE	24  /* bcrypt produces 24-byte output */
 #define BCRYPT_SALT_LEN		16
 #define BCRYPT_HASH_LEN		24
 #define BCRYPT_STRING_LEN	60
@@ -94,15 +95,32 @@ void bcryptEncodeBase64(char *dst, const uint8_t *src, size_t len);
 int bcryptDecodeBase64(uint8_t *dst, const char *src, size_t maxLen);
 
 /**
- * @brief Convert a 32-bit integer from/to little-endian (no-op on big-endian?)
- *        Actually used for byte order conversion if needed.
+ * @brief Derive a key using bcrypt's PBKDF
+ * 
+ * @param pass Password
+ * @param passLen Length of password
+ * @param salt Salt bytes
+ * @param saltLen Length of salt (should be 16)
+ * @param key Output buffer for derived key
+ * @param keyLen Desired length of derived key
+ * @param rounds Number of rounds (cost factor)
+ * @return 0 on success, -1 on error
+ */
+int bcryptPbkdf(const char		*pass,	size_t			passLen,
+				const uint8_t	*salt,	size_t			saltLen,
+				uint8_t			*key,	size_t			keyLen,
+				unsigned int	rounds);
+
+/**
+ * @brief Convert a 32-bit integer from/to little-endian (no-op on little-endian systems)
+ *		Actually used for byte order conversion if needed.
  */
 static inline uint32_t swap32(uint32_t x)
 {
 	return ((x >> 24) & 0xFF) |
-	       ((x >> 8) & 0xFF00) |
-	       ((x << 8) & 0xFF0000) |
-	       ((x << 24) & 0xFF000000);
+		   ((x >> 8) & 0xFF00) |
+		   ((x << 8) & 0xFF0000) |
+		   ((x << 24) & 0xFF000000);
 }
 
 #endif

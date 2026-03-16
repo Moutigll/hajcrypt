@@ -1,4 +1,3 @@
-#include "../../hajlib/include/hmemory.h"
 #include "../../hajlib/include/hstring.h"
 
 #include "../../includes/hash/sha256.h"
@@ -63,11 +62,14 @@ int deriveKeyFromParams(t_sslOptions *opts, uint8_t *key, size_t keyLen, uint8_t
 {
 	uint8_t	salt[8];
 	size_t	saltLen = 8;
+	int		converted;
 	
 	/* Convert salt from hex to bytes */
 	if (opts->saltHex) {
-		if (pbkdfHexToBytes(opts->saltHex, salt, 8) < 0)
+		converted = pbkdfHexToBytes(opts->saltHex, salt, 8);
+		if (converted < 0)
 			return (-1);
+		saltLen = converted;
 	} else
 		return (-1);
 
@@ -88,14 +90,13 @@ int deriveKeyFromParams(t_sslOptions *opts, uint8_t *key, size_t keyLen, uint8_t
 		}
 		
 		case KDF_BCRYPT: {
-			uint8_t derived[24];
-			int ret = bcryptHash(opts->password, salt,
-								opts->kdfIterations, (char*)derived);
-			if (ret != 0) return (-1);
-			ft_memcpy(key, derived, keyLen < 24 ? keyLen : 24);
-			return (0);
+			int ret = bcryptPbkdf(opts->password,
+						ft_strlen(opts->password),
+						salt, 8,  /* salt is 8 bytes */
+						key, keyLen,
+						opts->kdfIterations);
+			return (ret == 0 ? 0 : -1);
 		}
-		
 		case KDF_ARGON2D:
 		case KDF_ARGON2I:
 		case KDF_ARGON2ID: {

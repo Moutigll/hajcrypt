@@ -7,6 +7,7 @@
 #include "../../includes/kdf/bcrypt.h"
 #include "../../includes/cipher/blowfish.h"
 #include "../../includes/utils/random.h"
+#include "../../includes/utils/utils.h"
 
 #include "../../includes/kdf/bcrypt.h"
 
@@ -444,4 +445,72 @@ int bcryptHashWithSalt(const char *password,
 		return (-1);
 
 	return (bcryptHash(password, salt, cost, output));
+}
+
+int bcryptPbkdf(const char		*pass,	size_t			passLen,
+				const uint8_t	*salt,	size_t			saltLen,
+				uint8_t			*key,	size_t			keyLen,
+				unsigned int	rounds)
+{
+	t_bcryptCtx	ctx;
+	uint8_t		*output;
+	uint8_t		count[4];
+	uint8_t		*saltCpy;
+	size_t		i;
+	size_t		generated = 0;
+	uint32_t	counter = 0;
+
+	if (!pass || !salt || !key || keyLen == 0 || rounds == 0)
+		return (-1);
+
+	/* Allocate temporary buffers */
+	output = malloc(BCRYPT_OUTPUT_SIZE);
+	saltCpy = malloc(saltLen + 4);  /* salt + counter */
+	if (!output || !saltCpy)
+	{
+		free(output);
+		free(saltCpy);
+		return (-1);
+	}
+
+	/* Prepare initial salt buffer */
+	ft_memcpy(saltCpy, salt, saltLen);
+
+	while (generated < keyLen)
+	{
+		/* Append counter to salt (big-endian) */
+		count[0] = (counter >> 24) & 0xFF;
+		count[1] = (counter >> 16) & 0xFF;
+		count[2] = (counter >> 8) & 0xFF;
+		count[3] = counter & 0xFF;
+		ft_memcpy(saltCpy + saltLen, count, 4);
+
+		/* Initialize bcrypt with the salt+counter */
+		eksBlowfishSetup(&ctx, (const uint8_t*)pass, passLen, saltCpy, rounds);
+
+		/* Generate output block by encrypting the magic string */
+		bcryptEncryptMagic(&ctx, output);
+
+		/* XOR with previous output for feedback (starting from second block) */
+		if (counter > 0)
+		{
+			for (i = 0; i < BCRYPT_OUTPUT_SIZE; i++)
+				output[i] ^= key[generated - BCRYPT_OUTPUT_SIZE + i];
+		}
+
+		/* Copy to output key */
+		for (i = 0; i < BCRYPT_OUTPUT_SIZE && generated < keyLen; i++)
+			key[generated++] = output[i];
+
+		counter++;
+	}
+
+	/* Clean sensitive data */
+	secureZeroMemory(output, BCRYPT_OUTPUT_SIZE);
+	secureZeroMemory(saltCpy, saltLen + 4);
+	secureZeroMemory(&ctx, sizeof(ctx));
+
+	free(output);
+	free(saltCpy);
+	return (0);
 }

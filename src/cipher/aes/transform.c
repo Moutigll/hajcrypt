@@ -37,16 +37,16 @@ uint32_t aesExpandKey(const uint8_t *key, size_t keyLen, uint32_t roundKeys[60])
 	for (i = keyLen / 4; i < 4 * (nbRounds + 1); i++) {
 		temp = roundKeys[i-1];
 		if (i % (keyLen / 4) == 0) {
-			temp = (g_aes_sbox[(temp >> 16) & 0xFF] << 24) |
-				   (g_aes_sbox[(temp >>  8) & 0xFF] << 16) |
-				   (g_aes_sbox[(temp	  ) & 0xFF] <<  8) |
-				   (g_aes_sbox[(temp >> 24) & 0xFF]);
+			temp = ((uint32_t)g_aes_sbox[(temp >> 16) & 0xFF] << 24) |
+				   ((uint32_t)g_aes_sbox[(temp >>  8) & 0xFF] << 16) |
+				   ((uint32_t)g_aes_sbox[(temp      ) & 0xFF] <<  8) |
+				   ((uint32_t)g_aes_sbox[(temp >> 24) & 0xFF]);
 			temp ^= rcon[i / (keyLen / 4)];
 		} else if ((keyLen / 4) == 8 && i % 8 == 4) {
-			temp = (g_aes_sbox[(temp >> 24) & 0xFF] << 24) |
-				   (g_aes_sbox[(temp >> 16) & 0xFF] << 16) |
-				   (g_aes_sbox[(temp >>  8) & 0xFF] <<  8) |
-				   (g_aes_sbox[(temp	  ) & 0xFF]);
+			temp = ((uint32_t)g_aes_sbox[(temp >> 24) & 0xFF] << 24) |
+				   ((uint32_t)g_aes_sbox[(temp >> 16) & 0xFF] << 16) |
+				   ((uint32_t)g_aes_sbox[(temp >>  8) & 0xFF] <<  8) |
+				   ((uint32_t)g_aes_sbox[(temp      ) & 0xFF]);
 		}
 		roundKeys[i] = roundKeys[i - (keyLen / 4)] ^ temp;
 	}

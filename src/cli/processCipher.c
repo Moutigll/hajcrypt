@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "../../hajlib/include/hprintf.h"
 #include "../../hajlib/include/hmemory.h"
@@ -217,104 +218,81 @@ static int initCipherCtx(t_cipherCtx *c, const t_cipher *cipher,
 	return (0);
 }
 
-/* ---------- Cipher with base64 chaining ---------- */
+/* ---------- Base64 with cipher using pipe ---------- */
 
-static int processCipherWithBase64(int fd, int outFd, const t_cipher *cipher,
-									t_sslOptions *opts)
+static int processBase64WithCipher(int inFd, int outFd, const t_cipher *cipher, t_sslOptions *opts)
 {
-	t_cipherCtx	cipherCtx;
-	t_base64Ctx	b64Ctx;
-	uint8_t		inBuf[CIPHER_BUFFER_SIZE];
-	uint8_t		midBuf[CIPHER_BUFFER_SIZE * 2];   // résultat intermédiaire
-	uint8_t		outBuf[CIPHER_BUFFER_SIZE * 4];   // résultat final
-	ssize_t		bytesRead;
-	size_t		midLen, outLen;
-	int			ret = 0;
+	int		pipeFd[2];
+	pid_t	pid;
+	int		ret;
+	int		status;
 
-	if (initCipherCtx(&cipherCtx, cipher, opts, outFd) != 0)
+	if (pipe(pipeFd) < 0)
 		return (1);
-	base64Init(&b64Ctx, NULL, 0, NULL,
-			   opts->isDecoding ? CIPHER_DECRYPT : CIPHER_ENCRYPT);
 
-	while (1)
+	pid = fork();
+	if (pid == -1)
 	{
-		bytesRead = read(fd, inBuf, sizeof(inBuf));
-		if (bytesRead <= 0)
-			break;
+		close(pipeFd[0]);
+		close(pipeFd[1]);
+		return (1);
+	}
+
+	if (pid == 0)
+	{
+		close(pipeFd[0]); /* Close read end in child */
+
+		if (opts->isDecoding)
+			ret = processBase64(inFd, pipeFd[1], opts);
+		else
+		{
+			t_cipherCtx ctx;
+
+			if (initCipherCtx(&ctx, cipher, opts, pipeFd[1]) != 0)
+				exit(1);
+
+			if (cipher->blockSize == 1)
+				ret = handleStreamCipher(&ctx, inFd);
+			else
+				ret = handleBlockCipher(&ctx, inFd);
+
+			ctx.cipher->free(ctx.ctx);
+			free(ctx.ctx);
+		}
+
+		close(pipeFd[1]);
+		exit(ret);
+	}
+	else
+	{
+		close(pipeFd[1]); /* Close write end in parent */
 
 		if (opts->isDecoding)
 		{
-			base64Update(&b64Ctx, inBuf, bytesRead, midBuf, &midLen);
-			if (midLen > 0)
+			t_cipherCtx ctx;
+
+			if (initCipherCtx(&ctx, cipher, opts, outFd) != 0)
 			{
-				cipherCtx.cipher->update(cipherCtx.ctx, midBuf, midLen, outBuf, &outLen);
-				if (outLen > 0 && writeOutput(outFd, outBuf, outLen,
-											  cipherCtx.shouldWrap, &cipherCtx.lineLen) < 0)
-				{
-					ret = -1;
-					break;
-				}
+				close(pipeFd[0]);
+				wait(&status);
+				return (1);
 			}
+
+			if (cipher->blockSize == 1)
+				ret = handleStreamCipher(&ctx, pipeFd[0]);
+			else
+				ret = handleBlockCipher(&ctx, pipeFd[0]);
+
+			ctx.cipher->free(ctx.ctx);
+			free(ctx.ctx);
 		}
 		else
-		{
-			cipherCtx.cipher->update(cipherCtx.ctx, inBuf, bytesRead, midBuf, &midLen);
-			if (midLen > 0)
-			{
-				base64Update(&b64Ctx, midBuf, midLen, outBuf, &outLen);
-				if (outLen > 0 && writeOutput(outFd, outBuf, outLen,
-											  cipherCtx.shouldWrap, &cipherCtx.lineLen) < 0)
-				{
-					ret = -1;
-					break;
-				}
-			}
-		}
-	}
+			ret = processBase64(pipeFd[0], outFd, opts);
 
-	if (ret == 0)
-	{
-		if (opts->isDecoding)
-		{
-			base64Final(&b64Ctx, midBuf, &midLen);
-			if (midLen > 0)
-			{
-				cipherCtx.cipher->update(cipherCtx.ctx, midBuf, midLen, outBuf, &outLen);
-				if (outLen > 0 && writeOutput(outFd, outBuf, outLen,
-											  cipherCtx.shouldWrap, &cipherCtx.lineLen) < 0)
-					ret = -1;
-			}
-			cipherCtx.cipher->final(cipherCtx.ctx, outBuf, &outLen);
-			if (outLen > 0 && writeOutput(outFd, outBuf, outLen,
-										  cipherCtx.shouldWrap, &cipherCtx.lineLen) < 0)
-				ret = -1;
-		}
-		else
-		{
-			cipherCtx.cipher->final(cipherCtx.ctx, midBuf, &midLen);
-			if (midLen > 0)
-			{
-				base64Update(&b64Ctx, midBuf, midLen, outBuf, &outLen);
-				if (outLen > 0 && writeOutput(outFd, outBuf, outLen,
-											  cipherCtx.shouldWrap, &cipherCtx.lineLen) < 0)
-					ret = -1;
-			}
-			base64Final(&b64Ctx, outBuf, &outLen);
-			if (outLen > 0 && writeOutput(outFd, outBuf, outLen,
-										  cipherCtx.shouldWrap, &cipherCtx.lineLen) < 0)
-				ret = -1;
-		}
+		close(pipeFd[0]);
+		wait(&status);
+		return (ret);
 	}
-
-	cipherCtx.cipher->free(cipherCtx.ctx);
-	free(cipherCtx.ctx);
-
-	if (ret == 0 && !opts->isDecoding && outFd == STDOUT_FILENO)
-	{
-		if (cipherCtx.lineLen > 0 && write(outFd, "\n", 1) != 1)
-			ret = -1;
-	}
-	return (ret < 0 ? 1 : 0);
 }
 
 /* ---------- Main cipher dispatcher ---------- */
@@ -325,11 +303,11 @@ static int processCipherFd(int fd, int outFd, const t_cipher *cipher, t_sslOptio
 		return (processBase64(fd, outFd, opts));
 
 	if (opts->useBase64)
-		return (processCipherWithBase64(fd, outFd, cipher, opts));
+		return (processBase64WithCipher(fd, outFd, cipher, opts));
 	else
 	{
-		t_cipherCtx c;
-		int (ret);
+		t_cipherCtx	c;
+		int			ret;
 		if (initCipherCtx(&c, cipher, opts, outFd) != 0)
 			return 1;
 		if (c.cipher->blockSize == 1)
