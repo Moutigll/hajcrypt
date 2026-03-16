@@ -1,6 +1,6 @@
 #include "../../../includes/cipher/des.h"
 
-void desEcbInit(void				*vctx,
+int desEcbInit(void				*vctx,
 				const uint8_t		*key,
 				size_t				keyLen,
 				const uint8_t		*iv,
@@ -9,6 +9,9 @@ void desEcbInit(void				*vctx,
 	t_desEcbCtx	*ctx = vctx;
 	uint64_t	k = 0;
 	int			i;
+
+	if (!key || keyLen != 8)
+		return (-1);
 
 	(void)iv;	/* ECB does not use an IV */
 
@@ -19,6 +22,7 @@ void desEcbInit(void				*vctx,
 	desGenerateSubkeys(k, ctx->subkeys);
 	ctx->bufferLen = 0;
 	ctx->dir = dir;
+	return (0);
 }
 
 void desEcbUpdate(void			*vctx,
@@ -31,25 +35,25 @@ void desEcbUpdate(void			*vctx,
 	*outLen = 0;
 
 	for (size_t i = 0; i < inLen; i += 8) {
-        uint64_t block = 0;
-        for (int j = 0; j < 8; j++)
-            block = (block << 8) | in[i + j];
-        
-        if (ctx->dir == CIPHER_ENCRYPT)
-            block = desEncryptBlock(block, ctx->subkeys);
-        else
-            block = desDecryptBlock(block, ctx->subkeys);
-        
-        for (int j = 0; j < 8; j++)
-            out[(*outLen)++] = (block >> (56 - j * 8)) & 0xFF;
-    }
+		uint64_t block = 0;
+		for (int j = 0; j < 8; j++)
+			block = (block << 8) | in[i + j];
+		
+		if (ctx->dir == CIPHER_ENCRYPT)
+			block = desEncryptBlock(block, ctx->subkeys);
+		else
+			block = desDecryptBlock(block, ctx->subkeys);
+		
+		for (int j = 0; j < 8; j++)
+			out[(*outLen)++] = (block >> (56 - j * 8)) & 0xFF;
+	}
 }
 
 void desEcbFinal(void *vctx, uint8_t *out, size_t *outLen)
 {
-    (void)vctx;
+	(void)vctx;
 	(void)out;
-    *outLen = 0;
+	*outLen = 0;
 }
 
 void desEcbFree(void *vctx)

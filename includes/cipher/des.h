@@ -96,7 +96,7 @@ uint64_t	desDecryptBlock(uint64_t block, uint64_t subkeys[16]);
  * @param iv Initialization vector (unused in ECB, kept for interface)
  * @param dir Encryption or decryption direction
  */
-void	desEcbInit(void					*ctx,
+int	desEcbInit(void						*ctx,
 				   const uint8_t		*key,
 				   size_t				keyLen,
 				   const uint8_t		*iv,
@@ -150,8 +150,11 @@ void	desEcbFree(void *ctx);
  * @param iv Initialization vector (8 bytes, NULL for zeros)
  * @param dir Encryption or decryption direction
  */
-void	desCbcInit(void *ctx, const uint8_t *key, size_t keyLen,
-				   const uint8_t *iv, t_cipherDirection dir);
+int	desCbcInit(void					*ctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
 
 /**
  * @brief Updates DES CBC context with input data.
@@ -166,8 +169,11 @@ void	desCbcInit(void *ctx, const uint8_t *key, size_t keyLen,
  * @param out Output buffer for processed data
  * @param outLen Number of bytes written to output
  */
-void	desCbcUpdate(void *ctx, const uint8_t *in, size_t inLen,
-					 uint8_t *out, size_t *outLen);
+void	desCbcUpdate(void			*ctx,
+					 const uint8_t	*in,
+					 size_t			inLen,
+					 uint8_t		*out,
+					 size_t			*outLen);
 
 /**
  * @brief Finalizes DES CBC operation, handling padding.

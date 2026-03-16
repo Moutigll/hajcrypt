@@ -1,15 +1,24 @@
-#include <fcntl.h>
+// cipher_io.c - Fonctions d'entrée/sortie pour les ciphers
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "../../hajlib/include/hprintf.h"
+#include "../../hajlib/include/hstring.h"
 #include "../../hajlib/include/hmemory.h"
 
-#include "../../includes/cli/parser.h"
-#include "../../includes/kdf/kdf.h"
+#include "../../includes/cli/prompt.h"
+#include "../../includes/utils/random.h"
+#include "../../includes/kdf/bytesToKey.h"
+
+#include "../../includes/cli/algoHandling.h"
 
 #define WRAP_LIMIT 64
 
-int	writeWrapped(int fd, const uint8_t *data, size_t len, int *lineLen)
+/* ---------- Write helpers ---------- */
+
+static int	writeWrapped(int fd, const uint8_t *data, size_t len, int *lineLen)
 {
 	size_t	i;
 
@@ -30,8 +39,11 @@ int	writeWrapped(int fd, const uint8_t *data, size_t len, int *lineLen)
 	return (0);
 }
 
-int	writeOutput(int fd, const uint8_t *data, size_t len,
-				int shouldWrap, int *lineLen)
+int	writeOutput(int				fd,
+				const uint8_t	*data,
+				size_t 			len,
+				int				shouldWrap,
+				int				*lineLen)
 {
 	if (shouldWrap)
 		return (writeWrapped(fd, data, len, lineLen));
@@ -40,38 +52,7 @@ int	writeOutput(int fd, const uint8_t *data, size_t len,
 	return (0);
 }
 
-
-int	prepareKeyAndIv(t_sslOptions *opts, const t_cipher *cipher,
-					uint8_t *key, uint8_t *iv)
-{
-	size_t	keyLen;
-	size_t	ivLen;
-	int		converted;
-
-	keyLen = cipher->keySize;
-	ivLen = cipher->ivSize;
-	ft_bzero(key, keyLen);
-	if (ivLen > 0)
-		ft_bzero(iv, ivLen);
-	if (!opts->keyHex)
-		return (0);
-	converted = pbkdfHexToBytes(opts->keyHex, key, keyLen);
-	if (converted < 0)
-	{
-		ft_dprintf(STDERR_FILENO, "ft_ssl: invalid key hex format\n");
-		return (-1);
-	}
-	if (opts->ivHex && ivLen > 0)
-	{
-		converted = pbkdfHexToBytes(opts->ivHex, iv, ivLen);
-		if (converted < 0)
-		{
-			ft_dprintf(STDERR_FILENO, "ft_ssl: invalid IV hex format\n");
-			return (-1);
-		}
-	}
-	return (0);
-}
+/* ---------- File helpers ---------- */
 
 int	openInputFile(const char *filename, const char *cipherName)
 {
@@ -87,7 +68,6 @@ int	openInputFile(const char *filename, const char *cipherName)
 	return (fd);
 }
 
-
 int	openOutputFile(const char *filename, const char *cipherName)
 {
 	int	fd;
@@ -100,4 +80,118 @@ int	openOutputFile(const char *filename, const char *cipherName)
 			cipherName, filename);
 	}
 	return (fd);
+}
+
+/* ---------- Key/IV preparation ---------- */
+
+int prepareKeyAndIv(t_sslOptions	*opts,
+					const t_cipher	*cipher,
+					uint8_t			*key,
+					uint8_t			*iv)
+{
+	size_t	keyLen = cipher->keySize;
+	size_t	ivLen  = cipher->ivSize;
+
+	ft_bzero(key, keyLen);
+	if (ivLen > 0)
+		ft_bzero(iv, ivLen);
+
+	/* Case 1 : key provided in hex (IV optional) */
+	if (opts->keyHex)
+	{
+		if (pbkdfHexToBytes(opts->keyHex, key, keyLen) < 0)
+		{
+			ft_dprintf(STDERR_FILENO, "ft_ssl: invalid key hex\n");
+			return (-1);
+		}
+		/* IV hex optional, if provided it overrides the derived IV or zeros */
+		if (opts->ivHex && ivLen > 0)
+		{
+			if (pbkdfHexToBytes(opts->ivHex, iv, ivLen) < 0)
+			{
+				ft_dprintf(STDERR_FILENO, "ft_ssl: invalid IV hex\n");
+				return (-1);
+			}
+		}
+		return (0);
+	}
+
+	/* Case 2 : password provided (with or without salt) */
+	if (opts->password)
+	{
+		uint8_t salt[8];
+
+		if (opts->saltHex)
+		{
+			if (pbkdfHexToBytes(opts->saltHex, salt, 8) < 0)
+			{
+				ft_dprintf(STDERR_FILENO, "ft_ssl: invalid salt hex\n");
+				return (-1);
+			}
+		}
+		else
+		{
+			/* No salt provided, generate a random one and display it (for repeatability) */
+			hajSecRandBytes(salt, 8);
+			ft_dprintf(STDERR_FILENO, "salt=");
+			for (int i = 0; i < 8; i++)
+				ft_dprintf(STDERR_FILENO, "%02X", salt[i]);
+			ft_dprintf(STDERR_FILENO, "\n");
+			opts->saltHex = malloc(17);
+			if (opts->saltHex)
+			{
+				for (int i = 0; i < 8; i++)
+					ft_snprintf(opts->saltHex + i*2, 3, "%02X", salt[i]);
+				opts->saltHex[16] = '\0';
+			}
+		}
+
+		/* Derive with bytesToKey by default for compatibility with OpenSSL, but allow other KDFs if specified */
+		if (pbkdfBytesToKeyExtended(opts->password,
+									ft_strlen(opts->password),
+									salt, keyLen, key, iv) < 0)
+		{
+			ft_dprintf(STDERR_FILENO, "ft_ssl: key derivation failed\n");
+			return (-1);
+		}
+
+		/* IV hex optional, if provided it overrides the derived IV or zeros */
+		if (opts->ivHex && ivLen > 0)
+		{
+			if (pbkdfHexToBytes(opts->ivHex, iv, ivLen) < 0)
+			{
+				ft_dprintf(STDERR_FILENO, "ft_ssl: invalid IV hex\n");
+				return (-1);
+			}
+		}
+		return (0);
+	}
+
+	/* Case 3 : interactive mode (no key or password provided) */
+	if (promptForCipherParams(opts) != 0)
+		return (-1);
+
+	/* Now we derive the key from the stored parameters */
+	if (deriveKeyFromParams(opts, key, keyLen, iv) != 0) {
+		ft_dprintf(STDERR_FILENO, "ft_ssl: key derivation failed\n");
+		return (-1);
+	}
+
+	/* If IV hex provided, override the derived IV */
+	if (ivLen > 0 && opts->ivHex)
+ 	{
+ 		if (pbkdfHexToBytes(opts->ivHex, iv, ivLen) < 0)
+ 		{
+ 			ft_dprintf(STDERR_FILENO, "ft_ssl: invalid IV hex\n");
+ 			return (-1);
+ 		}
+ 	}
+
+	/* Display the derived key */
+	ft_dprintf(STDERR_FILENO, "key=");
+	for (size_t i = 0; i < keyLen; i++)
+		ft_dprintf(STDERR_FILENO, "%02X", key[i]);
+	ft_dprintf(STDERR_FILENO, "\n");
+
+	return (0);
 }

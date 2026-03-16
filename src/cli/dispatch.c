@@ -7,6 +7,7 @@
 
 #include "../../includes/cipher/base64.h"
 #include "../../includes/cipher/des.h"
+#include "../../includes/cipher/aes.h"
 
 const t_hashDispatch g_hashTable[] = {
 	{ ALGO_MD5,		&g_md5Hash },
@@ -17,11 +18,30 @@ const t_hashDispatch g_hashTable[] = {
 };
 
 const t_cipherDispatch g_cipherTable[] = {
+	/* Base64 */
 	{ ALGO_BASE64,	&g_base64Cipher },
-	{ ALGO_DES,		&g_desCipher }, /* Default to CBC for DES */
+	
+	/* DES family */
+	{ ALGO_DES,		&g_desCipher },
 	{ ALGO_DES_ECB,	&g_desEcbCipher },
 	{ ALGO_DES_CBC,	&g_desCbcCipher },
-	{ ALGO_NONE,	NULL }
+	
+	/* AES-128 family */
+	{ ALGO_AES_128,		&g_aes128Cipher },
+	{ ALGO_AES_128_ECB,	&g_aes128EcbCipher },
+	{ ALGO_AES_128_CBC,	&g_aes128CbcCipher },
+	
+	/* AES-192 family */
+	{ ALGO_AES_192,		&g_aes192Cipher },
+	{ ALGO_AES_192_ECB,	&g_aes192EcbCipher },
+	{ ALGO_AES_192_CBC,	&g_aes192CbcCipher },
+	
+	/* AES-256 family */
+	{ ALGO_AES_256,		&g_aes256Cipher },
+	{ ALGO_AES_256_ECB,	&g_aes256EcbCipher },
+	{ ALGO_AES_256_CBC,	&g_aes256CbcCipher },
+	
+	{ ALGO_NONE, NULL }
 };
 
 const t_hash *getHashByAlgo(t_algo algo)

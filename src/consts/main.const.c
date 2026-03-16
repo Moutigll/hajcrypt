@@ -12,7 +12,8 @@ const static t_header headers[] = {
 	{ "whirlpool", generateWhirlpoolHeader },
 	{ "base64", generateBase64Header },
 	{ "des", generateDesHeader },
-	{ "blake2b", generateBlake2bHeader }
+	{ "blake2b", generateBlake2bHeader },
+	{ "aes", generateAesHeader }
 };
 
 void writeUint32Hex(char buf[11], uint32_t n)
