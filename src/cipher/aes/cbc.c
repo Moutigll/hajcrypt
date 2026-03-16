@@ -238,9 +238,9 @@ void	aesCbcFinal(void *vctx, uint8_t *out, size_t *outLen)
 	.supportsWrap = 0                          \
 }
 
-const t_cipher	g_aes128CbcCipher = AES_CBC_CIPHER("aes-128-cbc", AES_KEY_SIZE_128);
-const t_cipher	g_aes192CbcCipher = AES_CBC_CIPHER("aes-192-cbc", AES_KEY_SIZE_192);
-const t_cipher	g_aes256CbcCipher = AES_CBC_CIPHER("aes-256-cbc", AES_KEY_SIZE_256);
+const t_cipher	g_aes128CbcCipher = AES_CBC_CIPHER("aes128-cbc", AES_KEY_SIZE_128);
+const t_cipher	g_aes192CbcCipher = AES_CBC_CIPHER("aes192-cbc", AES_KEY_SIZE_192);
+const t_cipher	g_aes256CbcCipher = AES_CBC_CIPHER("aes256-cbc", AES_KEY_SIZE_256);
 const t_cipher	g_aes128Cipher    = AES_CBC_CIPHER("aes128",      AES_KEY_SIZE_128);
 const t_cipher	g_aes192Cipher    = AES_CBC_CIPHER("aes192",      AES_KEY_SIZE_192);
 const t_cipher	g_aes256Cipher    = AES_CBC_CIPHER("aes256",      AES_KEY_SIZE_256);

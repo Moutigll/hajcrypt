@@ -160,6 +160,6 @@ void	aesEcbFinal(void *vctx, uint8_t *out, size_t *outLen)
 	.supportsWrap = 0                         \
 }
 
-const t_cipher	g_aes128EcbCipher = AES_ECB_CIPHER("aes-128-ecb", AES_KEY_SIZE_128);
-const t_cipher	g_aes192EcbCipher = AES_ECB_CIPHER("aes-192-ecb", AES_KEY_SIZE_192);
-const t_cipher	g_aes256EcbCipher = AES_ECB_CIPHER("aes-256-ecb", AES_KEY_SIZE_256);
+const t_cipher	g_aes128EcbCipher = AES_ECB_CIPHER("aes128-ecb", AES_KEY_SIZE_128);
+const t_cipher	g_aes192EcbCipher = AES_ECB_CIPHER("aes192-ecb", AES_KEY_SIZE_192);
+const t_cipher	g_aes256EcbCipher = AES_ECB_CIPHER("aes256-ecb", AES_KEY_SIZE_256);

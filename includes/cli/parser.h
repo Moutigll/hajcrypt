@@ -10,37 +10,51 @@ typedef enum e_cmdType {
 	CMD_CIPHER
 } t_cmdType;
 
+typedef enum e_kdfChoice {
+	KDF_BYTESTOKEY,  /* OpenSSL's legacy key derivation method (MD5-based) */
+	KDF_PBKDF2,
+	KDF_BCRYPT,
+	KDF_ARGON2D,
+	KDF_ARGON2I,
+	KDF_ARGON2ID
+} t_kdfChoice;
+
 typedef struct s_sslOptions
 {
 	t_algo		algo;
 	t_cmdType	cmdType;
 
-	int		flagP;
-	int		flagQ;
-	int		flagR;
-	int		flagK;
+/* ---------- Common options ---------- */
+	int		flagP;			/* -p for hash: echo stdin to stdout */
+	int		flagQ;			/* -q for hash: quiet mode, only print the hash */
+	int		flagR;			/* -r for hash: reverse the format of the output */
+	int		flagK;			/* -k for cipher: for HMAC (hash) and cipher key */
+	int		useBase64;		/* -a for hash: base64 encode the output, for cipher: base64 encode input and output */
 
-	char	*hmacKey;
-	char	*keyHex;
+	char	*hmacKey;		/* -k for cipher: HMAC key */
 
-	char	*password;
-	char	*ivHex;
+/* ---------- Cipher options ---------- */
+	char	*keyHex;		/* -k for cipher: key in hex */
+	char	*password;		/* -p password to derive key and iv from */
+	char	*saltHex;		/* -s salt in hex for key derivation */
+	char	*ivHex;			/* -i iv in hex */
+	char	*inputFile;		/* -i input file */
+	char	*outputFile;	/* -o output file */
+	int		isDecoding;		/* -d decrypt mode */
+	int		wrapOutput;		/* -w wrap output */
 
 	char	**stringInputs;
 	size_t	stringCount;
-
 	char	**fileInputs;
 	size_t	fileCount;
-
 	size_t	maxInputs;
-
 	int		readFromStdin;
 
-	/* Encoding */
-	int		isDecoding;
-	char	*inputFile;
-	char	*outputFile;
-	int		wrapOutput;
+/* ---------- Derived parameters ---------- */
+	t_kdfChoice	kdfChoice;
+	int			kdfIterations;
+	int			kdfMemory;
+	int			kdfParallelism;
 }	t_sslOptions;
 
 typedef struct {
@@ -49,27 +63,54 @@ typedef struct {
 } t_algoName;
 
 
+/**
+ * @brief Parses command-line arguments for SSL/TLS configuration options.
+ * 
+ * @param argc The number of command-line arguments.
+ * @param argv An array of pointers to command-line argument strings.
+ * @param opts A pointer to a t_sslOptions structure where parsed options will be stored.
+ * 
+ * @return An integer status code indicating success or failure:
+ *         - 0 on success
+ *         - Non-zero on error (specific error code depends on implementation)
+ * 
+ * @note The caller is responsible for ensuring that argv is valid and opts points
+ *       to a valid t_sslOptions structure.
+ */
 int	parseSslArgs(int argc, char **argv, t_sslOptions *opts);
 
+/**
+ * @brief Frees the memory allocated for SSL options structure.
+ * 
+ * Deallocates all dynamically allocated memory within the provided SSL options
+ * structure and optionally frees the structure itself.
+ * 
+ * @param opts Pointer to the t_sslOptions structure to be freed.
+ *             If NULL, the function should handle it gracefully.
+ * 
+ * @return void
+ * 
+ * @note Ensure that opts is not used after calling this function to avoid
+ *       use-after-free errors.
+ */
 void freeSslOptions(t_sslOptions *opts);
 
+/**
+ * @brief Retrieves the name of the algorithm as a string.
+ * 
+ * @param algo The algorithm enumeration value.
+ * @return const char* A pointer to a null-terminated string containing the name of the algorithm.
+ */
 const char *getAlgoName(t_algo algo);
 
+/**
+ * @brief Prints the name of the specified algorithm to standard output.
+ * 
+ * @param algo The algorithm type whose name is to be printed.
+ * 
+ * @return void
+ */
 void printAlgoName(t_algo algo);
 
-
-
-int processFd(int fd, const t_hash *hash, t_sslOptions *opts, const char *filename);
-
-int processString(const char *str, const t_hash *hash, t_sslOptions *opts);
-int	executeCipher(t_sslOptions *opts);
-
-/* ---------- Cipher io helpers ---------- */
-int	writeOutput(int fd, const uint8_t *data, size_t len,
-				int shouldWrap, int *lineLen);
-int	prepareKeyAndIv(t_sslOptions *opts, const t_cipher *cipher,
-					uint8_t *key, uint8_t *iv);
-int	openInputFile(const char *filename, const char *cipherName);
-int	openOutputFile(const char *filename, const char *cipherName);
 
 #endif /* HAJCRYPT_CLI_PARSER_H */

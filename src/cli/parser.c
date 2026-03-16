@@ -49,12 +49,73 @@ void freeSslOptions(t_sslOptions *opts)
 static void printUsage(void)
 {
 	ft_printf("Standard commands:\n");
+	
 	ft_printf("\nMessage Digest commands:\n");
 	for (size_t i = 0; g_hashTable[i].hash; i++)
 		ft_printf("\t%s\n", g_hashTable[i].hash->name);
+	
 	ft_printf("\nCipher commands:\n");
-	for (size_t i = 0; g_cipherTable[i].cipher; i++)
-		ft_printf("\t%s\n", g_cipherTable[i].cipher->name);
+	
+	size_t i = 0;
+	while (g_cipherTable[i].cipher)
+	{
+		const char *name = g_cipherTable[i].cipher->name;
+		
+		/* Check if the name contains a dash, which indicates it's a specific mode rather than a base algorithm */
+		int has_dash = 0;
+		for (const char *p = name; *p; p++)
+		{
+			if (*p == '-')
+			{
+				has_dash = 1;
+				break;
+			}
+		}
+		
+		/* If it's an alias, display it and check the following entries */
+		if (!has_dash)
+		{
+			ft_printf("\t%s", name);
+			
+			/* Search for modes that start with this alias + dash */
+			size_t j = i + 1;
+			int first = 1;
+			
+			while (g_cipherTable[j].cipher)
+			{
+				const char *next = g_cipherTable[j].cipher->name;
+				size_t k = 0;
+				
+				/* Check if next starts with "alias-" */
+				while (name[k] && next[k] && name[k] == next[k])
+					k++;
+				
+				if (name[k] == '\0' && next[k] == '-')
+				{
+					if (first)
+					{
+						ft_printf(", %s", next);
+						first = 0;
+					}
+					else
+						ft_printf(", %s", next);
+					j++;
+				}
+				else
+					break;
+			}
+			
+			ft_printf("\n");
+			i = j;  /* Sauter tous les modes déjà affichés */
+		}
+		else
+		{
+			/* Case of algorithms without alias (like base64 or standalone modes) */
+			ft_printf("\t%s\n", name);
+			i++;
+		}
+	}
+	
 	ft_printf("\nFlags:\n -p -q -r -s <string> -k <key> -e (encode) -d (decode) -i <input file> -o <output file>\n");
 }
 
@@ -145,7 +206,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 {
 	tFtGetopt st;
 	tFtGetoptStatus status;
-	const char *shortOpts = "pqrs:k:edi:o:v:";
+	const char *shortOpts = "pqrs:k:edi:o:v:a";
 
 	
 	/* minimal validation */
@@ -177,7 +238,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 	st.index = 0; /* reset index to start of options (argv[2]) */
 
 	/* iterate options */
-	for (;;)
+	while (1)
 	{
 		status = ft_getoptLong(&st, shortOpts, NULL);
 
@@ -192,6 +253,9 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 			freeSslOptions(opts);
 			return (1);
 		}
+
+		if (status == FT_GETOPT_POSITIONAL)
+			break; /* stop option parsing on first non-option */
 
 		if (status == FT_GETOPT_OK)
 		{
@@ -230,6 +294,9 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 					break;
 				case 'v':
 					opts->ivHex = (char *)st.optArg;
+					break;
+				case 'a':
+					opts->useBase64 = 1;
 					break;
 
 				case 's':

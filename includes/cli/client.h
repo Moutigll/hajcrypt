@@ -18,7 +18,16 @@ typedef enum e_algo
 	ALGO_BASE64,
 	ALGO_DES,
 	ALGO_DES_ECB,
-	ALGO_DES_CBC
+	ALGO_DES_CBC,
+	ALGO_AES_128,
+	ALGO_AES_192,
+	ALGO_AES_256,
+	ALGO_AES_128_ECB,
+	ALGO_AES_128_CBC,
+	ALGO_AES_192_ECB,
+	ALGO_AES_192_CBC,
+	ALGO_AES_256_ECB,
+	ALGO_AES_256_CBC
 }	t_algo;
 
 typedef struct s_hashDispatch
@@ -32,10 +41,28 @@ typedef struct s_cipherDispatch
 	t_algo			algo;
 	const t_cipher	*cipher;
 }	t_cipherDispatch;
+
 extern const	t_hashDispatch g_hashTable[];
 extern const	t_cipherDispatch g_cipherTable[];
 
+/**
+ * @brief Retrieves a hash structure based on the specified algorithm.
+ * 
+ * @param algo The algorithm type to look up the corresponding hash structure.
+ * 
+ * @return A pointer to a constant t_hash structure matching the given algorithm,
+ *         or NULL if the algorithm is not found.
+ */
 const t_hash	*getHashByAlgo(t_algo algo);
+
+/**
+ * @brief Retrieves a cipher structure based on the specified algorithm.
+ * 
+ * @param algo The algorithm type to look up the corresponding cipher structure.
+ * 
+ * @return A pointer to a constant t_cipher structure matching the given algorithm,
+ *         or NULL if the algorithm is not found.
+ */
 const t_cipher	*getCipherByAlgo(t_algo algo);
 
 #endif /* HAJCRYPT_CLI_CLIENT_H */
