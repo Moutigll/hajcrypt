@@ -57,11 +57,27 @@ static void printUsage(void)
 	ft_printf("\nCipher commands:\n");
 	
 	size_t i = 0;
+	char last_generic[32] = "";
+	int first = 1;
+	
 	while (g_cipherTable[i].cipher)
 	{
 		const char *name = g_cipherTable[i].cipher->name;
-		
-		/* Check if the name contains a dash, which indicates it's a specific mode rather than a base algorithm */
+
+		char generic[32] = {0};
+		int j = 0;
+		while (name[j] && !(name[j] >= '0' && name[j] <= '9'))
+		{
+			generic[j] = name[j];
+			j++;
+		}
+		generic[j] = '\0';
+
+		if (!first && ft_strcmp(generic, last_generic) != 0)
+			ft_printf("\n");
+		first = 0;
+		ft_strlcpy(last_generic, generic, sizeof(last_generic));
+
 		int has_dash = 0;
 		for (const char *p = name; *p; p++)
 		{
@@ -72,51 +88,53 @@ static void printUsage(void)
 			}
 		}
 		
-		/* If it's an alias, display it and check the following entries */
 		if (!has_dash)
 		{
 			ft_printf("\t%s", name);
-			
-			/* Search for modes that start with this alias + dash */
-			size_t j = i + 1;
-			int first = 1;
-			
-			while (g_cipherTable[j].cipher)
+
+			const char *num = name + j;
+			char prefix[64] = {0};
+			ft_strlcpy(prefix, generic, sizeof(prefix));
+			ft_strlcat(prefix, "-", sizeof(prefix));
+			if (num[0] != '\0')
 			{
-				const char *next = g_cipherTable[j].cipher->name;
-				size_t k = 0;
-				
-				/* Check if next starts with "alias-" */
-				while (name[k] && next[k] && name[k] == next[k])
-					k++;
-				
-				if (name[k] == '\0' && next[k] == '-')
+				ft_strlcat(prefix, num, sizeof(prefix));
+				ft_strlcat(prefix, "-", sizeof(prefix));
+			}
+			size_t k = i + 1;
+			while (g_cipherTable[k].cipher)
+			{
+				const char *next = g_cipherTable[k].cipher->name;
+				if (ft_strncmp(next, prefix, ft_strlen(prefix)) == 0)
 				{
-					if (first)
-					{
-						ft_printf(", %s", next);
-						first = 0;
-					}
-					else
-						ft_printf(", %s", next);
-					j++;
+					ft_printf(", %s", next);
+					k++;
 				}
 				else
 					break;
 			}
-			
 			ft_printf("\n");
-			i = j;  /* Sauter tous les modes déjà affichés */
+			i = k;
 		}
 		else
 		{
-			/* Case of algorithms without alias (like base64 or standalone modes) */
 			ft_printf("\t%s\n", name);
 			i++;
 		}
 	}
 	
-	ft_printf("\nFlags:\n -p -q -r -s <string> -k <key> -e (encode) -d (decode) -i <input file> -o <output file>\n");
+	ft_printf("\n\nFlags:\n"
+	"\t-p <password>\n\t\tHash: read from stdin and print it\n\t\tCipher: Password in ASCII (for key derivation)\n"
+	"\t-q\t\tQuiet mode - only print the hash\n"
+	"\t-r\t\tReverse output format\n"
+	"\t-s <salt>\tSalt in hex (for key derivation)\n"
+	"\t-k <key>\tKey in hex (direct key, no derivation)\n"
+	"\t-e\t\tEncrypt mode (default)\n"
+	"\t-d\t\tDecrypt mode\n"
+	"\t-i <file>\tInput file\n"
+	"\t-o <file>\tOutput file\n"
+	"\t-a\t\tBase64 encode/decode input/output\n"
+);
 }
 
 static int initSslOptions(t_sslOptions *opts, int argc)
@@ -206,7 +224,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 {
 	tFtGetopt st;
 	tFtGetoptStatus status;
-	const char *shortOpts = "pqrs:k:edi:o:v:a";
+	const char *shortOpts;
 
 	
 	/* minimal validation */
@@ -233,6 +251,11 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		opts->readFromStdin = 1;
 		return (0);
 	}
+
+	if (opts->cmdType == CMD_HASH)
+		shortOpts = "pqrs:";
+	else
+		shortOpts = "p:qreds:k:i:o:v:a";
 
 	ft_getoptInit(&st, argc - 2, argv + 2);
 	st.index = 0; /* reset index to start of options (argv[2]) */
@@ -262,8 +285,24 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 			switch (st.opt)
 			{
 				case 'p':
-					opts->flagP = 1;
-					opts->readFromStdin = 1;
+					if (opts->cmdType == CMD_HASH)
+					{
+						/* For hashes: -p means read from stdin and print it */
+						opts->flagP = 1;
+						opts->readFromStdin = 1;
+					}
+					else
+					{
+						/* For ciphers: -p means password provided in ASCII for key derivation */
+						if (st.optArg)
+							opts->password = (char *)st.optArg;
+						else
+						{
+							ft_dprintf(STDERR_FILENO, "ft_ssl: %s: option requires an argument -- p\n", argv[1]);
+							freeSslOptions(opts);
+							return (1);
+						}
+					}
 					break;
 				case 'q':
 					opts->flagQ = 1;
@@ -302,14 +341,17 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 				case 's':
 					if (st.optArg)
 					{
-						if (opts->stringCount < opts->maxInputs)
-							opts->stringInputs[opts->stringCount++] = (char *)st.optArg;
+						if (opts->cmdType == CMD_HASH)
+							if (opts->stringCount < opts->maxInputs)
+								opts->stringInputs[opts->stringCount++] = (char *)st.optArg;
+							else
+							{
+								ft_dprintf(STDERR_FILENO, "ft_ssl: too many inputs\n");
+								freeSslOptions(opts);
+								return (1);
+							}
 						else
-						{
-							ft_dprintf(STDERR_FILENO, "ft_ssl: too many inputs\n");
-							freeSslOptions(opts);
-							return (1);
-						}
+							opts->saltHex = (char *)st.optArg;
 					}
 					else
 					{

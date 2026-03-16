@@ -1,8 +1,11 @@
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "../../hajlib/include/hprintf.h"
+
+#include "../../includes/cli/algoHandling.h"
 #include "../../includes/cli/parser.h"
 
 
@@ -53,7 +56,7 @@ static int executeSsl(t_sslOptions *opts)
 		if (opts->readFromStdin && !opts->flagP)
 			processFd(STDIN_FILENO, hash, opts, NULL);
 	} else if (opts->cmdType == CMD_CIPHER) {
-		return executeCipher(opts);
+		return (executeCipher(opts));
 	}
 
 	return (0);

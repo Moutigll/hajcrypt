@@ -1,5 +1,13 @@
-#include "../../includes/kdf/kdf.h"
+#include "../../hajlib/include/hmemory.h"
+#include "../../hajlib/include/hstring.h"
 
+#include "../../includes/hash/sha256.h"
+#include "../../includes/kdf/bytesToKey.h"
+#include "../../includes/kdf/pbkdf2.h"
+#include "../../includes/kdf/bcrypt.h"
+#include "../../includes/kdf/argon2.h"
+
+#include "../../includes/kdf/kdf.h"
 
 
 int	pbkdfHexToBytes(const char *hex, uint8_t *bytes, size_t maxBytes)
@@ -49,4 +57,69 @@ int	pbkdfHexToBytes(const char *hex, uint8_t *bytes, size_t maxBytes)
 	}
 	
 	return ((int)(hexLen / 2));
+}
+
+int deriveKeyFromParams(t_sslOptions *opts, uint8_t *key, size_t keyLen, uint8_t *iv)
+{
+	uint8_t	salt[8];
+	size_t	saltLen = 8;
+	
+	/* Convert salt from hex to bytes */
+	if (opts->saltHex) {
+		if (pbkdfHexToBytes(opts->saltHex, salt, 8) < 0)
+			return (-1);
+	} else
+		return (-1);
+
+	switch (opts->kdfChoice) {
+		case KDF_BYTESTOKEY:
+			return (pbkdfBytesToKeyExtended(opts->password,
+										  ft_strlen(opts->password),
+										  salt, keyLen, key, iv));
+		
+		case KDF_PBKDF2: {
+			t_pbkdf2Ctx ctx;
+			pbkdf2Init(&ctx, &g_sha256Hash,
+					  (const uint8_t*)opts->password,
+					  ft_strlen(opts->password),
+					  salt, saltLen,
+					  opts->kdfIterations);
+			return (pbkdf2Derive(&ctx, key, keyLen) == 0 ? 0 : -1);
+		}
+		
+		case KDF_BCRYPT: {
+			uint8_t derived[24];
+			int ret = bcryptHash(opts->password, salt,
+								opts->kdfIterations, (char*)derived);
+			if (ret != 0) return (-1);
+			ft_memcpy(key, derived, keyLen < 24 ? keyLen : 24);
+			return (0);
+		}
+		
+		case KDF_ARGON2D:
+		case KDF_ARGON2I:
+		case KDF_ARGON2ID: {
+			t_argon2Type type;
+			t_argon2Ctx ctx;
+			
+			type = (opts->kdfChoice == KDF_ARGON2D) ? ARGON2_D :
+				   (opts->kdfChoice == KDF_ARGON2I) ? ARGON2_I : ARGON2_ID;
+			
+			argon2Init(&ctx,
+					  (const uint8_t*)opts->password,
+					  ft_strlen(opts->password),
+					  salt, saltLen,
+					  opts->kdfMemory,
+					  opts->kdfIterations,
+					  opts->kdfParallelism,
+					  type);
+			ctx.outputLen = keyLen;
+			int ret = argon2Hash(&ctx, key, keyLen);
+			argon2Free(&ctx);
+			return (ret == 0 ? 0 : -1);
+		}
+		
+		default:
+			return (-1);
+	}
 }
