@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "cipher.h"
+#include "modes.h"
 
 /* AES block size in bytes */
 #define AES_BLOCK_SIZE 16
@@ -44,12 +45,9 @@ typedef struct s_aesEcbCtx
  */
 typedef struct s_aesCbcCtx
 {
+	t_cbcGenCtx			cbcCtx;					/* CBC context */
 	uint32_t			roundKeys[60];			/* Expanded key schedule (max for AES-256) */
 	uint32_t			nbRounds;				/* Number of rounds (10/12/14) */
-	uint8_t				iv[AES_BLOCK_SIZE] __attribute__((aligned(16)));		/* Initialization vector */
-	uint8_t				buffer[AES_BLOCK_SIZE] __attribute__((aligned(16)));	/* Buffer for partial block */
-	size_t				bufferLen;				/* Number of bytes in buffer */
-	t_cipherDirection	dir;					/* Encryption or decryption mode */
 }	t_aesCbcCtx;
 
 /* ---------- Core AES operations ---------- */

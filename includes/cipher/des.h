@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "cipher.h"
+#include "modes.h"
 
 /**
  * @brief DES ECB (Electronic Codebook) context structure.
@@ -29,11 +30,8 @@ typedef struct s_desEcbCtx
  */
 typedef struct s_desCbcCtx
 {
+	t_cbcGenCtx			cbcCtx;			/* CBC context */
 	uint64_t			subkeys[16];	/* 16 round subkeys (48 bits each) */
-	uint64_t			iv;				/* Initialization vector */
-	uint8_t				buffer[8];		/* Buffer for partial block */
-	size_t				bufferLen;		/* Number of bytes in buffer */
-	t_cipherDirection	dir;			/* Encryption or decryption mode */
 }	t_desCbcCtx;
 
 /* ---------- Core DES operations ---------- */
