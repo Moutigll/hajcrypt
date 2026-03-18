@@ -25,21 +25,33 @@ const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_DES,		&g_desCipher },
 	{ ALGO_DES_ECB,	&g_desEcbCipher },
 	{ ALGO_DES_CBC,	&g_desCbcCipher },
+	{ ALGO_DES_CFB,	&g_desCfbCipher },
+	{ ALGO_DES_CFB1,	&g_desCfb1Cipher },
+	{ ALGO_DES_CFB8,	&g_desCfb8Cipher },
 	
 	/* AES-128 family */
 	{ ALGO_AES_128,		&g_aes128Cipher },
 	{ ALGO_AES_128_ECB,	&g_aes128EcbCipher },
 	{ ALGO_AES_128_CBC,	&g_aes128CbcCipher },
+	{ ALGO_AES_128_CFB,	&g_aes128CfbCipher },
+	{ ALGO_AES_128_CFB1,	&g_aes128Cfb1Cipher },
+	{ ALGO_AES_128_CFB8,	&g_aes128Cfb8Cipher },
 	
 	/* AES-192 family */
 	{ ALGO_AES_192,		&g_aes192Cipher },
 	{ ALGO_AES_192_ECB,	&g_aes192EcbCipher },
 	{ ALGO_AES_192_CBC,	&g_aes192CbcCipher },
+	{ ALGO_AES_192_CFB,	&g_aes192CfbCipher },
+	{ ALGO_AES_192_CFB1,	&g_aes192Cfb1Cipher },
+	{ ALGO_AES_192_CFB8,	&g_aes192Cfb8Cipher },
 	
 	/* AES-256 family */
 	{ ALGO_AES_256,		&g_aes256Cipher },
 	{ ALGO_AES_256_ECB,	&g_aes256EcbCipher },
 	{ ALGO_AES_256_CBC,	&g_aes256CbcCipher },
+	{ ALGO_AES_256_CFB,	&g_aes256CfbCipher },
+	{ ALGO_AES_256_CFB1,	&g_aes256Cfb1Cipher },
+	{ ALGO_AES_256_CFB8,	&g_aes256Cfb8Cipher },
 	
 	{ ALGO_NONE, NULL }
 };

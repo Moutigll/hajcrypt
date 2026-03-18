@@ -144,20 +144,20 @@ void	aesEcbFinal(void *vctx, uint8_t *out, size_t *outLen)
 /* ---------- Cipher descriptors ---------- */
 
 #define AES_ECB_CIPHER(name_str, key_size) { \
-	.name        = name_str,                  \
-	.mode        = CIPHER_MODE_ECB,           \
-	.isEncoder   = 1,                         \
-	.blockSize   = AES_BLOCK_SIZE,            \
-	.keySize     = key_size,                  \
-	.ivSize      = 0,                         \
-	.ctxSize     = sizeof(t_aesEcbCtx),       \
-	.init        = aesEcbInit,                \
-	.update      = aesEcbUpdate,              \
-	.final       = aesEcbFinal,               \
-	.free        = aesEcbFree,                \
-	.pad         = pkcs7Pad,                  \
-	.unpad       = pkcs7Unpad,                \
-	.supportsWrap = 0                         \
+	.name			= name_str,				\
+	.mode			= CIPHER_MODE_ECB,		\
+	.isEncoder		= 1,					\
+	.blockSize		= AES_BLOCK_SIZE,		\
+	.keySize		= key_size,				\
+	.ivSize			= 0,					\
+	.ctxSize		= sizeof(t_aesEcbCtx),	\
+	.init			= aesEcbInit,			\
+	.update			= aesEcbUpdate,			\
+	.final			= aesEcbFinal,			\
+	.free			= aesEcbFree,			\
+	.pad			= pkcs7Pad,				\
+	.unpad			= pkcs7Unpad,			\
+	.supportsWrap	= 0						\
 }
 
 const t_cipher	g_aes128EcbCipher = AES_ECB_CIPHER("aes-128-ecb", AES_KEY_SIZE_128);

@@ -46,6 +46,8 @@ typedef enum e_cipherMode
 	CIPHER_MODE_ECB,		/* Electronic Codebook */
 	CIPHER_MODE_CBC,		/* Cipher Block Chaining */
 	CIPHER_MODE_CFB,		/* Cipher Feedback */
+	CIPHER_MODE_CFB1,		/* CFB with 1-bit feedback */
+	CIPHER_MODE_CFB8,		/* CFB with 8-bit feedback */
 	CIPHER_MODE_OFB,		/* Output Feedback */
 	CIPHER_MODE_CTR,		/* Counter */
 	CIPHER_MODE_GCM,		/* Galois/Counter Mode */

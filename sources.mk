@@ -37,21 +37,24 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/blake2b/transform.c \
 	$(SRC_DIR)/hash/hmac.c \
 	$(SRC_DIR)/cipher/utils.c \
+	$(SRC_DIR)/cipher/modes/cbc.c \
+	$(SRC_DIR)/cipher/modes/cfb.c \
 	$(SRC_DIR)/cipher/base64.c \
 	$(SRC_DIR)/cipher/blowfish/transform.c \
 	$(SRC_DIR)/cipher/des/transform.c \
 	$(SRC_DIR)/cipher/des/ecb.c \
 	$(SRC_DIR)/cipher/des/cbc.c \
+	$(SRC_DIR)/cipher/des/cfb.c \
 	$(SRC_DIR)/cipher/aes/transform.c \
 	$(SRC_DIR)/cipher/aes/ecb.c \
 	$(SRC_DIR)/cipher/aes/cbc.c \
+	$(SRC_DIR)/cipher/aes/cfb.c \
 	$(SRC_DIR)/cipher/aes/transform_arm64.c \
 	$(SRC_DIR)/kdf/kdf.c \
 	$(SRC_DIR)/kdf/bytesToKey.c \
 	$(SRC_DIR)/kdf/pbkdf2.c \
 	$(SRC_DIR)/kdf/bcrypt.c \
-	$(SRC_DIR)/kdf/argon2.c \
-	$(SRC_DIR)/cipher/modes/cbc.c
+	$(SRC_DIR)/kdf/argon2.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s

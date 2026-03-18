@@ -50,6 +50,19 @@ typedef struct s_aesCbcCtx
 	uint32_t			nbRounds;				/* Number of rounds (10/12/14) */
 }	t_aesCbcCtx;
 
+/**
+ * @brief AES CFB (Cipher Feedback) context structure.
+ * 
+ * Maintains state for AES encryption/decryption in CFB mode.
+ * Supports 128, 192, and 256-bit keys.
+ */
+typedef struct s_aesCfbCtx
+{
+	t_cfbGenCtx			cfbCtx;					/* CFB context */
+	uint32_t			roundKeys[60];			/* Expanded key schedule (max for AES-256) */
+	uint32_t			nbRounds;				/* Number of rounds (10/12/14) */
+}	t_aesCfbCtx;
+
 /* ---------- Core AES operations ---------- */
 
 /**
@@ -213,6 +226,120 @@ void	aesCbcFinal(void *ctx, uint8_t *out, size_t *outLen);
  */
 void	aesCbcFree(void *ctx);
 
+/* ---------- CFB mode functions ---------- */
+
+/**
+ * @brief Initializes AES CFB context with key, IV, and direction.
+ * 
+ * @param ctx Pointer to AES CFB context
+ * @param key Encryption key (16, 24, or 32 bytes)
+ * @param keyLen Length of key in bytes
+ * @param iv Initialization vector (16 bytes, NULL for zeros)
+ * @param dir Encryption or decryption direction
+ */
+int	aesCfbInit(void					*ctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
+
+/**
+ * @brief Updates AES CFB context with input data.
+ * 
+ * Processes input data in 16-byte blocks with cipher feedback mode.
+ * 
+ * @param ctx Pointer to AES CFB context
+ * @param in Input data buffer
+ * @param inLen Length of input data
+ * @param out Output buffer for processed data
+ * @param outLen Number of bytes written to output
+ */
+void	aesCfbUpdate(void			*ctx,
+					 const uint8_t	*in,
+					 size_t			inLen,
+					 uint8_t		*out,
+					 size_t			*outLen);
+
+/**
+ * @brief Finalizes AES CFB operation.
+ * 
+ * CFB mode does not require padding, so this function may be a no-op.
+ * 
+ * @param ctx Pointer to AES CFB context
+ * @param out Output buffer for final data (unused)
+ * @param outLen Number of bytes written to output (set to 0)
+ */
+void	aesCfbFinal(void *ctx, uint8_t *out, size_t *outLen);
+
+/**
+ * @brief Frees AES CFB context resources.
+ * 
+ * @param ctx Pointer to AES CFB context
+ */
+void	aesCfbFree(void *ctx);
+
+/**
+ * @brief Initializes AES CFB1 context with key, IV, and direction.
+ * 
+ * CFB1 mode operates on single bits, so this function may set up additional state.
+ * 
+ * @param ctx Pointer to AES CFB1 context
+ * @param key Encryption key (16, 24, or 32 bytes)
+ * @param keyLen Length of key in bytes
+ * @param iv Initialization vector (16 bytes, NULL for zeros)
+ * @param dir Encryption or decryption direction
+ */
+int	aesCfb1Init(void				*ctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
+
+/**
+ * @brief Updates AES CFB1 context with input data.
+ * 
+ * Processes input data bit by bit, which may require special handling.
+ * 
+ * @param ctx Pointer to AES CFB1 context
+ * @param in Input data buffer (bit-packed)
+ * @param inLen Length of input data in bits
+ * @param out Output buffer for processed data (bit-packed)
+ * @param outLen Number of bits written to output
+ */
+void	aesCfb1Update(void			*ctx,
+					 const uint8_t	*in,
+					 size_t			inLen,
+					 uint8_t		*out,
+					 size_t			*outLen);
+
+/**
+ * @brief Finalizes AES CFB1 operation.
+ * 
+ * CFB1 mode does not require padding, so this function may be a no-op.
+ * 
+ * @param ctx Pointer to AES CFB1 context
+ * @param out Output buffer for final data (unused)
+ * @param outLen Number of bits written to output (set to 0)
+ */
+void	aesCfb1Final(void *ctx, uint8_t *out, size_t *outLen);
+
+/**
+ * @brief Initializes AES CFB8 context with key, IV, and direction.
+ * 
+ * CFB8 mode operates on bytes, so this function may set up additional state.
+ * 
+ * @param ctx Pointer to AES CFB8 context
+ * @param key Encryption key (16, 24, or 32 bytes)
+ * @param keyLen Length of key in bytes
+ * @param iv Initialization vector (16 bytes, NULL for zeros)
+ * @param dir Encryption or decryption direction
+ */
+int	aesCfb8Init(void				*ctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
+
 /* ---------- ARM64 optimized functions ---------- */
 
 /**
@@ -247,5 +374,17 @@ extern const t_cipher g_aes256CbcCipher;
 extern const t_cipher g_aes128Cipher;
 extern const t_cipher g_aes192Cipher;
 extern const t_cipher g_aes256Cipher;
+
+extern const t_cipher g_aes128CfbCipher;
+extern const t_cipher g_aes192CfbCipher;
+extern const t_cipher g_aes256CfbCipher;
+
+extern const t_cipher g_aes128Cfb8Cipher;
+extern const t_cipher g_aes192Cfb8Cipher;
+extern const t_cipher g_aes256Cfb8Cipher;
+
+extern const t_cipher g_aes128Cfb1Cipher;
+extern const t_cipher g_aes192Cfb1Cipher;
+extern const t_cipher g_aes256Cfb1Cipher;
 
 #endif /* HAJCRYPT_AES_H */
