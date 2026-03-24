@@ -63,6 +63,19 @@ typedef struct s_aesCfbCtx
 	uint32_t			nbRounds;				/* Number of rounds (10/12/14) */
 }	t_aesCfbCtx;
 
+/**
+ * @brief AES OFB (Output Feedback) context structure.
+ * 
+ * Maintains state for AES encryption/decryption in OFB mode.
+ * Supports 128, 192, and 256-bit keys.
+ */
+typedef struct s_aesOfbCtx
+{
+	t_ofbGenCtx			ofbCtx;					/* OFB context */
+	uint32_t			roundKeys[60];			/* Expanded key schedule (max for AES-256) */
+	uint32_t			nbRounds;				/* Number of rounds (10/12/14) */
+}	t_aesOfbCtx;
+
 /* ---------- Core AES operations ---------- */
 
 /**
@@ -340,6 +353,58 @@ int	aesCfb8Init(void				*ctx,
 			   const uint8_t		*iv,
 			   t_cipherDirection	dir);
 
+/* --------- OFB mode functions ---------- */
+
+/**
+ * @brief Initializes AES OFB context with key, IV, and direction.
+ * 
+ * @param ctx Pointer to AES OFB context
+ * @param key Encryption key (16, 24, or 32 bytes)
+ * @param keyLen Length of key in bytes
+ * @param iv Initialization vector (16 bytes, NULL for zeros)
+ * @param dir Encryption or decryption direction (OFB uses the same process for both)
+ */
+int	aesOfbInit(void					*vctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
+
+/**
+ * @brief Updates AES OFB context with input data.
+ * 
+ * Processes input data in 16-byte blocks with output feedback mode.
+ * 
+ * @param ctx Pointer to AES OFB context
+ * @param in Input data buffer
+ * @param inLen Length of input data
+ * @param out Output buffer for processed data
+ * @param outLen Number of bytes written to output
+ */
+void	aesOfbUpdate(void			*vctx,
+					 const uint8_t	*in,
+					 size_t			inLen,
+					 uint8_t		*out,
+					 size_t			*outLen);
+
+/**
+ * @brief Finalizes AES OFB operation.
+ * 
+ * OFB mode does not require padding, so this function may be a no-op.
+ * 
+ * @param ctx Pointer to AES OFB context
+ * @param out Output buffer for final data (unused)
+ * @param outLen Number of bytes written to output (set to 0)
+ */
+void	aesOfbFinal(void *vctx, uint8_t *out, size_t *outLen);
+
+/**
+ * @brief Frees AES OFB context resources.
+ * 
+ * @param ctx Pointer to AES OFB context
+ */
+void	aesOfbFree(void *vctx);
+
 /* ---------- ARM64 optimized functions ---------- */
 
 /**
@@ -386,5 +451,9 @@ extern const t_cipher g_aes256Cfb8Cipher;
 extern const t_cipher g_aes128Cfb1Cipher;
 extern const t_cipher g_aes192Cfb1Cipher;
 extern const t_cipher g_aes256Cfb1Cipher;
+
+extern const t_cipher g_aes128OfbCipher;
+extern const t_cipher g_aes192OfbCipher;
+extern const t_cipher g_aes256OfbCipher;
 
 #endif /* HAJCRYPT_AES_H */

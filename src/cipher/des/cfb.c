@@ -82,10 +82,10 @@ void desCfbUpdate(void *vctx, const uint8_t *in, size_t inLen, uint8_t *out, siz
 
 void desCfb1Update(void *vctx, const uint8_t *in, size_t inLen, uint8_t *out, size_t *outLen)
 {
-    t_desCfbCtx *ctx = vctx;
-    size_t outBits = 0;
-    cfb1Update(&ctx->cfbCtx, in, inLen * 8, out, &outBits);
-    *outLen = (outBits + 7) / 8;
+	t_desCfbCtx *ctx = vctx;
+	size_t outBits = 0;
+	cfb1Update(&ctx->cfbCtx, in, inLen * 8, out, &outBits);
+	*outLen = (outBits + 7) / 8;
 }
 
 void desCfbFinal(void *vctx, uint8_t *out, size_t *outLen)

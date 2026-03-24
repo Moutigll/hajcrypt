@@ -46,6 +46,18 @@ typedef struct s_desCfbCtx
 	uint64_t			subkeys[16];	/* 16 round subkeys (48 bits each) */
 }	t_desCfbCtx;
 
+/**
+ * @brief DES OFB (Output Feedback) context structure.
+ * 
+ * Maintains state for DES encryption/decryption in OFB mode.
+ * OFB mode generates keystream blocks independent of plaintext/ciphertext.
+ */
+typedef struct s_desOfbCtx
+{
+	t_ofbGenCtx			ofbCtx;			/* OFB context */
+	uint64_t			subkeys[16];	/* 16 round subkeys (48 bits each) */
+}	t_desOfbCtx;
+
 /* ---------- Core DES operations ---------- */
 
 /**
@@ -324,6 +336,52 @@ int	desCfb8Init(void					*ctx,
 			   const uint8_t			*iv,
 			   t_cipherDirection		dir);
 
+/* ---------- OFB mode functions ---------- */
+
+/**
+ * @brief Initializes a DES cipher in OFB (Output Feedback) mode.
+ * 
+ * @param vctx Pointer to the cipher context structure to be initialized.
+ * @param key Pointer to the encryption key buffer.
+ * @param keyLen Length of the key in bytes.
+ * @param iv Pointer to the initialization vector buffer.
+ * @param dir The cipher direction (encrypt or decrypt).
+ * 
+ * @return On success, returns 0. On error, returns a non-zero error code.
+ */
+int	desOfbInit(void					*vctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
+
+/**
+ * @brief Frees resources associated with a DES OFB context.
+ * 
+ * @param vctx Pointer to the DES OFB context to be freed.
+ */
+void	desOfbFree(void *vctx);
+
+/**
+ * @brief Updates the DES OFB context with input data, producing output data.
+ * 
+ * @param vctx Pointer to the DES OFB context.
+ * @param in Pointer to the input data buffer.
+ * @param inLen Length of the input data in bytes.
+ * @param out Pointer to the output buffer where processed data will be written.
+ * @param outLen Pointer to a size_t variable where the number of bytes written to output will be stored.
+ */
+void	desOfbUpdate(void *vctx, const uint8_t *in, size_t inLen, uint8_t *out, size_t *outLen);
+
+/**
+ * @brief Finalizes the DES OFB operation, writing any remaining output data.
+ * 
+ * @param vctx Pointer to the DES OFB context.
+ * @param out Pointer to the output buffer where final data will be written.
+ * @param outLen Pointer to a size_t variable where the number of bytes written to output will be stored.
+ */
+void	desOfbFinal(void *vctx, uint8_t *out, size_t *outLen);
+
 /* ---------- Global cipher structures ---------- */
 
 /**
@@ -367,5 +425,12 @@ extern const t_cipher	g_desCfb1Cipher;
  * Implements the t_cipher interface for DES CFB8 mode.
  */
 extern const t_cipher	g_desCfb8Cipher;
+
+/**
+ * @brief DES OFB cipher structure for dispatch table.
+ * 
+ * Implements the t_cipher interface for DES OFB mode.
+ */
+extern const t_cipher	g_desOfbCipher;
 
 #endif /* HAJCRYPT_DES_H */

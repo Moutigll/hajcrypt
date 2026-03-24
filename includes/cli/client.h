@@ -22,6 +22,7 @@ typedef enum e_algo
 	ALGO_DES_CFB,
 	ALGO_DES_CFB1,
 	ALGO_DES_CFB8,
+	ALGO_DES_OFB,
 	ALGO_AES_128,
 	ALGO_AES_192,
 	ALGO_AES_256,
@@ -39,7 +40,10 @@ typedef enum e_algo
 	ALGO_AES_256_CFB1,
 	ALGO_AES_128_CFB8,
 	ALGO_AES_192_CFB8,
-	ALGO_AES_256_CFB8
+	ALGO_AES_256_CFB8,
+	ALGO_AES_128_OFB,
+	ALGO_AES_192_OFB,
+	ALGO_AES_256_OFB
 }	t_algo;
 
 typedef struct s_hashDispatch
