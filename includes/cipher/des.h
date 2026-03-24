@@ -58,6 +58,18 @@ typedef struct s_desOfbCtx
 	uint64_t			subkeys[16];	/* 16 round subkeys (48 bits each) */
 }	t_desOfbCtx;
 
+/**
+ * @brief DES CTR (Counter) context structure.
+ * 
+ * Maintains state for DES encryption/decryption in CTR mode.
+ * CTR mode generates keystream blocks by encrypting a counter value.
+ */
+typedef struct s_desCtrCtx {
+    t_ctrGenCtx  ctrCtx;
+    uint64_t     subkeys[16];
+} t_desCtrCtx;
+
+
 /* ---------- Core DES operations ---------- */
 
 /**
@@ -382,6 +394,54 @@ void	desOfbUpdate(void *vctx, const uint8_t *in, size_t inLen, uint8_t *out, siz
  */
 void	desOfbFinal(void *vctx, uint8_t *out, size_t *outLen);
 
+/* ---------- CTR mode functions ---------- */
+
+/**
+ * @brief Initializes a DES cipher in CTR (Counter) mode.
+ * 
+ * @param vctx Pointer to the cipher context structure to be initialized.
+ * @param key Pointer to the encryption key buffer.
+ * @param keyLen Length of the key in bytes.
+ * @param iv Pointer to the initialization vector buffer (used as initial counter).
+ * @param dir The cipher direction (encrypt or decrypt).
+ * 
+ * @return On success, returns 0. On error, returns a non-zero error code.
+ */
+int	desCtrInit(void					*vctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
+
+/**
+ * @brief Frees resources associated with a DES CTR context.
+ * 
+ * @param vctx Pointer to the DES CTR context to be freed.
+ */
+void	desCtrFree(void *vctx);
+
+/**
+ * @brief Updates the DES CTR context with input data, producing output data.
+ * 
+ * @param vctx Pointer to the DES CTR context.
+ * @param in Pointer to the input data buffer.
+ * @param inLen Length of the input data in bytes.
+ * @param out Pointer to the output buffer where processed data will be written.
+ * @param outLen Pointer to a size_t variable where the number of bytes written to output will be stored.
+ */
+void	desCtrUpdate(void *vctx, const uint8_t *in, size_t inLen, uint8_t *out, size_t *outLen);
+
+/**
+ * @brief Finalizes the DES CTR operation, writing any remaining output data.
+ * This function is not needed to do anything for CTR mode, as it operates as a stream cipher,
+ * but it is included for interface consistency.
+ * 
+ * @param vctx Pointer to the DES CTR context.
+ * @param out Pointer to the output buffer where final data will be written.
+ * @param outLen Pointer to a size_t variable where the number of bytes written to output will be stored.
+ */
+void	desCtrFinal(void *vctx, uint8_t *out, size_t *outLen);
+
 /* ---------- Global cipher structures ---------- */
 
 /**
@@ -432,5 +492,12 @@ extern const t_cipher	g_desCfb8Cipher;
  * Implements the t_cipher interface for DES OFB mode.
  */
 extern const t_cipher	g_desOfbCipher;
+
+/**
+ * @brief DES CTR cipher structure for dispatch table.
+ * 
+ * Implements the t_cipher interface for DES CTR mode.
+ */
+extern const t_cipher	g_desCtrCipher;
 
 #endif /* HAJCRYPT_DES_H */

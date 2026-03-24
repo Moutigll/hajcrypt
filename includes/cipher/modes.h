@@ -37,6 +37,16 @@ typedef struct s_ofbGenCtx {
 	void (*processBlock)(const uint8_t*, uint8_t*, const void*);
 } t_ofbGenCtx;
 
+typedef struct s_ctrGenCtx {
+	uint8_t		iv[64]			__attribute__((aligned(16)));
+	uint8_t		counter[64]		__attribute__((aligned(16)));	/* Current counter block (incremented each block) */
+	uint8_t		keystream[64]	__attribute__((aligned(16)));	/* E(counter) output, consumed byte by byte */
+	size_t		keystreamOff;									/* Bytes already consumed in keystream */
+	size_t		blockSize;
+	const void	*cipherCtx;
+	void (*processBlock)(const uint8_t*, uint8_t*, const void*);
+} t_ctrGenCtx;
+
 
 
 /**
@@ -209,5 +219,30 @@ void ofbGenUpdate(t_ofbGenCtx	*ctx,
  *       to finalize the cipher operation and handle any remaining buffered data.
  */
 void ofbGenFinal(t_ofbGenCtx *ctx, uint8_t *out, size_t *outLen);
+
+
+
+/* ---------- CTR mode functions ---------- */
+
+
+/**
+ * @brief Updates CTR mode context with input data.
+ *
+ * Encrypts or decrypts input data using CTR (Counter) mode. Each block of
+ * keystream is produced by encrypting an incrementing counter value. The
+ * keystream is XORed with the input to produce output. Encrypt and decrypt
+ * are identical operations.
+ *
+ * @param ctx    Pointer to the CTR mode context (must be initialized).
+ * @param in     Input data buffer.
+ * @param inLen  Length of input in bytes.
+ * @param out    Output buffer (must be at least inLen bytes).
+ * @param outLen Updated with the number of bytes written.
+ */
+void	ctrGenUpdate(t_ctrGenCtx	*ctx,
+					 const uint8_t	*in,
+					 size_t			inLen,
+					 uint8_t		*out,
+					 size_t			*outLen);
 
 #endif /* CIPHER_MODES_H */

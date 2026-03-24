@@ -40,6 +40,7 @@ LIB_SRC = \
 	$(SRC_DIR)/cipher/modes/cbc.c \
 	$(SRC_DIR)/cipher/modes/cfb.c \
 	$(SRC_DIR)/cipher/modes/ofb.c \
+	$(SRC_DIR)/cipher/modes/ctr.c \
 	$(SRC_DIR)/cipher/base64.c \
 	$(SRC_DIR)/cipher/blowfish/transform.c \
 	$(SRC_DIR)/cipher/des/transform.c \
@@ -47,11 +48,13 @@ LIB_SRC = \
 	$(SRC_DIR)/cipher/des/cbc.c \
 	$(SRC_DIR)/cipher/des/cfb.c \
 	$(SRC_DIR)/cipher/des/ofb.c \
+	$(SRC_DIR)/cipher/des/ctr.c \
 	$(SRC_DIR)/cipher/aes/transform.c \
 	$(SRC_DIR)/cipher/aes/ecb.c \
 	$(SRC_DIR)/cipher/aes/cbc.c \
 	$(SRC_DIR)/cipher/aes/cfb.c \
 	$(SRC_DIR)/cipher/aes/ofb.c \
+	$(SRC_DIR)/cipher/aes/ctr.c \
 	$(SRC_DIR)/cipher/aes/transform_arm64.c \
 	$(SRC_DIR)/kdf/kdf.c \
 	$(SRC_DIR)/kdf/bytesToKey.c \

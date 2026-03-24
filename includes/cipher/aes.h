@@ -76,6 +76,18 @@ typedef struct s_aesOfbCtx
 	uint32_t			nbRounds;				/* Number of rounds (10/12/14) */
 }	t_aesOfbCtx;
 
+/**
+ * @brief AES CTR (Counter) context structure.
+ * 
+ * Maintains state for AES encryption/decryption in CTR mode.
+ * Supports 128, 192, and 256-bit keys.
+ */
+typedef struct s_aesCtrCtx {
+    t_ctrGenCtx  ctrCtx;
+    uint32_t     roundKeys[60];
+    uint32_t     nbRounds;
+} t_aesCtrCtx;
+
 /* ---------- Core AES operations ---------- */
 
 /**
@@ -390,7 +402,8 @@ void	aesOfbUpdate(void			*vctx,
 /**
  * @brief Finalizes AES OFB operation.
  * 
- * OFB mode does not require padding, so this function may be a no-op.
+ * OFB mode does not require padding, so this function is not needed to do anything,
+ * but it is included for interface consistency.
  * 
  * @param ctx Pointer to AES OFB context
  * @param out Output buffer for final data (unused)
@@ -404,6 +417,58 @@ void	aesOfbFinal(void *vctx, uint8_t *out, size_t *outLen);
  * @param ctx Pointer to AES OFB context
  */
 void	aesOfbFree(void *vctx);
+
+/* ---------- CTR mode functions ---------- */
+
+/**
+ * @brief Initializes AES CTR context with key, IV, and direction.
+ * 
+ * @param ctx Pointer to AES CTR context
+ * @param key Encryption key (16, 24, or 32 bytes)
+ * @param keyLen Length of key in bytes
+ * @param iv Initialization vector (16 bytes, NULL for zeros)
+ * @param dir Encryption or decryption direction (CTR uses the same process for both)
+ */
+int	aesCtrInit(void					*vctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
+
+/**
+ * @brief Updates AES CTR context with input data.
+ * 
+ * Processes input data in 16-byte blocks with counter mode.
+ * 
+ * @param ctx Pointer to AES CTR context
+ * @param in Input data buffer
+ * @param inLen Length of input data
+ * @param out Output buffer for processed data
+ * @param outLen Number of bytes written to output
+ */
+void	aesCtrUpdate(void			*vctx,
+					 const uint8_t	*in,
+					 size_t			inLen,
+					 uint8_t		*out,
+					 size_t			*outLen);
+
+/**
+ * @brief Finalizes AES CTR operation.
+ * 
+ * CTR mode does not require padding, so this function may be a no-op.
+ * 
+ * @param ctx Pointer to AES CTR context
+ * @param out Output buffer for final data (unused)
+ * @param outLen Number of bytes written to output (set to 0)
+ */
+void	aesCtrFinal(void *vctx, uint8_t *out, size_t *outLen);
+
+/**
+ * @brief Frees AES CTR context resources.
+ * 
+ * @param ctx Pointer to AES CTR context
+ */
+void	aesCtrFree(void *vctx);
 
 /* ---------- ARM64 optimized functions ---------- */
 
@@ -455,5 +520,9 @@ extern const t_cipher g_aes256Cfb1Cipher;
 extern const t_cipher g_aes128OfbCipher;
 extern const t_cipher g_aes192OfbCipher;
 extern const t_cipher g_aes256OfbCipher;
+
+extern const t_cipher g_aes128CtrCipher;
+extern const t_cipher g_aes192CtrCipher;
+extern const t_cipher g_aes256CtrCipher;
 
 #endif /* HAJCRYPT_AES_H */
