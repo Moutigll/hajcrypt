@@ -12,6 +12,8 @@ static void aesProcessBlock(const uint8_t *in, uint8_t *out, const void *key)
 	aesProcessBlocksNeon(in, out, ctx->roundKeys, 1, ctx->nbRounds, 1);
 #else
 	aesEncryptBlock((uint8_t*)in, ctx->roundKeys, ctx->nbRounds);
+
+	(void)out;
 #endif
 }
 

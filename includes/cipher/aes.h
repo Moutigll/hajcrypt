@@ -22,6 +22,9 @@
 #define AES_ROUNDS_192 12
 #define AES_ROUNDS_256 14
 
+/* GCM tag size in bytes */
+#define AES_GCM_TAG_SIZE 16
+
 /**
  * @brief AES ECB (Electronic Codebook) context structure.
  * 
@@ -87,6 +90,44 @@ typedef struct s_aesCtrCtx {
     uint32_t     roundKeys[60];
     uint32_t     nbRounds;
 } t_aesCtrCtx;
+
+
+
+
+ typedef struct {
+    uint32_t rk[4 * (AES_MAX_ROUNDS + 1)];
+} t_aesRoundKeys;
+
+#if defined(__aarch64__)
+#include <arm_neon.h>
+#endif
+
+/**
+ * @brief AES GCM (Galois/Counter Mode) context structure.
+ * 
+ * Maintains state for AES encryption/decryption in GCM mode, including
+ * authentication data and tag generation. Supports 128, 192, and 256-bit keys.
+ */
+typedef struct {
+	t_cipherDirection	dir;
+	t_aesRoundKeys		roundKeys;
+	int					nr;					/* number of rounds (10,12,14) */
+	uint8_t				H[16];				/* hash key (normal order) */
+	uint8_t				Hpow[8][16];			/* H^1 .. H^8 (normal order) */
+#if defined(__aarch64__)
+	uint8_t				Hpow8[8][16] __attribute__((aligned(16))); /* H^1 .. H^8 in bit-reflected order for NEON */
+	uint8x16_t			rk_neon[AES_MAX_ROUNDS + 1];	/* Round keys in NEON format (bit-reflected) */
+#endif
+	uint8_t				J0[16];				/* initial counter */
+	uint8_t				counter[16];			/* running counter */
+	uint8_t				ghashState[16];		/* current GHASH value */
+	uint64_t			aadLen;					/* total length of AAD processed */
+	uint64_t			dataLen;
+	uint8_t				aadBuffer[16];
+	size_t				aadBufferLen;
+	uint8_t				dataBuffer[16];
+	size_t				dataBufferLen;
+} t_aesGcmCtx;
 
 /* ---------- Core AES operations ---------- */
 
@@ -469,6 +510,77 @@ void	aesCtrFinal(void *vctx, uint8_t *out, size_t *outLen);
  * @param ctx Pointer to AES CTR context
  */
 void	aesCtrFree(void *vctx);
+
+/* ---------- GCM mode functions ---------- */
+
+/**
+ * @brief Initializes AES GCM context with key, IV, and direction.
+ * 
+ * @param ctx Pointer to AES GCM context
+ * @param key Encryption key (16, 24, or 32 bytes)
+ * @param keyLen Length of key in bytes
+ * @param iv Initialization vector (16 bytes, NULL for zeros)
+ * @param dir Encryption or decryption direction
+ */
+int	aesGcmInit(void					*vctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   size_t				ivLen,
+			   t_cipherDirection	dir);
+
+/**
+ * @brief Updates AES GCM context with additional authenticated data (AAD).
+ * 
+ * AAD is processed for authentication but not encrypted. This function can be called
+ * before or after processing plaintext/ciphertext data.
+ *
+ * @param ctx Pointer to AES GCM context
+ * @param aad Additional authenticated data buffer
+ * @param aadLen Length of AAD in bytes
+ */
+void	aesGcmUpdateAAD(void *vctx, const uint8_t *aad, size_t aadLen);
+
+/**
+ * @brief Updates AES GCM context with input data and AAD.
+ * 
+ * @param ctx Pointer to AES GCM context
+ * @param in Input data buffer
+ * @param inLen Length of input data
+ * @param out Output buffer for processed data
+ * @param outLen Number of bytes written to output
+ */
+void	aesGcmUpdate(void			*vctx,
+					 const uint8_t	*in,
+					 size_t			inLen,
+					 uint8_t		*out,
+					 size_t			*outLen);
+
+/**
+ * @brief Finalizes AES GCM operation, generating the authentication tag.
+ * 
+ * @param ctx Pointer to AES GCM context
+ * @param out Output buffer for authentication tag
+ * @param outLen Number of bytes written to output (set to tag size)
+ */
+void	aesGcmFinal(void *vctx, uint8_t *out, size_t *outLen);
+
+/**
+ * @brief Verifies the AES GCM authentication tag during decryption.
+ * 
+ * @param ctx Pointer to AES GCM context
+ * @param tag Expected authentication tag
+ * @param tagLen Length of the tag in bytes
+ * @return 0 if the tag is valid, -1 if the data has been tampered with
+ */
+int	aesGcmVerifyTag(void *vctx, const uint8_t *tag, size_t tagLen);
+
+/**
+ * @brief Frees AES GCM context resources.
+ * 
+ * @param ctx Pointer to AES GCM context
+ */
+void	aesGcmFree(void *vctx);
 
 /* ---------- ARM64 optimized functions ---------- */
 

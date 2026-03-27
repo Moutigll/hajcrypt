@@ -55,6 +55,7 @@ LIB_SRC = \
 	$(SRC_DIR)/cipher/aes/cfb.c \
 	$(SRC_DIR)/cipher/aes/ofb.c \
 	$(SRC_DIR)/cipher/aes/ctr.c \
+	$(SRC_DIR)/cipher/aes/gcm.c \
 	$(SRC_DIR)/cipher/aes/transform_arm64.c \
 	$(SRC_DIR)/kdf/kdf.c \
 	$(SRC_DIR)/kdf/bytesToKey.c \

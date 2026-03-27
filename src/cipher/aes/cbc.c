@@ -21,6 +21,8 @@ static void aesProcessBlock(const uint8_t *in, uint8_t *out, const void *key, in
 		aesEncryptBlock((uint8_t*)in, ctx->roundKeys, ctx->nbRounds);
 	else
 		aesDecryptBlock((uint8_t*)in, ctx->roundKeys, ctx->nbRounds);
+
+	(void)out;
 #endif
 }
 
