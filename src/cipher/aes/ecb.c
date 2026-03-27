@@ -23,7 +23,7 @@ int	aesEcbInit(void					*vctx,
 	 * Reference: handles InvMixColumns itself during decryption.
 	 * NEON:      handles key transformation inside prepareKeys().
 	 */
-#if !defined(__aarch64__) && !defined(AES_USE_REFERENCE)
+#if !defined(__aarch64__) && !defined(__x86_64__) && !defined(_M_X64) && !defined(AES_USE_REFERENCE)
 	if (dir == CIPHER_DECRYPT)
 		aesExpandDecryptKeys(ctx->roundKeys, ctx->nbRounds, ctx->roundKeys);
 #endif
@@ -72,6 +72,9 @@ static size_t	flushBuffer(t_aesEcbCtx		*ctx,
 #if defined(__aarch64__)
 	aesProcessBlocksNeon(temp, temp, ctx->roundKeys, 1, ctx->nbRounds,
 						 ctx->dir == CIPHER_ENCRYPT);
+#elif defined(__x86_64__) || defined(_M_X64)	
+	aesProcessBlocksX86(temp, temp, ctx->roundKeys, 1, ctx->nbRounds,
+						ctx->dir == CIPHER_ENCRYPT);
 #else
 	if (ctx->dir == CIPHER_ENCRYPT)
 		aesEncryptBlock(temp, ctx->roundKeys, ctx->nbRounds);
@@ -106,6 +109,9 @@ void	aesEcbUpdate(void			*vctx,
 #if defined(__aarch64__)
 	aesProcessBlocksNeon(in, out, ctx->roundKeys, blocks, ctx->nbRounds,
 						 ctx->dir == CIPHER_ENCRYPT);
+#elif defined(__x86_64__) || defined(_M_X64)
+	aesProcessBlocksX86(in, out, ctx->roundKeys, blocks, ctx->nbRounds,
+						ctx->dir == CIPHER_ENCRYPT);
 #else
 	void	(*cryptFunc)(uint8_t *, const uint32_t *, uint32_t);
 	size_t	i;

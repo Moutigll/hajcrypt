@@ -16,6 +16,11 @@ static void aesProcessBlock(const uint8_t *in, uint8_t *out, const void *key, in
 		aesProcessBlocksNeon(in, out, ctx->roundKeys, 1, ctx->nbRounds, 1);
 	else
 		aesProcessBlocksNeon(in, out, ctx->roundKeys, 1, ctx->nbRounds, 0);
+#elif defined(__x86_64__) || defined(_M_X64)
+	if (encrypt)
+		aesProcessBlocksX86(in, out, ctx->roundKeys, 1, ctx->nbRounds, 1);
+	else
+		aesProcessBlocksX86(in, out, ctx->roundKeys, 1, ctx->nbRounds, 0);
 #else
 	if (encrypt)
 		aesEncryptBlock((uint8_t*)in, ctx->roundKeys, ctx->nbRounds);
@@ -42,7 +47,7 @@ int aesCbcInit(void *vctx, const uint8_t *key, size_t keyLen, const uint8_t *iv,
 	ctx->cbcCtx.cipherCtx = ctx;
 	ctx->cbcCtx.processBlock = aesProcessBlock;
 
-#if !defined(__aarch64__) && !defined(AES_USE_REFERENCE)
+#if !defined(__aarch64__) && !defined(__x86_64__) && !defined(_M_X64) && !defined(AES_USE_REFERENCE)
 	if (dir == CIPHER_DECRYPT)
 		aesExpandDecryptKeys(ctx->roundKeys, ctx->nbRounds, ctx->roundKeys);
 #endif

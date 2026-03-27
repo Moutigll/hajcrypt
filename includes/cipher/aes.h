@@ -603,6 +603,29 @@ void	aesProcessBlocksNeon(const uint8_t	*in,
 							 size_t			blocks,
 							 int			nbRounds,
 							 int			encrypt);
+
+/* ---------- x86 AES-NI optimized functions ---------- */
+
+/**
+ * @brief Processes multiple AES blocks using AES-NI instructions.
+ *
+ * This function performs AES encryption or decryption on a batch of blocks,
+ * leveraging AES-NI hardware acceleration for improved performance on supported x86_64 hardware.
+ *
+ * @param in         Pointer to the input data buffer containing blocks to process.
+ * @param out        Pointer to the output data buffer where processed blocks will be written.
+ * @param roundKeys  Pointer to the expanded AES round keys.
+ * @param blocks     Number of blocks to process.
+ * @param nbRounds   Number of AES rounds (depends on key size).
+ * @param encrypt    Set to non-zero for encryption, zero for decryption.
+ */
+void	aesProcessBlocksX86(const uint8_t	*in,
+							uint8_t			*out,
+							const uint32_t	*roundKeys,
+							size_t			blocks,
+							int				nbRounds,
+							int				encrypt);
+
 /* ---------- Global cipher structures ---------- */
 
 extern const t_cipher g_aes128EcbCipher;

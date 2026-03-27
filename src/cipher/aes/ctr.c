@@ -10,6 +10,8 @@ static void	aesProcessBlock(const uint8_t *in, uint8_t *out, const void *key)
 
 #if defined(__aarch64__)
 	aesProcessBlocksNeon(in, out, ctx->roundKeys, 1, ctx->nbRounds, 1);
+#elif defined(__x86_64__) || defined(_M_X64)
+	aesProcessBlocksX86(in, out, ctx->roundKeys, 1, ctx->nbRounds, 1);
 #else
 	ft_memcpy(out, in, AES_BLOCK_SIZE);
 	aesEncryptBlock(out, ctx->roundKeys, ctx->nbRounds);
@@ -35,6 +37,11 @@ int	aesCtrInit(void				*vctx,
 	ctx->ctrCtx.blockSize    = AES_BLOCK_SIZE;
 	ctx->ctrCtx.cipherCtx    = ctx;
 	ctx->ctrCtx.processBlock = aesProcessBlock;
+
+#if !defined(__aarch64__) && !defined(__x86_64__) && !defined(_M_X64) && !defined(AES_USE_REFERENCE)
+	aesExpandDecryptKeys(ctx->roundKeys, ctx->nbRounds, ctx->roundKeys);
+#endif
+
 	return (0);
 }
 
