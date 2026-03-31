@@ -69,6 +69,17 @@ typedef struct s_desCtrCtx {
     uint64_t     subkeys[16];
 } t_desCtrCtx;
 
+/**
+ * @brief DES PCBC (Propagating Cipher Block Chaining) context structure.
+ * 
+ * Maintains state for DES encryption/decryption in PCBC mode.
+ * PCBC mode is similar to CBC but propagates changes in both plaintext and ciphertext.
+ */
+typedef struct s_desPcbcCtx {
+	t_pcbcGenCtx	pcbcCtx;			/* PCBC context */
+	uint64_t		subkeys[16];	/* 16 round subkeys (48 bits each) */
+} t_desPcbcCtx;
+
 
 /* ---------- Core DES operations ---------- */
 
@@ -442,6 +453,52 @@ void	desCtrUpdate(void *vctx, const uint8_t *in, size_t inLen, uint8_t *out, siz
  */
 void	desCtrFinal(void *vctx, uint8_t *out, size_t *outLen);
 
+/* ---------- PCBC mode functions ---------- */
+
+/**
+ * @brief Initializes a DES cipher in PCBC (Propagating Cipher Block Chaining) mode.
+ * 
+ * @param vctx Pointer to the cipher context structure to be initialized.
+ * @param key Pointer to the encryption key buffer.
+ * @param keyLen Length of the key in bytes.
+ * @param iv Pointer to the initialization vector buffer.
+ * @param dir The cipher direction (encrypt or decrypt).
+ * 
+ * @return On success, returns 0. On error, returns a non-zero error code.
+ */
+int	desPcbcInit(void				*vctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
+
+/**
+ * @brief Frees resources associated with a DES PCBC context.
+ * 
+ * @param vctx Pointer to the DES PCBC context to be freed.
+ */
+void	desPcbcFree(void *vctx);
+
+/**
+ * @brief Updates the DES PCBC context with input data, producing output data.
+ * 
+ * @param vctx Pointer to the DES PCBC context.
+ * @param in Pointer to the input data buffer.
+ * @param inLen Length of the input data in bytes.
+ * @param out Pointer to the output buffer where processed data will be written.
+ * @param outLen Pointer to a size_t variable where the number of bytes written to output will be stored.
+ */
+void	desPcbcUpdate(void *vctx, const uint8_t *in, size_t inLen, uint8_t *out, size_t *outLen);
+
+/**
+ * @brief Finalizes the DES PCBC operation, writing any remaining output data.
+ * 
+ * @param vctx Pointer to the DES PCBC context.
+ * @param out Pointer to the output buffer where final data will be written.
+ * @param outLen Pointer to a size_t variable where the number of bytes written to output will be stored.
+ */
+void	desPcbcFinal(void *vctx, uint8_t *out, size_t *outLen);
+
 /* ---------- Global cipher structures ---------- */
 
 /**
@@ -499,5 +556,12 @@ extern const t_cipher	g_desOfbCipher;
  * Implements the t_cipher interface for DES CTR mode.
  */
 extern const t_cipher	g_desCtrCipher;
+
+/**
+ * @brief DES PCBC cipher structure for dispatch table.
+ * 
+ * Implements the t_cipher interface for DES PCBC mode.
+ */
+extern const t_cipher	g_desPcbcCipher;
 
 #endif /* HAJCRYPT_DES_H */

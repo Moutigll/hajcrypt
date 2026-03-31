@@ -47,6 +47,17 @@ typedef struct s_ctrGenCtx {
 	void (*processBlock)(const uint8_t*, uint8_t*, const void*);
 } t_ctrGenCtx;
 
+typedef struct s_pcbcGenCtx {
+	uint8_t				iv[64]			__attribute__((aligned(16)));
+	uint8_t				prevPlain[64]	__attribute__((aligned(16)));
+	uint8_t				buffer[64]		__attribute__((aligned(16)));
+	size_t				bufferLen;
+	size_t				blockSize;
+	t_cipherDirection	dir;
+	const void			*cipherCtx;
+	void (*processBlock)(const uint8_t*, uint8_t*, const void*, int);
+} t_pcbcGenCtx;
+
 
 
 /**
@@ -244,5 +255,45 @@ void	ctrGenUpdate(t_ctrGenCtx	*ctx,
 					 size_t			inLen,
 					 uint8_t		*out,
 					 size_t			*outLen);
+
+
+
+/* ---------- PCBC mode functions ---------- */
+
+
+/**
+ * @brief Updates PCBC mode context with input data.
+ *
+ * Encrypts or decrypts input data using PCBC (Propagating Cipher Block Chaining) mode.
+ * Similar to CBC but with additional propagation of changes. Each block is XORed
+ * with both the previous plaintext and the previous ciphertext before encryption.
+ *
+ * @param ctx    Pointer to the PCBC mode context (must be initialized).
+ * @param in     Input data buffer.
+ * @param inLen  Length of input in bytes.
+ * @param out    Output buffer (must be at least inLen bytes).
+ * @param outLen Updated with the number of bytes written.
+ */
+void pcbcGenUpdate(t_pcbcGenCtx	*ctx,
+				   const uint8_t	*in,
+				   size_t		inLen,
+				   uint8_t		*out,
+				   size_t		*outLen);
+
+/**
+ * @brief Finalizes PCBC mode encryption/decryption and outputs remaining data.
+ *
+ * @param ctx Pointer to the PCBC mode context containing state and configuration.
+ * @param out Pointer to the output buffer where final encrypted/decrypted data
+ *			will be written.
+ * @param outLen Pointer to a size_t variable. On input, contains the maximum
+ *			   available space in the output buffer. On output, contains the
+ *			   number of bytes actually written.
+ * @return void
+ * @note The caller is responsible for ensuring that the output buffer has
+ *	   sufficient space and that the context is properly initialized.
+ * @note For encryption, this function should handle any necessary padding of the final block. For decryption, it should verify and remove padding.
+ */
+void pcbcGenFinal(t_pcbcGenCtx *ctx, uint8_t *out, size_t *outLen);
 
 #endif /* CIPHER_MODES_H */

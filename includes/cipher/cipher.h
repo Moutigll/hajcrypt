@@ -50,6 +50,7 @@ typedef enum e_cipherMode
 	CIPHER_MODE_CFB8,		/* CFB with 8-bit feedback */
 	CIPHER_MODE_OFB,		/* Output Feedback */
 	CIPHER_MODE_CTR,		/* Counter */
+	CIPHER_MODE_PCBC,		/* Propagating Cipher Block Chaining */
 	CIPHER_MODE_GCM,		/* Galois/Counter Mode */
 	CIPHER_MODE_CCM,		/* Counter with CBC-MAC */
 	CIPHER_MODE_MAX

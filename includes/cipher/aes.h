@@ -86,16 +86,16 @@ typedef struct s_aesOfbCtx
  * Supports 128, 192, and 256-bit keys.
  */
 typedef struct s_aesCtrCtx {
-    t_ctrGenCtx  ctrCtx;
-    uint32_t     roundKeys[60];
-    uint32_t     nbRounds;
+	t_ctrGenCtx  ctrCtx;
+	uint32_t	 roundKeys[60];
+	uint32_t	 nbRounds;
 } t_aesCtrCtx;
 
 
 
 
  typedef struct {
-    uint32_t rk[4 * (AES_MAX_ROUNDS + 1)];
+	uint32_t rk[4 * (AES_MAX_ROUNDS + 1)];
 } t_aesRoundKeys;
 
 #if defined(__aarch64__)
@@ -128,6 +128,18 @@ typedef struct {
 	uint8_t				dataBuffer[16];
 	size_t				dataBufferLen;
 } t_aesGcmCtx;
+
+/**
+ * @brief AES PCBC (Propagating Cipher Block Chaining) context structure.
+ * 
+ * Maintains state for AES encryption/decryption in PCBC mode.
+ * Supports 128, 192, and 256-bit keys.
+ */
+typedef struct s_aesPcbcCtx {
+	t_pcbcGenCtx	pcbcCtx;
+	uint32_t		roundKeys[4 * (AES_MAX_ROUNDS + 1)];
+	uint32_t		nbRounds;
+} t_aesPcbcCtx;
 
 /* ---------- Core AES operations ---------- */
 
@@ -582,6 +594,52 @@ int	aesGcmVerifyTag(void *vctx, const uint8_t *tag, size_t tagLen);
  */
 void	aesGcmFree(void *vctx);
 
+/* ---------- PCBC mode functions ---------- */
+
+/**
+ * @brief Initializes AES PCBC context with key, IV, and direction.
+ * 
+ * @param ctx Pointer to AES PCBC context
+ * @param key Encryption key (16, 24, or 32 bytes)
+ * @param keyLen Length of key in bytes
+ * @param iv Initialization vector (16 bytes, NULL for zeros)
+ * @param dir Encryption or decryption direction
+ */
+int	aesPcbcInit(void				*ctx,
+			   const uint8_t		*key,
+			   size_t				keyLen,
+			   const uint8_t		*iv,
+			   t_cipherDirection	dir);
+
+/**
+ * @brief Updates AES PCBC context with input data.
+ * 
+ * Processes input data in 16-byte blocks with propagating cipher block chaining.
+ * 
+ * @param ctx Pointer to AES PCBC context
+ * @param in Input data buffer
+ * @param inLen Length of input data
+ * @param out Output buffer for processed data
+ * @param outLen Number of bytes written to output
+ */
+void	aesPcbcUpdate(void			*ctx,
+					 const uint8_t	*in,
+					 size_t			inLen,
+					 uint8_t		*out,
+					 size_t			*outLen);
+
+/**
+ * @brief Finalizes AES PCBC operation, handling padding.
+ * 
+ * For encryption: applies PKCS#7 padding to the last block.
+ * For decryption: verifies and removes padding.
+ * 
+ * @param ctx Pointer to AES PCBC context
+ * @param out Output buffer for final data
+ * @param outLen Number of bytes written to output
+ */
+void	aesPcbcFinal(void *ctx, uint8_t *out, size_t *outLen);
+
 /* ---------- ARM64 optimized functions ---------- */
 
 /**
@@ -590,12 +648,12 @@ void	aesGcmFree(void *vctx);
  * This function performs AES encryption or decryption on a batch of blocks,
  * leveraging NEON SIMD acceleration for improved performance on supported hardware.
  *
- * @param in         Pointer to the input data buffer containing blocks to process.
- * @param out        Pointer to the output data buffer where processed blocks will be written.
+ * @param in		 Pointer to the input data buffer containing blocks to process.
+ * @param out		Pointer to the output data buffer where processed blocks will be written.
  * @param roundKeys  Pointer to the expanded AES round keys.
- * @param blocks     Number of blocks to process.
+ * @param blocks	 Number of blocks to process.
  * @param nbRounds   Number of AES rounds (depends on key size).
- * @param encrypt    Set to non-zero for encryption, zero for decryption.
+ * @param encrypt	Set to non-zero for encryption, zero for decryption.
  */
 void	aesProcessBlocksNeon(const uint8_t	*in,
 							 uint8_t		*out,
@@ -612,12 +670,12 @@ void	aesProcessBlocksNeon(const uint8_t	*in,
  * This function performs AES encryption or decryption on a batch of blocks,
  * leveraging AES-NI hardware acceleration for improved performance on supported x86_64 hardware.
  *
- * @param in         Pointer to the input data buffer containing blocks to process.
- * @param out        Pointer to the output data buffer where processed blocks will be written.
+ * @param in		 Pointer to the input data buffer containing blocks to process.
+ * @param out		Pointer to the output data buffer where processed blocks will be written.
  * @param roundKeys  Pointer to the expanded AES round keys.
- * @param blocks     Number of blocks to process.
+ * @param blocks	 Number of blocks to process.
  * @param nbRounds   Number of AES rounds (depends on key size).
- * @param encrypt    Set to non-zero for encryption, zero for decryption.
+ * @param encrypt	Set to non-zero for encryption, zero for decryption.
  */
 void	aesProcessBlocksX86(const uint8_t	*in,
 							uint8_t			*out,
@@ -659,5 +717,9 @@ extern const t_cipher g_aes256OfbCipher;
 extern const t_cipher g_aes128CtrCipher;
 extern const t_cipher g_aes192CtrCipher;
 extern const t_cipher g_aes256CtrCipher;
+
+extern const t_cipher g_aes128PcbcCipher;
+extern const t_cipher g_aes192PcbcCipher;
+extern const t_cipher g_aes256PcbcCipher;
 
 #endif /* HAJCRYPT_AES_H */

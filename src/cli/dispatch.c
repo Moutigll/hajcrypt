@@ -30,6 +30,7 @@ const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_DES_CFB8,	&g_desCfb8Cipher },
 	{ ALGO_DES_OFB,	&g_desOfbCipher },
 	{ ALGO_DES_CTR,	&g_desCtrCipher },
+	{ ALGO_DES_PCBC,	&g_desPcbcCipher },
 
 	/* AES-128 family */
 	{ ALGO_AES_128,		&g_aes128Cipher },
@@ -40,6 +41,7 @@ const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_AES_128_CFB8,	&g_aes128Cfb8Cipher },
 	{ ALGO_AES_128_OFB,	&g_aes128OfbCipher },
 	{ ALGO_AES_128_CTR,	&g_aes128CtrCipher },
+	{ ALGO_AES_128_PCBC,	&g_aes128PcbcCipher },
 	
 	/* AES-192 family */
 	{ ALGO_AES_192,		&g_aes192Cipher },
@@ -50,6 +52,7 @@ const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_AES_192_CFB8,	&g_aes192Cfb8Cipher },
 	{ ALGO_AES_192_OFB,	&g_aes192OfbCipher },
 	{ ALGO_AES_192_CTR,	&g_aes192CtrCipher },
+	{ ALGO_AES_192_PCBC,	&g_aes192PcbcCipher },
 	
 	/* AES-256 family */
 	{ ALGO_AES_256,		&g_aes256Cipher },
@@ -60,6 +63,7 @@ const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_AES_256_CFB8,	&g_aes256Cfb8Cipher },
 	{ ALGO_AES_256_OFB,	&g_aes256OfbCipher },
 	{ ALGO_AES_256_CTR,	&g_aes256CtrCipher },
+	{ ALGO_AES_256_PCBC,	&g_aes256PcbcCipher },
 	
 	{ ALGO_NONE, NULL }
 };
