@@ -251,7 +251,7 @@ static int processBase64WithCipher(int inFd, int outFd, const t_cipher *cipher, 
 			if (initCipherCtx(&ctx, cipher, opts, pipeFd[1]) != 0)
 				exit(1);
 
-			if (cipher->blockSize == 1)
+			if (ctx.cipher->pad == NULL && ctx.cipher->unpad == NULL)
 				ret = handleStreamCipher(&ctx, inFd);
 			else
 				ret = handleBlockCipher(&ctx, inFd);
@@ -278,7 +278,7 @@ static int processBase64WithCipher(int inFd, int outFd, const t_cipher *cipher, 
 				return (1);
 			}
 
-			if (cipher->blockSize == 1)
+			if (ctx.cipher->pad == NULL && ctx.cipher->unpad == NULL)
 				ret = handleStreamCipher(&ctx, pipeFd[0]);
 			else
 				ret = handleBlockCipher(&ctx, pipeFd[0]);
@@ -309,11 +309,11 @@ static int processCipherFd(int fd, int outFd, const t_cipher *cipher, t_sslOptio
 		t_cipherCtx	c;
 		int			ret;
 		if (initCipherCtx(&c, cipher, opts, outFd) != 0)
-			return 1;
-		if (c.cipher->blockSize == 1)
-			ret = (handleStreamCipher(&c, fd));
+			return (1);
+		if (c.cipher->pad == NULL && c.cipher->unpad == NULL)
+		    ret = handleStreamCipher(&c, fd);
 		else
-			ret = (handleBlockCipher(&c, fd));
+		    ret = handleBlockCipher(&c, fd);
 		c.cipher->free(c.ctx);
 		free(c.ctx);
 		return (ret);

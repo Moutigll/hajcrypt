@@ -22,9 +22,10 @@ CONST_SRC = \
 	$(CONST_DIR)/aes.const.c
 
 LIB_SRC = \
+	$(SRC_DIR)/utils.c \
+	$(SRC_DIR)/hajSecRandBytes.c \
 	$(SRC_DIR)/hash/common/padding.c \
 	$(SRC_DIR)/hash/common/endian.c \
-	$(SRC_DIR)/hajSecRandBytes.c \
 	$(SRC_DIR)/hash/md5/md5.c \
 	$(SRC_DIR)/hash/md5/transform.c \
 	$(SRC_DIR)/hash/sha256/sha256.c \
@@ -32,26 +33,39 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/whirlpool/whirlpool.c \
 	$(SRC_DIR)/hash/whirlpool/transform.c \
 	$(SRC_DIR)/hash/whirlpool/transform.opt.c \
+	$(SRC_DIR)/hash/blake2b/blake2b.c \
+	$(SRC_DIR)/hash/blake2b/transform.c \
 	$(SRC_DIR)/hash/hmac.c \
+	$(SRC_DIR)/cipher/utils.c \
+	$(SRC_DIR)/cipher/modes/cbc.c \
+	$(SRC_DIR)/cipher/modes/cfb.c \
+	$(SRC_DIR)/cipher/modes/ofb.c \
+	$(SRC_DIR)/cipher/modes/ctr.c \
+	$(SRC_DIR)/cipher/modes/pcbc.c \
 	$(SRC_DIR)/cipher/base64.c \
-	$(SRC_DIR)/kdf/kdf.c \
-	$(SRC_DIR)/kdf/bytesToKey.c \
+	$(SRC_DIR)/cipher/blowfish/transform.c \
 	$(SRC_DIR)/cipher/des/transform.c \
 	$(SRC_DIR)/cipher/des/ecb.c \
 	$(SRC_DIR)/cipher/des/cbc.c \
-	$(SRC_DIR)/cipher/utils.c \
-	$(SRC_DIR)/cipher/blowfish/transform.c \
-	$(SRC_DIR)/kdf/pbkdf2.c \
-	$(SRC_DIR)/kdf/bcrypt.c \
-	$(SRC_DIR)/hash/blake2b/blake2b.c \
-	$(SRC_DIR)/hash/blake2b/transform.c \
-	$(SRC_DIR)/kdf/argon2.c \
+	$(SRC_DIR)/cipher/des/cfb.c \
+	$(SRC_DIR)/cipher/des/ofb.c \
+	$(SRC_DIR)/cipher/des/ctr.c \
+	$(SRC_DIR)/cipher/des/pcbc.c \
 	$(SRC_DIR)/cipher/aes/transform.c \
 	$(SRC_DIR)/cipher/aes/ecb.c \
 	$(SRC_DIR)/cipher/aes/cbc.c \
-	$(SRC_DIR)/cli/prompt.c \
-	$(SRC_DIR)/utils.c \
-	$(SRC_DIR)/cipher/aes/transform_arm64.c
+	$(SRC_DIR)/cipher/aes/cfb.c \
+	$(SRC_DIR)/cipher/aes/ofb.c \
+	$(SRC_DIR)/cipher/aes/ctr.c \
+	$(SRC_DIR)/cipher/aes/gcm.c \
+	$(SRC_DIR)/cipher/aes/pcbc.c \
+	$(SRC_DIR)/cipher/aes/transform_arm64.c \
+	$(SRC_DIR)/cipher/aes/transform_x86.c \
+	$(SRC_DIR)/kdf/kdf.c \
+	$(SRC_DIR)/kdf/bytesToKey.c \
+	$(SRC_DIR)/kdf/pbkdf2.c \
+	$(SRC_DIR)/kdf/bcrypt.c \
+	$(SRC_DIR)/kdf/argon2.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s
@@ -62,7 +76,8 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/dispatch.c \
 	$(SRC_DIR)/cli/processHash.c \
 	$(SRC_DIR)/cli/processCipher.c \
-	$(SRC_DIR)/cli/cipherIo.c
+	$(SRC_DIR)/cli/cipherIo.c \
+	$(SRC_DIR)/cli/prompt.c
 
 TEST_SRC = \
 	tests/main.test.c \

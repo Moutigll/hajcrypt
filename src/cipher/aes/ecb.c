@@ -23,7 +23,7 @@ int	aesEcbInit(void					*vctx,
 	 * Reference: handles InvMixColumns itself during decryption.
 	 * NEON:      handles key transformation inside prepareKeys().
 	 */
-#if !defined(__aarch64__) && !defined(AES_USE_REFERENCE)
+#if !defined(__aarch64__) && !defined(__x86_64__) && !defined(_M_X64) && !defined(AES_USE_REFERENCE)
 	if (dir == CIPHER_DECRYPT)
 		aesExpandDecryptKeys(ctx->roundKeys, ctx->nbRounds, ctx->roundKeys);
 #endif
@@ -72,6 +72,9 @@ static size_t	flushBuffer(t_aesEcbCtx		*ctx,
 #if defined(__aarch64__)
 	aesProcessBlocksNeon(temp, temp, ctx->roundKeys, 1, ctx->nbRounds,
 						 ctx->dir == CIPHER_ENCRYPT);
+#elif defined(__x86_64__) || defined(_M_X64)	
+	aesProcessBlocksX86(temp, temp, ctx->roundKeys, 1, ctx->nbRounds,
+						ctx->dir == CIPHER_ENCRYPT);
 #else
 	if (ctx->dir == CIPHER_ENCRYPT)
 		aesEncryptBlock(temp, ctx->roundKeys, ctx->nbRounds);
@@ -106,6 +109,9 @@ void	aesEcbUpdate(void			*vctx,
 #if defined(__aarch64__)
 	aesProcessBlocksNeon(in, out, ctx->roundKeys, blocks, ctx->nbRounds,
 						 ctx->dir == CIPHER_ENCRYPT);
+#elif defined(__x86_64__) || defined(_M_X64)
+	aesProcessBlocksX86(in, out, ctx->roundKeys, blocks, ctx->nbRounds,
+						ctx->dir == CIPHER_ENCRYPT);
 #else
 	void	(*cryptFunc)(uint8_t *, const uint32_t *, uint32_t);
 	size_t	i;
@@ -144,20 +150,20 @@ void	aesEcbFinal(void *vctx, uint8_t *out, size_t *outLen)
 /* ---------- Cipher descriptors ---------- */
 
 #define AES_ECB_CIPHER(name_str, key_size) { \
-	.name        = name_str,                  \
-	.mode        = CIPHER_MODE_ECB,           \
-	.isEncoder   = 1,                         \
-	.blockSize   = AES_BLOCK_SIZE,            \
-	.keySize     = key_size,                  \
-	.ivSize      = 0,                         \
-	.ctxSize     = sizeof(t_aesEcbCtx),       \
-	.init        = aesEcbInit,                \
-	.update      = aesEcbUpdate,              \
-	.final       = aesEcbFinal,               \
-	.free        = aesEcbFree,                \
-	.pad         = pkcs7Pad,                  \
-	.unpad       = pkcs7Unpad,                \
-	.supportsWrap = 0                         \
+	.name			= name_str,				\
+	.mode			= CIPHER_MODE_ECB,		\
+	.isEncoder		= 1,					\
+	.blockSize		= AES_BLOCK_SIZE,		\
+	.keySize		= key_size,				\
+	.ivSize			= 0,					\
+	.ctxSize		= sizeof(t_aesEcbCtx),	\
+	.init			= aesEcbInit,			\
+	.update			= aesEcbUpdate,			\
+	.final			= aesEcbFinal,			\
+	.free			= aesEcbFree,			\
+	.pad			= pkcs7Pad,				\
+	.unpad			= pkcs7Unpad,			\
+	.supportsWrap	= 0						\
 }
 
 const t_cipher	g_aes128EcbCipher = AES_ECB_CIPHER("aes-128-ecb", AES_KEY_SIZE_128);
