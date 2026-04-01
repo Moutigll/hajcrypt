@@ -116,7 +116,7 @@ uint32_t	desFeistel(uint32_t R, uint64_t subkey);
  * @param subkeys 16 round subkeys
  * @return 64-bit ciphertext block
  */
-uint64_t	desEncryptBlock(uint64_t block, uint64_t subkeys[16]);
+uint64_t	desEncryptBlock(uint64_t block, const uint64_t subkeys[16]);
 
 /**
  * @brief Decrypts a single 64-bit block using DES.
@@ -128,7 +128,7 @@ uint64_t	desEncryptBlock(uint64_t block, uint64_t subkeys[16]);
  * @param subkeys 16 round subkeys
  * @return 64-bit plaintext block
  */
-uint64_t	desDecryptBlock(uint64_t block, uint64_t subkeys[16]);
+uint64_t	desDecryptBlock(uint64_t block, const uint64_t subkeys[16]);
 
 /* ---------- ECB mode functions ---------- */
 
