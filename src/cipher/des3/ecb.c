@@ -45,18 +45,48 @@ void des3EcbUpdate(void				*vctx,
 				   size_t			*outLen)
 {
 	t_des3EcbCtx	*ctx = vctx;
+	size_t			remaining;
+	size_t			to_copy;
+	size_t			block_count;
+	size_t			i;
+	uint64_t		block;
+
 	*outLen = 0;
 
-	/* Process full blocks */
-	while (inLen >= 8) {
-		des3EcbProcessBlock(in, out, ctx, ctx->dir == CIPHER_ENCRYPT);
-		in += 8;
-		out += 8;
-		inLen -= 8;
-		*outLen += 8;
+	/* If we have a partially filled buffer from previous call, fill it first */
+	if (ctx->bufferLen > 0) {
+		/* Calculate how many bytes we need to complete a block */
+		to_copy = 8 - ctx->bufferLen;
+		if (to_copy > inLen)
+			to_copy = inLen;
+
+		/* Copy data to complete the buffer */
+		ft_memcpy(ctx->buffer + ctx->bufferLen, in, to_copy);
+		ctx->bufferLen += to_copy;
+		in += to_copy;
+		inLen -= to_copy;
+
+		/* If we have a full block now, process it */
+		if (ctx->bufferLen == 8) {
+			des3EcbProcessBlock(ctx->buffer, out, ctx,
+					    ctx->dir == CIPHER_ENCRYPT);
+			out += 8;
+			*outLen += 8;
+			ctx->bufferLen = 0;
+		}
 	}
 
-	/* Buffer remainder */
+	/* Process full blocks from input */
+	block_count = inLen / 8;
+	for (i = 0; i < block_count; i++) {
+		des3EcbProcessBlock(in + i * 8, out + i * 8, ctx,
+				    ctx->dir == CIPHER_ENCRYPT);
+	}
+	*outLen += block_count * 8;
+	in += block_count * 8;
+	inLen -= block_count * 8;
+
+	/* Buffer remaining bytes for next call */
 	if (inLen > 0) {
 		ft_memcpy(ctx->buffer, in, inLen);
 		ctx->bufferLen = inLen;

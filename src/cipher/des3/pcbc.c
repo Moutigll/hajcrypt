@@ -41,8 +41,6 @@ int des3PcbcInit(void				*vctx,
 	ctx->pcbcCtx.bufferLen = 0;
 	ctx->pcbcCtx.dir = dir;
 	ctx->pcbcCtx.blockSize = 8;
-	ctx->pcbcCtx.cipherCtx = ctx->subkeys1;   /* We'll pass ctx via cipherCtx? */
-	/* The generic PCBC expects cipherCtx to be passed to processBlock; we'll set it to ctx */
 	ctx->pcbcCtx.cipherCtx = ctx;
 	ctx->pcbcCtx.processBlock = des3PcbcProcessBlock;
 

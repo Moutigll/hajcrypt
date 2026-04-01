@@ -234,11 +234,11 @@ int     des3CfbInit(void				*vctx,
 					t_cipherDirection	dir);
 
 /**
- * @brief Initializes Triple DES CFB8 context with key, IV, and direction.
+ * @brief Initializes Triple DES CFB1 context with key, IV, and direction.
  *
- * CFB8 mode operates on 8-bit units, so this function sets up the necessary state.
+ * CFB1 mode operates on 1-bit units, so this function sets up the necessary state.
  *
- * @param ctx Pointer to Triple DES CFB8 context
+ * @param ctx Pointer to Triple DES CFB1 context
  * @param key 24-byte key (K1, K2, K3)
  * @param keyLen Length of key (must be 24)
  * @param iv Initialization vector (8 bytes, NULL for zeros)
@@ -293,7 +293,7 @@ void    des3CfbUpdate(void			*vctx,
  *
  * @param ctx Pointer to Triple DES CFB context
  * @param in Input data
- * @param inLen Length of input data in bytes (will be treated as bits)
+ * @param inLen Length of input data in bits
  * @param out Output data
  * @param outBits Number of bits written to output
  */

@@ -7,6 +7,7 @@
 
 #include "../../includes/cipher/base64.h"
 #include "../../includes/cipher/des.h"
+#include "../../includes/cipher/des3.h"
 #include "../../includes/cipher/aes.h"
 
 const t_hashDispatch g_hashTable[] = {
@@ -31,6 +32,17 @@ const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_DES_OFB,	&g_desOfbCipher },
 	{ ALGO_DES_CTR,	&g_desCtrCipher },
 	{ ALGO_DES_PCBC,	&g_desPcbcCipher },
+
+	/* Triple DES family */
+	{ ALGO_DES3,			&g_des3Cipher },
+	{ ALGO_DES3_ECB,		&g_des3EcbCipher },
+	{ ALGO_DES3_CBC,		&g_des3CbcCipher },
+	{ ALGO_DES3_CFB,		&g_des3CfbCipher },
+	{ ALGO_DES3_CFB1,		&g_des3Cfb1Cipher },
+	{ ALGO_DES3_CFB8,		&g_des3Cfb8Cipher },
+	{ ALGO_DES3_OFB,		&g_des3OfbCipher },
+	{ ALGO_DES3_CTR,		&g_des3CtrCipher },
+	{ ALGO_DES3_PCBC,	&g_des3PcbcCipher },
 
 	/* AES-128 family */
 	{ ALGO_AES_128,		&g_aes128Cipher },
