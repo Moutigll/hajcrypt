@@ -45,11 +45,9 @@ void des3EcbUpdate(void				*vctx,
 				   size_t			*outLen)
 {
 	t_des3EcbCtx	*ctx = vctx;
-	size_t			remaining;
 	size_t			to_copy;
 	size_t			block_count;
 	size_t			i;
-	uint64_t		block;
 
 	*outLen = 0;
 

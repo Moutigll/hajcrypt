@@ -334,10 +334,15 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 					{
 						/* For ciphers: -p means password provided in ASCII for key derivation */
 						if (st.optArg)
-							opts->password = (char *)st.optArg;
+							opts->password = ft_strdup((char *)st.optArg);
 						else
 						{
 							ft_dprintf(STDERR_FILENO, "ft_ssl: %s: option requires an argument -- p\n", argv[1]);
+							freeSslOptions(opts);
+							return (1);
+						}
+						if (!opts->password) {
+							ft_dprintf(STDERR_FILENO, "ft_ssl: memory allocation failed\n");
 							freeSslOptions(opts);
 							return (1);
 						}
@@ -354,7 +359,12 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 					if (opts->cmdType == CMD_HASH) {
 						opts->hmacKey = (char *)st.optArg;
 					} else {
-						opts->keyHex = (char *)st.optArg;
+						opts->keyHex = ft_strdup((char *)st.optArg);
+						if (!opts->keyHex) {
+							ft_dprintf(STDERR_FILENO, "ft_ssl: memory allocation failed\n");
+							freeSslOptions(opts);
+							return (1);
+						}
 					}
 					break;
 
@@ -371,7 +381,12 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 					opts->outputFile = (char *)st.optArg;
 					break;
 				case 'v':
-					opts->ivHex = (char *)st.optArg;
+					opts->ivHex = ft_strdup((char *)st.optArg);
+					if (!opts->ivHex) {
+						ft_dprintf(STDERR_FILENO, "ft_ssl: memory allocation failed\n");
+						freeSslOptions(opts);
+						return (1);
+					}
 					break;
 				case 'a':
 					opts->useBase64 = 1;
@@ -390,7 +405,12 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 								return (1);
 							}
 						else
-							opts->saltHex = (char *)st.optArg;
+							opts->saltHex = ft_strdup((char *)st.optArg);
+						if (!opts->saltHex) {
+							ft_dprintf(STDERR_FILENO, "ft_ssl: memory allocation failed\n");
+							freeSslOptions(opts);
+							return (1);
+						}
 					}
 					else
 					{
@@ -426,7 +446,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 	}
 
 	/* if nothing specified -> read stdin */
-	if (!opts->flagP && opts->stringCount == 0 && opts->fileCount == 0)
+	if (((!opts->flagP && opts->cmdType == CMD_HASH) || opts->cmdType != CMD_HASH) && opts->stringCount == 0 && opts->fileCount == 0)
 		opts->readFromStdin = 1;
 
 	return (0);

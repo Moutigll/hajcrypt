@@ -59,4 +59,15 @@ int generateKeyFromPrompt(t_kdfParams *params, uint8_t *key, size_t keyLen);
  */
 int generateIvFromPrompt(uint8_t *iv, size_t ivLen);
 
+/**
+ * @brief Frees any dynamically allocated memory within the t_sslOptions structure.
+ *
+ * This function checks for and frees any dynamically allocated fields within the provided
+ * t_sslOptions structure, such as keyHex, ivHex, saltHex, and password. It is important to
+ * call this function to prevent memory leaks after using a t_sslOptions instance.
+ *
+ * @param opts Pointer to the t_sslOptions structure to clean up. Must not be NULL.
+ */
+void cleanupSslOptions(t_sslOptions *opts);
+
 #endif

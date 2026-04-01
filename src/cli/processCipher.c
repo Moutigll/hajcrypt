@@ -6,9 +6,10 @@
 #include "../../hajlib/include/hprintf.h"
 #include "../../hajlib/include/hmemory.h"
 
+#include "../../includes/cli/algoHandling.h"
 #include "../../includes/cipher/base64.h"
 #include "../../includes/cli/parser.h"
-#include "../../includes/cli/algoHandling.h"
+#include "../../includes/cli/prompt.h"
 
 /* ---------- Stream cipher processing ---------- */
 
@@ -261,6 +262,8 @@ static int processBase64WithCipher(int inFd, int outFd, const t_cipher *cipher, 
 		}
 
 		close(pipeFd[1]);
+		cleanupSslOptions(opts);
+		freeSslOptions(opts);
 		exit(ret);
 	}
 	else
@@ -354,5 +357,6 @@ int executeCipher(t_sslOptions *opts)
 		close(inFd);
 	if (outFd != STDOUT_FILENO)
 		close(outFd);
+	cleanupSslOptions(opts);
 	return (ret);
 }

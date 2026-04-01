@@ -82,6 +82,25 @@ static int promptSalt(uint8_t *salt, size_t *saltLen)
 
 /* ---------- Public functions ---------- */
 
+void cleanupSslOptions(t_sslOptions *opts)
+{
+	if (opts->keyHex)
+		free(opts->keyHex);
+	if (opts->ivHex)
+		free(opts->ivHex);
+	if (opts->saltHex)
+		free(opts->saltHex);
+	if (opts->password)
+	{
+		secureZeroMemory(opts->password, ft_strlen(opts->password));
+		free(opts->password);
+	}
+	opts->keyHex = NULL;
+	opts->ivHex = NULL;
+	opts->saltHex = NULL;
+	opts->password = NULL;
+}
+
 char *promptPassword(const char *promptMsg)
 {
 	char	*pass1;
@@ -165,7 +184,7 @@ int generateIvFromPrompt(uint8_t *iv, size_t ivLen)
 	if (ivLen == 0)
 		return (0);
 
-	ft_printf("Enter IV in hex (or press Enter for zeros): ");
+	ft_printf("\nEnter IV in hex (or press Enter for zeros): ");
 	bytesRead = read(STDIN_FILENO, buffer, sizeof(buffer) - 1);
 	if (bytesRead <= 0)
 		return (-1);

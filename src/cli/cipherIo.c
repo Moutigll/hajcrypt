@@ -169,11 +169,15 @@ int prepareKeyAndIv(t_sslOptions	*opts,
 
 	/* Case 3 : interactive mode (no key or password provided) */
 	if (promptForCipherParams(opts) != 0)
+	{
+		cleanupSslOptions(opts);
 		return (-1);
+	}
 
 	/* Now we derive the key from the stored parameters */
 	if (deriveKeyFromParams(opts, key, keyLen, iv) != 0) {
 		ft_dprintf(STDERR_FILENO, "ft_ssl: key derivation failed\n");
+		cleanupSslOptions(opts);
 		return (-1);
 	}
 
@@ -183,7 +187,8 @@ int prepareKeyAndIv(t_sslOptions	*opts,
  		if (pbkdfHexToBytes(opts->ivHex, iv, ivLen) < 0)
  		{
  			ft_dprintf(STDERR_FILENO, "ft_ssl: invalid IV hex\n");
- 			return (-1);
+			cleanupSslOptions(opts);
+			return (-1);
  		}
  	}
 
@@ -191,7 +196,7 @@ int prepareKeyAndIv(t_sslOptions	*opts,
 	ft_dprintf(STDERR_FILENO, "key=");
 	for (size_t i = 0; i < keyLen; i++)
 		ft_dprintf(STDERR_FILENO, "%02X", key[i]);
-	ft_dprintf(STDERR_FILENO, "\n");
+	ft_dprintf(STDERR_FILENO, "\n\n");
 
 	return (0);
 }

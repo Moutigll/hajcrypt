@@ -64,7 +64,7 @@ static int executeSsl(t_sslOptions *opts)
 
 int main(int argc, char **argv)
 {
-	t_sslOptions	opts;
+	t_sslOptions	opts = {0};
 	int				status;
 
 	if (parseSslArgs(argc, argv, &opts))
