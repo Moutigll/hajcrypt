@@ -51,6 +51,13 @@ LIB_SRC = \
 	$(SRC_DIR)/cipher/des/ofb.c \
 	$(SRC_DIR)/cipher/des/ctr.c \
 	$(SRC_DIR)/cipher/des/pcbc.c \
+	$(SRC_DIR)/cipher/des3/transform.c \
+	$(SRC_DIR)/cipher/des3/ecb.c \
+	$(SRC_DIR)/cipher/des3/cbc.c \
+	$(SRC_DIR)/cipher/des3/cfb.c \
+	$(SRC_DIR)/cipher/des3/ofb.c \
+	$(SRC_DIR)/cipher/des3/ctr.c \
+	$(SRC_DIR)/cipher/des3/pcbc.c \
 	$(SRC_DIR)/cipher/aes/transform.c \
 	$(SRC_DIR)/cipher/aes/ecb.c \
 	$(SRC_DIR)/cipher/aes/cbc.c \

@@ -69,7 +69,7 @@ uint32_t desFeistel(uint32_t R, uint64_t subkey)
 }
 
 
-uint64_t desEncryptBlock(uint64_t block, uint64_t subkeys[16])
+uint64_t desEncryptBlock(uint64_t block, const uint64_t subkeys[16])
 {
 	uint32_t	L, R;
 	int			i;
@@ -227,7 +227,7 @@ uint32_t desFeistel(uint32_t R, uint64_t subkey)
 	return permuted;
 }
 
-uint64_t desEncryptBlock(uint64_t block, uint64_t subkeys[16])
+uint64_t desEncryptBlock(uint64_t block, const uint64_t subkeys[16])
 {
 	uint64_t	permuted = 0;
 	uint32_t	L, R;
@@ -308,7 +308,7 @@ uint64_t desEncryptBlock(uint64_t block, uint64_t subkeys[16])
 
 #endif
 
-uint64_t desDecryptBlock(uint64_t block, uint64_t subkeys[16])
+uint64_t desDecryptBlock(uint64_t block, const uint64_t subkeys[16])
 {
 	uint64_t reversedKeys[16];
 	for (int i = 0; i < 16; i++)

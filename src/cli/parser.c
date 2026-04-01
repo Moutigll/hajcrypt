@@ -46,72 +46,110 @@ void freeSslOptions(t_sslOptions *opts)
 	opts->maxInputs = 0;
 }
 
-static void printUsage(void)
+static void	getRootFamily(const char *name, char *out, size_t size)
 {
+	size_t	i;
+
+	i = 0;
+	while (name[i] && !(name[i] >= '0' && name[i] <= '9')
+		&& name[i] != '-' && i < size - 1)
+	{
+		out[i] = name[i];
+		i++;
+	}
+	out[i] = '\0';
+}
+
+static int	isSameExactFamily(const char *a, const char *b)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	j = 0;
+
+	while (a[i] && b[j])
+	{
+		if (a[i] == '-')
+		{
+			i++;
+			continue;
+		}
+		if (b[j] == '-')
+		{
+			j++;
+			continue;
+		}
+		if (a[i] != b[j])
+			return (0);
+		i++;
+		j++;
+
+		/* stop à la fin du nom de base */
+		if ((a[i] == '\0' || a[i] == '-') &&
+			(b[j] == '\0' || b[j] == '-'))
+			return (1);
+	}
+	return (0);
+}
+
+static int	hasDash(const char *str)
+{
+	while (*str)
+	{
+		if (*str == '-')
+			return (1);
+		str++;
+	}
+	return (0);
+}
+
+static void	printUsage(void)
+{
+	size_t	i;
+	char	prevRoot[32];
+	char	currRoot[32];
+
 	ft_printf("Standard commands:\n");
 	
 	ft_printf("\nMessage Digest commands:\n");
-	for (size_t i = 0; g_hashTable[i].hash; i++)
+	i = 0;
+	while (g_hashTable[i].hash)
+	{
 		ft_printf("\t%s\n", g_hashTable[i].hash->name);
+		i++;
+	}
 	
 	ft_printf("\nCipher commands:\n");
 	
-	size_t i = 0;
-	char last_generic[32] = "";
-	int first = 1;
-	
+	i = 0;
+	prevRoot[0] = '\0';
+
 	while (g_cipherTable[i].cipher)
 	{
-		const char *name = g_cipherTable[i].cipher->name;
+		const char	*name;
+		size_t		k;
 
-		char generic[32] = {0};
-		int j = 0;
-		while (name[j] && !(name[j] >= '0' && name[j] <= '9'))
-		{
-			generic[j] = name[j];
-			j++;
-		}
-		generic[j] = '\0';
+		name = g_cipherTable[i].cipher->name;
+		getRootFamily(name, currRoot, sizeof(currRoot));
 
-		if (!first && ft_strcmp(generic, last_generic) != 0)
+		/* saut de ligne entre familles racines (des -> aes) */
+		if (prevRoot[0] != '\0' && ft_strcmp(prevRoot, currRoot) != 0)
 			ft_printf("\n");
-		first = 0;
-		ft_strlcpy(last_generic, generic, sizeof(last_generic));
 
-		int has_dash = 0;
-		for (const char *p = name; *p; p++)
-		{
-			if (*p == '-')
-			{
-				has_dash = 1;
-				break;
-			}
-		}
-		
-		if (!has_dash)
+		ft_strlcpy(prevRoot, currRoot, sizeof(prevRoot));
+
+		if (!hasDash(name))
 		{
 			ft_printf("\t%s", name);
 
-			const char *num = name + j;
-			char prefix[64] = {0};
-			ft_strlcpy(prefix, generic, sizeof(prefix));
-			ft_strlcat(prefix, "-", sizeof(prefix));
-			if (num[0] != '\0')
+			k = i + 1;
+			while (g_cipherTable[k].cipher &&
+				isSameExactFamily(name, g_cipherTable[k].cipher->name))
 			{
-				ft_strlcat(prefix, num, sizeof(prefix));
-				ft_strlcat(prefix, "-", sizeof(prefix));
-			}
-			size_t k = i + 1;
-			while (g_cipherTable[k].cipher)
-			{
-				const char *next = g_cipherTable[k].cipher->name;
-				if (ft_strncmp(next, prefix, ft_strlen(prefix)) == 0)
-				{
-					ft_printf(", %s", next);
-					k++;
-				}
-				else
-					break;
+				ft_printf(",\t%s",
+					g_cipherTable[k].cipher->name);
+				k++;
 			}
 			ft_printf("\n");
 			i = k;
@@ -123,8 +161,8 @@ static void printUsage(void)
 		}
 	}
 	
-	ft_printf("\n\nFlags:\n"
-	"\t-p <password>\n\t\tHash: read from stdin and print it\n\t\tCipher: Password in ASCII (for key derivation)\n"
+	ft_printf("\nFlags:\n"
+	"\t-p <password>\n\t\tHash:\tread from stdin and print it\n\t\tCipher:\tPassword in ASCII (for key derivation)\n"
 	"\t-q\t\tQuiet mode - only print the hash\n"
 	"\t-r\t\tReverse output format\n"
 	"\t-s <salt>\tSalt in hex (for key derivation)\n"
@@ -134,7 +172,8 @@ static void printUsage(void)
 	"\t-i <file>\tInput file\n"
 	"\t-o <file>\tOutput file\n"
 	"\t-a\t\tBase64 encode/decode input/output\n"
-);
+	"\t-v <iv>\t\tIV in hex (for ciphers that use IV)\n"
+	);
 }
 
 static int initSslOptions(t_sslOptions *opts, int argc)
