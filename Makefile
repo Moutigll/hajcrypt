@@ -35,20 +35,11 @@ lib: $(LIB_NAME).a
 
 const: $(CONST_EXEC) $(CONST_HEADERS)
 
-
-
 # --- Compile with optimized assembly file for architecture if avaible ---
-
 ifeq ($(ARCH),aarch64)
 LIB_OBJ += $(LIB_ASM_ARM_OBJ)
 ASM_FLAGS := -march=armv8.2-a+crypto
-endif
-
-
-# --- Check for leak flag to add debug flags ---
-ifneq (,$(filter leak,$(MAKECMDGOALS)))
-SAN_FLAGS = --pedantic -g -fsanitize=address -fno-omit-frame-pointer
-OPT_FLAGS = 
+CFLAGS += $(ASM_FLAGS)
 endif
 
 # --- Build hajlib ---
@@ -56,7 +47,6 @@ $(HLIB_LIBA):
 	@echo -e "$(BLUE)Building hajlib...$(RESET)"
 	$(MAKE) -C $(HLIB_PATH) -j $(nproc)
 	@echo -e "$(GREEN)hajlib built.$(RESET)"
-
 
 # ---- Generate constants ----
 $(BUILD_DIR)/consts/%.o: $(CONST_DIR)/%.c
@@ -82,7 +72,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 	@mkdir -p $(dir $@)
 	@echo -e "$(BLUE)Assembling $<...$(RESET)"
-	$(CC) $(BASE_FLAGS) $(ASM_FLAGS) -g  $(INCLUDES) -c $< -o $@
+	$(CC) $(BASE_FLAGS) $(ASM_FLAGS) -g $(INCLUDES) -c $< -o $@
 
 # --- Build static library ---
 $(LIB_NAME).a: $(CONST_HEADERS) $(LIB_OBJ)
@@ -124,6 +114,24 @@ fclean: clean
 re: fclean all
 
 leak:
-	@true
+	@echo -e "$(YELLOW)Building with AddressSanitizer...$(RESET)"
+	@$(MAKE) fclean > /dev/null 2>&1
+	@$(MAKE) all SAN_FLAGS="-g -fsanitize=address -fno-omit-frame-pointer" OPT_FLAGS=""
+	@echo -e "$(GREEN)Leak check build complete.$(RESET)"
+	@echo -e "$(YELLOW)Run with: ./$(NAME)$(RESET)"
+	@echo -e "$(YELLOW)Or: ASAN_OPTIONS=detect_leaks=1 ./$(NAME)$(RESET)"
 
-.PHONY: all clean fclean re const lib leak
+leak-test: $(LIB_NAME).a $(TEST_SRC)
+	@echo -e "$(YELLOW)Building tests with AddressSanitizer...$(RESET)"
+	@$(MAKE) $(LIB_NAME).a SAN_FLAGS="-g -fsanitize=address -fno-omit-frame-pointer" OPT_FLAGS=""
+	@echo -e "$(BLUE)Compiling test runner with ASAN...$(RESET)"
+	@mkdir -p $(BUILD_DIR)/tests
+	$(CC) $(BASE_FLAGS) -g -fsanitize=address -fno-omit-frame-pointer $(ASM_FLAGS) $(INCLUDES) -o $(BUILD_DIR)/tests/test_runner \
+		$(TEST_SRC) \
+		$(LIB_NAME).a \
+		$(HLIB_LIBA)
+	@echo -e "$(GREEN)Running tests with ASAN...$(RESET)"
+	@echo -e "$(YELLOW)ASAN_OPTIONS=detect_leaks=1 $(BUILD_DIR)/tests/test_runner$(RESET)"
+	ASAN_OPTIONS=detect_leaks=1 $(BUILD_DIR)/tests/test_runner
+
+.PHONY: all clean fclean re const lib leak leak-test

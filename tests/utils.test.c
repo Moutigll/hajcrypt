@@ -39,3 +39,11 @@ int compareHex(const char *expected, const uint8_t *actual, size_t len) {
 	}
 	return (1); // All bytes match
 }
+
+int isZeroed(const void *ptr, size_t len) {
+	const uint8_t	*p = (const uint8_t *)ptr;
+	for (size_t i = 0; i < len; i++) {
+		if (p[i] != 0) return (0);
+	}
+	return (1);
+}

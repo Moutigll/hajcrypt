@@ -91,7 +91,8 @@ TEST_SRC = \
 	tests/utils.test.c \
 	tests/src/md5.test.c \
 	tests/src/sha256.test.c \
-	tests/src/whirlpool.test.c
+	tests/src/whirlpool.test.c \
+	tests/src/aes128.test.c
 
 CONST_OBJ = $(patsubst $(CONST_DIR)/%.c, $(BUILD_DIR)/consts/%.o, $(CONST_SRC))
 LIB_SRC_OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(LIB_SRC))
