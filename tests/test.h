@@ -43,6 +43,7 @@ void printFailure(const char *msg);
 void printInfo(const char *msg);
 int compareHex(const char *expected, const uint8_t *actual, size_t len);
 void hexDump(const uint8_t *data, size_t len);
+int isZeroed(const void *ptr, size_t len);
 
 /* Test function declarations */
 int testMd5Basic(void);
@@ -56,5 +57,18 @@ int testSha256Large(void);
 int testWhirlpoolBasic(void);
 int testWhirlpoolUpdate(void);
 int testWhirlpoolLarge(void);
+
+/* AES tests */
+
+/* 128 */
+int testAes128Ecb(void);
+int testAes128Cbc(void);
+int testAes128Cfb(void);
+int testAes128Cfb8(void);
+int testAes128Cfb1(void);
+int testAes128Ofb(void);
+int testAes128Ctr(void);
+int testAes128Gcm(void);
+int testAes128Pcbc(void);
 
 #endif /* HAJCRYPT_TEST_H */

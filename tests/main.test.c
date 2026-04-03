@@ -10,6 +10,15 @@ static testEntry_t all_tests[] = {
 	{"SHA-256 update", testSha256Update},
 	{"SHA-256 large", testSha256Large},
 	{"Whirlpool basic", testWhirlpoolBasic},
+	{"AES-128 ECB", testAes128Ecb},
+	{"AES-128 CBC", testAes128Cbc},
+	{"AES-128 CFB", testAes128Cfb},
+	{"AES-128 CFB8", testAes128Cfb8},
+	{"AES-128 CFB1", testAes128Cfb1},
+	{"AES-128 OFB", testAes128Ofb},
+	{"AES-128 CTR", testAes128Ctr},
+	{"AES-128 GCM", testAes128Gcm},
+	{"AES-128 PCBC", testAes128Pcbc},
 	{NULL, NULL}
 };
 
