@@ -228,17 +228,17 @@ static void mixColumns(uint8_t state[4][4])
 	}
 }
 
-void aesEncryptBlock(uint8_t block[AES_BLOCK_SIZE], const uint32_t *roundKeys, uint32_t nbRounds)
+void aesEncryptBlock(const uint8_t *in, uint8_t *out, const uint32_t *roundKeys, uint32_t nbRounds)
 {
 	uint8_t		state[4][4];
 	uint32_t	i;
 	
 	/* Convert input block to state matrix (column-major) */
 	for (i = 0; i < 4; i++) {
-		state[0][i] = block[4*i];
-		state[1][i] = block[4*i+1];
-		state[2][i] = block[4*i+2];
-		state[3][i] = block[4*i+3];
+		state[0][i] = in[4*i];
+		state[1][i] = in[4*i+1];
+		state[2][i] = in[4*i+2];
+		state[3][i] = in[4*i+3];
 	}
 	
 	/* Initial round key addition */
@@ -259,14 +259,14 @@ void aesEncryptBlock(uint8_t block[AES_BLOCK_SIZE], const uint32_t *roundKeys, u
 
 	/* Convert state back to output block */
 	for (i = 0; i < 4; i++) {
-		block[4*i]   = state[0][i];
-		block[4*i+1] = state[1][i];
-		block[4*i+2] = state[2][i];
-		block[4*i+3] = state[3][i];
+		out[4*i]   = state[0][i];
+		out[4*i+1] = state[1][i];
+		out[4*i+2] = state[2][i];
+		out[4*i+3] = state[3][i];
 	}
 }
 
-void aesDecryptBlock(uint8_t block[AES_BLOCK_SIZE],
+void aesDecryptBlock(const uint8_t *in, uint8_t *out,
 					 const uint32_t *roundKeys, uint32_t nbRounds)
 {
 	uint8_t		state[4][4];
@@ -274,10 +274,10 @@ void aesDecryptBlock(uint8_t block[AES_BLOCK_SIZE],
 
 	/* Convert input block to state matrix (column-major) */
 	for (i = 0; i < 4; i++) {
-		state[0][i] = block[4*i];
-		state[1][i] = block[4*i+1];
-		state[2][i] = block[4*i+2];
-		state[3][i] = block[4*i+3];
+		state[0][i] = in[4*i];
+		state[1][i] = in[4*i+1];
+		state[2][i] = in[4*i+2];
+		state[3][i] = in[4*i+3];
 	}
 
 	/* Initial round key addition (with last round key) */
@@ -298,30 +298,30 @@ void aesDecryptBlock(uint8_t block[AES_BLOCK_SIZE],
 
 	/* Convert state back to output block */
 	for (i = 0; i < 4; i++) {
-		block[4*i]   = state[0][i];
-		block[4*i+1] = state[1][i];
-		block[4*i+2] = state[2][i];
-		block[4*i+3] = state[3][i];
+		out[4*i]   = state[0][i];
+		out[4*i+1] = state[1][i];
+		out[4*i+2] = state[2][i];
+		out[4*i+3] = state[3][i];
 	}
 }
 
 /* ---------- OPTIMIZED IMPLEMENTATION (T-tables) ---------- */
 #else
 
-void aesEncryptBlock(uint8_t block[AES_BLOCK_SIZE], const uint32_t *roundKeys, uint32_t nbRounds)
+void aesEncryptBlock(const uint8_t *in, uint8_t *out, const uint32_t *roundKeys, uint32_t nbRounds)
 {
 	uint32_t		s0, s1, s2, s3, t0, t1, t2, t3;
 	const uint32_t	*rk = roundKeys;
 
 	/* Chargement column-major : chaque mot = une colonne */
-	s0 = ((uint32_t)block[0] << 24) | ((uint32_t)block[1] << 16) | 
-		 ((uint32_t)block[2] << 8) | block[3];
-	s1 = ((uint32_t)block[4] << 24) | ((uint32_t)block[5] << 16) | 
-		 ((uint32_t)block[6] << 8) | block[7];
-	s2 = ((uint32_t)block[8] << 24) | ((uint32_t)block[9] << 16) | 
-		 ((uint32_t)block[10] << 8) | block[11];
-	s3 = ((uint32_t)block[12] << 24) | ((uint32_t)block[13] << 16) | 
-		 ((uint32_t)block[14] << 8) | block[15];
+	s0 = ((uint32_t)in[0] << 24) | ((uint32_t)in[1] << 16) | 
+		 ((uint32_t)in[2] << 8) | in[3];
+	s1 = ((uint32_t)in[4] << 24) | ((uint32_t)in[5] << 16) | 
+		 ((uint32_t)in[6] << 8) | in[7];
+	s2 = ((uint32_t)in[8] << 24) | ((uint32_t)in[9] << 16) | 
+		 ((uint32_t)in[10] << 8) | in[11];
+	s3 = ((uint32_t)in[12] << 24) | ((uint32_t)in[13] << 16) | 
+		 ((uint32_t)in[14] << 8) | in[15];
 
 	/* Initial round key addition */
 	s0 ^= rk[0];
@@ -369,17 +369,17 @@ void aesEncryptBlock(uint8_t block[AES_BLOCK_SIZE], const uint32_t *roundKeys, u
 		  ((uint32_t)g_aes_sbox[(s2	  ) & 0xFF])) ^ rk[4*nbRounds+3];
 
 	/* Stockage column-major */
-	block[0]  = (t0 >> 24) & 0xFF; block[1]  = (t0 >> 16) & 0xFF;
-	block[2]  = (t0 >> 8) & 0xFF;   block[3]  = t0 & 0xFF;
-	block[4]  = (t1 >> 24) & 0xFF; block[5]  = (t1 >> 16) & 0xFF;
-	block[6]  = (t1 >> 8) & 0xFF;   block[7]  = t1 & 0xFF;
-	block[8]  = (t2 >> 24) & 0xFF; block[9]  = (t2 >> 16) & 0xFF;
-	block[10] = (t2 >> 8) & 0xFF;   block[11] = t2 & 0xFF;
-	block[12] = (t3 >> 24) & 0xFF; block[13] = (t3 >> 16) & 0xFF;
-	block[14] = (t3 >> 8) & 0xFF;   block[15] = t3 & 0xFF;
+	out[0]  = (t0 >> 24) & 0xFF; out[1]  = (t0 >> 16) & 0xFF;
+	out[2]  = (t0 >> 8) & 0xFF;   out[3]  = t0 & 0xFF;
+	out[4]  = (t1 >> 24) & 0xFF; out[5]  = (t1 >> 16) & 0xFF;
+	out[6]  = (t1 >> 8) & 0xFF;   out[7]  = t1 & 0xFF;
+	out[8]  = (t2 >> 24) & 0xFF; out[9]  = (t2 >> 16) & 0xFF;
+	out[10] = (t2 >> 8) & 0xFF;   out[11] = t2 & 0xFF;
+	out[12] = (t3 >> 24) & 0xFF; out[13] = (t3 >> 16) & 0xFF;
+	out[14] = (t3 >> 8) & 0xFF;   out[15] = t3 & 0xFF;
 }
 
-void aesDecryptBlock(uint8_t block[AES_BLOCK_SIZE],
+void aesDecryptBlock(const uint8_t *in, uint8_t *out,
 					 const uint32_t *roundKeys,
 					 uint32_t nbRounds)
 {
@@ -388,14 +388,14 @@ void aesDecryptBlock(uint8_t block[AES_BLOCK_SIZE],
 	uint32_t		lastRoundIdx = nbRounds * 4;
 
 	/* Column-major loading */
-	s0 = ((uint32_t)block[0]  << 24) | ((uint32_t)block[1]  << 16) |
-		 ((uint32_t)block[2]  <<  8) | block[3];
-	s1 = ((uint32_t)block[4]  << 24) | ((uint32_t)block[5]  << 16) |
-		 ((uint32_t)block[6]  <<  8) | block[7];
-	s2 = ((uint32_t)block[8]  << 24) | ((uint32_t)block[9]  << 16) |
-		 ((uint32_t)block[10] <<  8) | block[11];
-	s3 = ((uint32_t)block[12] << 24) | ((uint32_t)block[13] << 16) |
-		 ((uint32_t)block[14] <<  8) | block[15];
+	s0 = ((uint32_t)in[0]  << 24) | ((uint32_t)in[1]  << 16) |
+		 ((uint32_t)in[2]  <<  8) | in[3];
+	s1 = ((uint32_t)in[4]  << 24) | ((uint32_t)in[5]  << 16) |
+		 ((uint32_t)in[6]  <<  8) | in[7];
+	s2 = ((uint32_t)in[8]  << 24) | ((uint32_t)in[9]  << 16) |
+		 ((uint32_t)in[10] <<  8) | in[11];
+	s3 = ((uint32_t)in[12] << 24) | ((uint32_t)in[13] << 16) |
+		 ((uint32_t)in[14] <<  8) | in[15];
 
 	/* Initial AddRoundKey with last round key */
 	s0 ^= rk[lastRoundIdx];
@@ -431,9 +431,9 @@ void aesDecryptBlock(uint8_t block[AES_BLOCK_SIZE],
 	}
 
 	/*
-	** Final round: only InvSubBytes and InvShiftRows (no InvMixColumns)
-	** The bytes are permuted according to InvShiftRows
-	*/
+	 * Final round: only InvSubBytes and InvShiftRows (no InvMixColumns)
+	 * The bytes are permuted according to InvShiftRows
+	 */
 	t0 = (((uint32_t)g_aes_inv_sbox[(s0 >> 24) & 0xFF] << 24) |
 		  ((uint32_t)g_aes_inv_sbox[(s3 >> 16) & 0xFF] << 16) |
 		  ((uint32_t)g_aes_inv_sbox[(s2 >>  8) & 0xFF] <<  8) |
@@ -452,21 +452,21 @@ void aesDecryptBlock(uint8_t block[AES_BLOCK_SIZE],
 		  ((uint32_t)g_aes_inv_sbox[(s0      ) & 0xFF])) ^ rk[3];
 
 	/* Store back column-major */
-	block[0]  = (t0 >> 24) & 0xFF;
-	block[1]  = (t0 >> 16) & 0xFF;
-	block[2]  = (t0 >> 8)  & 0xFF;
-	block[3]  = t0 & 0xFF;
-	block[4]  = (t1 >> 24) & 0xFF;
-	block[5]  = (t1 >> 16) & 0xFF;
-	block[6]  = (t1 >> 8)  & 0xFF;
-	block[7]  = t1 & 0xFF;
-	block[8]  = (t2 >> 24) & 0xFF;
-	block[9]  = (t2 >> 16) & 0xFF;
-	block[10] = (t2 >> 8)  & 0xFF;
-	block[11] = t2 & 0xFF;
-	block[12] = (t3 >> 24) & 0xFF;
-	block[13] = (t3 >> 16) & 0xFF;
-	block[14] = (t3 >> 8)  & 0xFF;
-	block[15] = t3 & 0xFF;
+	out[0]  = (t0 >> 24) & 0xFF;
+	out[1]  = (t0 >> 16) & 0xFF;
+	out[2]  = (t0 >> 8)  & 0xFF;
+	out[3]  = t0 & 0xFF;
+	out[4]  = (t1 >> 24) & 0xFF;
+	out[5]  = (t1 >> 16) & 0xFF;
+	out[6]  = (t1 >> 8)  & 0xFF;
+	out[7]  = t1 & 0xFF;
+	out[8]  = (t2 >> 24) & 0xFF;
+	out[9]  = (t2 >> 16) & 0xFF;
+	out[10] = (t2 >> 8)  & 0xFF;
+	out[11] = t2 & 0xFF;
+	out[12] = (t3 >> 24) & 0xFF;
+	out[13] = (t3 >> 16) & 0xFF;
+	out[14] = (t3 >> 8)  & 0xFF;
+	out[15] = t3 & 0xFF;
 }
 #endif /* AES_USE_REFERENCE */

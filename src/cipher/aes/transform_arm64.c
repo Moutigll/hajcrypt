@@ -1,6 +1,6 @@
 #include "../../../includes/cipher/aes.h"
 
-#if defined(__aarch64__)
+#if defined(AES_USE_NEON)
 #include <arm_neon.h>
 
 /*  ---------- Round primitives - single block ---------- */

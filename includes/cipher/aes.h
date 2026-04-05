@@ -7,6 +7,12 @@
 #include "cipher.h"
 #include "modes.h"
 
+#if (defined(__x86_64__) || defined(_M_X64)) && defined(__AES__) && defined(__PCLMUL__)
+#define AES_USE_AESNI
+#elif defined(__aarch64__) && defined(__ARM_FEATURE_CRYPTO)
+#define AES_USE_NEON
+#endif
+
 /* AES block size in bytes */
 #define AES_BLOCK_SIZE 16
 
@@ -182,22 +188,24 @@ void	aesExpandDecryptKeys(const uint32_t *encRoundKeys, uint32_t nbRounds, uint3
  * AES operates on 16-byte blocks and uses the expanded key schedule.
  * The encryption process includes AddRoundKey, SubBytes, ShiftRows, and MixColumns.
  * 
- * @param block 16-byte plaintext block
+ * @param in 16-byte plaintext block
+ * @param out 16-byte output buffer for ciphertext block
  * @param roundKeys Expanded key schedule
  * @param nbRounds Number of rounds
  */
-void	aesEncryptBlock(uint8_t block[AES_BLOCK_SIZE], const uint32_t *roundKeys, uint32_t nbRounds);
+void	aesEncryptBlock(const uint8_t in[AES_BLOCK_SIZE], uint8_t out[AES_BLOCK_SIZE], const uint32_t *roundKeys, uint32_t nbRounds);
 
 /**
  * @brief Decrypts a single 128-bit block using AES.
  * 
  * Decryption uses the inverse operations: InvSubBytes, InvShiftRows, InvMixColumns.
  * 
- * @param block 16-byte ciphertext block
+ * @param in 16-byte ciphertext block
+ * @param out 16-byte output buffer for plaintext block
  * @param roundKeys Expanded key schedule (decryption keys)
  * @param nbRounds Number of rounds
  */
-void	aesDecryptBlock(uint8_t block[AES_BLOCK_SIZE], const uint32_t *roundKeys, uint32_t nbRounds);
+void	aesDecryptBlock(const uint8_t in[AES_BLOCK_SIZE], uint8_t out[AES_BLOCK_SIZE], const uint32_t *roundKeys, uint32_t nbRounds);
 
 /* ---------- ECB mode functions ---------- */
 
@@ -662,8 +670,8 @@ void	aesPcbcFree(void *ctx);
  * @param nbRounds   Number of AES rounds (depends on key size).
  * @param encrypt	Set to non-zero for encryption, zero for decryption.
  */
-void	aesProcessBlocksNeon(const uint8_t	*in,
-							 uint8_t		*out,
+void	aesProcessBlocksNeon(const uint8_t	in[AES_BLOCK_SIZE],
+							 uint8_t		out[AES_BLOCK_SIZE],
 							 const uint32_t	*roundKeys,
 							 size_t			blocks,
 							 int			nbRounds,
@@ -684,8 +692,8 @@ void	aesProcessBlocksNeon(const uint8_t	*in,
  * @param nbRounds   Number of AES rounds (depends on key size).
  * @param encrypt	Set to non-zero for encryption, zero for decryption.
  */
-void	aesProcessBlocksX86(const uint8_t	*in,
-							uint8_t			*out,
+void	aesProcessBlocksX86(const uint8_t	in[AES_BLOCK_SIZE],
+							uint8_t			out[AES_BLOCK_SIZE],
 							const uint32_t	*roundKeys,
 							size_t			blocks,
 							int				nbRounds,
