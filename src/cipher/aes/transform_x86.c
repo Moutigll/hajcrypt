@@ -1,7 +1,7 @@
 #include "../../../includes/cipher/aes.h"
 
 
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(AES_USE_AESNI)
 #include <immintrin.h>
 #include <wmmintrin.h>
 
@@ -393,4 +393,4 @@ void	aesProcessBlocksX86(const uint8_t	*in,
 
 #endif /* HAJCRYPT_SMALL_FOOTPRINT */
 
-#endif /* __x86_64__ || _M_X64 */
+#endif /* AES_USE_AESNI */

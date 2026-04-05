@@ -4,7 +4,7 @@
 #include "../../../includes/cipher/aes.h"
 
 
-#ifndef __aarch64__
+#ifndef AES_USE_NEON
 
 /**
  * @brief	Galois Field multiplication in GF(2^128) using the polynomial
@@ -48,7 +48,7 @@ static void ghashBlock(t_aesGcmCtx *ctx, const uint8_t *block)
 	gfmulStandard(tmp, ctx->H, ctx->ghashState);
 }
 
-#else /* __aarch64__ */
+#else /* AES_USE_NEON */
 
 /* --------------- ARMv8-A Optimized Implementation (NEON + PMULL) --------------- */
 
@@ -460,7 +460,7 @@ static void gcm4Blocks(uint8x16_t			*acc,
 	*acc = gcmReduce(sum_lo, sum_mid, sum_hi);
 }
 
-#endif /* __aarch64__ */
+#endif /* AES_USE_NEON */
 
 /**
  * @brief	Increment GCM counter in big-endian format (bytes 12-15)
@@ -510,15 +510,15 @@ int aesGcmInit(void					*vctx,
 
 	uint8_t zero[16] = {0};
 	ft_memcpy(ctx->H, zero, 16);
-#ifndef __aarch64__
-	aesEncryptBlock(ctx->H, ctx->roundKeys.rk, ctx->nr);
+#ifndef AES_USE_NEON
+	aesEncryptBlock(zero, ctx->H, ctx->roundKeys.rk, ctx->nr);
 #else
 	aesProcessBlocksNeon(zero, ctx->H, ctx->roundKeys.rk, 1, ctx->nr, 1);
 #endif
 
 	ft_memcpy(ctx->Hpow[0], ctx->H, 16);
 	for (int i = 1; i < 8; i++) {
-#ifndef __aarch64__
+#ifndef AES_USE_NEON
 		gfmulStandard(ctx->Hpow[i-1], ctx->H, ctx->Hpow[i]);
 #else
 		uint8_t tmp[16] = {0};
@@ -527,7 +527,7 @@ int aesGcmInit(void					*vctx,
 #endif
 	}
 
-#ifdef __aarch64__
+#ifdef AES_USE_NEON
 	for (int i = 0; i < 8; i++) {
 		uint8x16_t v = vld1q_u8(ctx->Hpow[i]);
 		vst1q_u8(ctx->Hpow[i], vrbitq_u8(v));
@@ -547,7 +547,7 @@ int aesGcmInit(void					*vctx,
 			size_t n = (ivLen - pos < 16) ? ivLen - pos : 16;
 			ft_memcpy(blk, iv + pos, n);
 			for (int k = 0; k < 16; k++) y[k] ^= blk[k];
-#ifndef __aarch64__
+#ifndef AES_USE_NEON
 			gfmulStandard(y, ctx->H, y);
 #else
 			uint8_t tmp[16] = {0};
@@ -559,7 +559,7 @@ int aesGcmInit(void					*vctx,
 		uint8_t  lb[16] = {0};
 		for (int i = 0; i < 8; i++) lb[8+i] = (bits >> (56 - i*8)) & 0xff;
 		for (int k = 0; k < 16; k++) lb[k] ^= y[k];
-#ifndef __aarch64__
+#ifndef AES_USE_NEON
 		gfmulStandard(lb, ctx->H, y);
 #else
 		ghashNeon(y, ctx->H, lb, 16);
@@ -567,7 +567,7 @@ int aesGcmInit(void					*vctx,
 		ft_memcpy(ctx->J0, y, 16);
 	}
 
-#if defined(__aarch64__)
+#if defined(AES_USE_NEON)
 	for (int i = 0; i <= ctx->nr; i++) {
 		uint8x16_t k = vld1q_u8((const uint8_t*)&ctx->roundKeys.rk[i * 4]);
 		ctx->rk_neon[i] = vrev32q_u8(k);
@@ -610,7 +610,7 @@ void aesGcmUpdateAAD(void *vctx, const uint8_t *aad, size_t aadLen) {
 	}
 }
 
-#ifdef __aarch64__
+#ifdef AES_USE_NEON
 __attribute__((target("aes")))
 #endif
 void aesGcmUpdate(void			*vctx,
@@ -625,7 +625,7 @@ void aesGcmUpdate(void			*vctx,
 		ghash_finish_aad(ctx);
 	ctx->dataLen += inLen;
 
-#ifdef __aarch64__
+#ifdef AES_USE_NEON
 
 	uint8x16_t	*rk = ctx->rk_neon;
 
@@ -695,7 +695,7 @@ void aesGcmUpdate(void			*vctx,
 	for (size_t i = 0; i < fullBlocks; i++) {
 		uint8_t ks[16];
 		ft_memcpy(ks, ctx->counter, 16);
-		aesEncryptBlock(ks, ctx->roundKeys.rk, ctx->nr);
+		aesEncryptBlock(ks, ks, ctx->roundKeys.rk, ctx->nr);
 		ctr_inc(ctx->counter);
 		for (int j = 0; j < 16; j++)
 			out[offset + j] = in[offset + j] ^ ks[j];
@@ -707,7 +707,7 @@ void aesGcmUpdate(void			*vctx,
 	if (remBytes) {
 		uint8_t ks[16];
 		ft_memcpy(ks, ctx->counter, 16);
-		aesEncryptBlock(ks, ctx->roundKeys.rk, ctx->nr);
+		aesEncryptBlock(ks, ks, ctx->roundKeys.rk, ctx->nr);
 		ctr_inc(ctx->counter);
 		for (size_t j = 0; j < remBytes; j++)
 			out[offset + j] = in[offset + j] ^ ks[j];
@@ -761,8 +761,8 @@ void aesGcmFinal(void *vctx, uint8_t *out, size_t *outLen)
 
 	uint8_t tagMask[16];
 	ft_memcpy(tagMask, ctx->J0, 16);
-#ifndef __aarch64__
-	aesEncryptBlock(tagMask, ctx->roundKeys.rk, ctx->nr);
+#ifndef AES_USE_NEON
+	aesEncryptBlock(tagMask, tagMask, ctx->roundKeys.rk, ctx->nr);
 #else
 	aesProcessBlocksNeon(tagMask, tagMask, ctx->roundKeys.rk, 1, ctx->nr, 1);
 #endif

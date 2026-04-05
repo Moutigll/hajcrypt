@@ -23,7 +23,7 @@ int	aesEcbInit(void					*vctx,
 	 * Reference: handles InvMixColumns itself during decryption.
 	 * NEON:      handles key transformation inside prepareKeys().
 	 */
-#if !defined(__aarch64__) && !defined(__x86_64__) && !defined(_M_X64) && !defined(AES_USE_REFERENCE)
+#if !defined(AES_USE_NEON) && !defined(AES_USE_AESNI) && !defined(AES_USE_REFERENCE)
 	if (dir == CIPHER_DECRYPT)
 		aesExpandDecryptKeys(ctx->roundKeys, ctx->nbRounds, ctx->roundKeys);
 #endif
@@ -69,17 +69,17 @@ static size_t	flushBuffer(t_aesEcbCtx		*ctx,
 	*inLen -= need;
 	ctx->bufferLen = 0;
 
-#if defined(__aarch64__)
+#if defined(AES_USE_NEON)
 	aesProcessBlocksNeon(temp, temp, ctx->roundKeys, 1, ctx->nbRounds,
 						 ctx->dir == CIPHER_ENCRYPT);
-#elif defined(__x86_64__) || defined(_M_X64)	
+#elif defined(AES_USE_AESNI)
 	aesProcessBlocksX86(temp, temp, ctx->roundKeys, 1, ctx->nbRounds,
 						ctx->dir == CIPHER_ENCRYPT);
 #else
 	if (ctx->dir == CIPHER_ENCRYPT)
-		aesEncryptBlock(temp, ctx->roundKeys, ctx->nbRounds);
+		aesEncryptBlock(temp, temp, ctx->roundKeys, ctx->nbRounds);
 	else
-		aesDecryptBlock(temp, ctx->roundKeys, ctx->nbRounds);
+		aesDecryptBlock(temp, temp, ctx->roundKeys, ctx->nbRounds);
 #endif
 
 	ft_memcpy(*out, temp, AES_BLOCK_SIZE);
@@ -106,14 +106,14 @@ void	aesEcbUpdate(void			*vctx,
 	{
 		blocks = inLen / AES_BLOCK_SIZE;
 
-#if defined(__aarch64__)
+#if defined(AES_USE_NEON)
 	aesProcessBlocksNeon(in, out, ctx->roundKeys, blocks, ctx->nbRounds,
 						 ctx->dir == CIPHER_ENCRYPT);
-#elif defined(__x86_64__) || defined(_M_X64)
+#elif defined(AES_USE_AESNI)
 	aesProcessBlocksX86(in, out, ctx->roundKeys, blocks, ctx->nbRounds,
 						ctx->dir == CIPHER_ENCRYPT);
 #else
-	void	(*cryptFunc)(uint8_t *, const uint32_t *, uint32_t);
+	void	(*cryptFunc)(const uint8_t *, uint8_t *, const uint32_t *, uint32_t);
 	size_t	i;
 
 	cryptFunc = (ctx->dir == CIPHER_ENCRYPT) ? aesEncryptBlock : aesDecryptBlock;
@@ -122,7 +122,7 @@ void	aesEcbUpdate(void			*vctx,
 	{
 		ft_memcpy(out + i * AES_BLOCK_SIZE, in + i * AES_BLOCK_SIZE,
 				  AES_BLOCK_SIZE);
-		cryptFunc(out + i * AES_BLOCK_SIZE, ctx->roundKeys, ctx->nbRounds);
+		cryptFunc(out + i * AES_BLOCK_SIZE, out + i * AES_BLOCK_SIZE, ctx->roundKeys, ctx->nbRounds);
 		i++;
 	}
 #endif
