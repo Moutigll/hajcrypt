@@ -1,7 +1,5 @@
-#include "../../hajlib/include/hmath.h"
 #include "../../hajlib/include/hmemory.h"
 #include "../../hajlib/include/hprintf.h"
-#include "../../hajlib/include/hstring.h"
 
 #include "../../includes/cipher/aes.h"
 #include "../test.h"
@@ -363,27 +361,6 @@ static const struct {
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
-/* --------------- Helper Functions --------------- */
-
-static int hexToBytes(const char *hex, uint8_t *out, size_t maxLen) {
-	size_t hexLen = ft_strlen(hex);
-	if (hexLen % 2 != 0 || hexLen / 2 > maxLen)
-		return (-1);
-	for (size_t i = 0; i < hexLen / 2; i++) {
-		char byteStr[3] = { hex[i*2], hex[i*2+1], 0 };
-		out[i] = (uint8_t)ft_strtol(byteStr, NULL, 16);
-	}
-	return (int)(hexLen / 2);
-}
-
-static int compareBytes(const uint8_t *expected, const uint8_t *actual, size_t len) {
-	for (size_t i = 0; i < len; i++) {
-		if (expected[i] != actual[i])
-			return (0);
-	}
-	return (1);
-}
-
 /* --------------- Test Functions for Each Mode --------------- */
 
 /* ----------------------------------------------------------------------------
@@ -411,7 +388,7 @@ int testAes128Ecb(void) {
 		outLen = written;
 		aesEcbFinal(&ctx, result + outLen, &written);
 		outLen += written;
-		if (compareBytes(cipher, result, 16)) {
+		if (ft_memcmp(cipher, result, 16) == 0) {
 			passed++; printSuccess("ECB encrypt vector");
 		} else {
 			printFailure("ECB encrypt vector");
@@ -426,11 +403,10 @@ int testAes128Ecb(void) {
 		outLen = written;
 		aesEcbFinal(&ctx, result + outLen, &written);
 		outLen += written;
-		if (compareBytes(plain, result, 16)) {
+		if (ft_memcmp(plain, result, 16) == 0) {
 			passed++; printSuccess("ECB decrypt vector");
-		} else {
+		} else
 			printFailure("ECB decrypt vector");
-		}
 		total++;
 
 		/* Cleanup */
@@ -438,12 +414,13 @@ int testAes128Ecb(void) {
 		if (isZeroed(ctx.roundKeys, sizeof(ctx.roundKeys)) &&
 			isZeroed(ctx.buffer, sizeof(ctx.buffer))) {
 			passed++; printSuccess("ECB context cleared");
-		} else {
+		} else
 			printFailure("ECB context not cleared");
-		}
 		total++;
 	}
 	ft_printf("AES-128-ECB: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -472,11 +449,10 @@ int testAes128Cbc(void) {
 		outLen = written;
 		aesCbcFinal(&ctx, result + outLen, &written);
 		outLen += written;
-		if (compareBytes(cipher, result, 16)) {
+		if (ft_memcmp(cipher, result, 16) == 0) {
 			passed++; printSuccess("CBC encrypt vector");
-		} else {
+		} else
 			printFailure("CBC encrypt vector");
-		}
 		total++;
 
 		/* Decryption */
@@ -486,11 +462,10 @@ int testAes128Cbc(void) {
 		outLen = written;
 		aesCbcFinal(&ctx, result + outLen, &written);
 		outLen += written;
-		if (compareBytes(plain, result, 16)) {
+		if (ft_memcmp(plain, result, 16) == 0) {
 			passed++; printSuccess("CBC decrypt vector");
-		} else {
+		} else
 			printFailure("CBC decrypt vector");
-		}
 		total++;
 
 		/* Cleanup */
@@ -499,12 +474,13 @@ int testAes128Cbc(void) {
 			isZeroed(ctx.cbcCtx.iv, sizeof(ctx.cbcCtx.iv)) &&
 			isZeroed(ctx.cbcCtx.buffer, sizeof(ctx.cbcCtx.buffer))) {
 			passed++; printSuccess("CBC context cleared");
-		} else {
+		} else
 			printFailure("CBC context not cleared");
-		}
 		total++;
 	}
 	ft_printf("AES-128-CBC: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -533,11 +509,10 @@ int testAes128Cfb(void) {
 		outLen = written;
 		aesCfbFinal(&ctx, result + outLen, &written);
 		outLen += written;
-		if (compareBytes(cipher, result, 16)) {
+		if (ft_memcmp(cipher, result, 16) == 0) {
 			passed++; printSuccess("CFB encrypt vector");
-		} else {
+		} else
 			printFailure("CFB encrypt vector");
-		}
 		total++;
 
 		/* Decryption */
@@ -547,11 +522,10 @@ int testAes128Cfb(void) {
 		outLen = written;
 		aesCfbFinal(&ctx, result + outLen, &written);
 		outLen += written;
-		if (compareBytes(plain, result, 16)) {
+		if (ft_memcmp(plain, result, 16) == 0) {
 			passed++; printSuccess("CFB decrypt vector");
-		} else {
+		} else
 			printFailure("CFB decrypt vector");
-		}
 		total++;
 
 		/* Cleanup */
@@ -561,12 +535,13 @@ int testAes128Cfb(void) {
 			isZeroed(ctx.cfbCtx.shiftRegister, sizeof(ctx.cfbCtx.shiftRegister)) &&
 			isZeroed(ctx.cfbCtx.inputBuf, sizeof(ctx.cfbCtx.inputBuf))) {
 			passed++; printSuccess("CFB context cleared");
-		} else {
+		} else
 			printFailure("CFB context not cleared");
-		}
 		total++;
 	}
 	ft_printf("AES-128-CFB: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -595,11 +570,10 @@ int testAes128Cfb8(void) {
 		outLen = written;
 		aesCfbFinal(&ctx, result + outLen, &written);
 		outLen += written;
-		if (compareBytes(cipher, result, plainLen)) {
+		if (ft_memcmp(cipher, result, plainLen) == 0) {
 			passed++; printSuccess("CFB8 encrypt vector");
-		} else {
+		} else
 			printFailure("CFB8 encrypt vector");
-		}
 		total++;
 
 		/* Decryption */
@@ -609,11 +583,10 @@ int testAes128Cfb8(void) {
 		outLen = written;
 		aesCfbFinal(&ctx, result + outLen, &written);
 		outLen += written;
-		if (compareBytes(plain, result, plainLen)) {
+		if (ft_memcmp(plain, result, plainLen) == 0) {
 			passed++; printSuccess("CFB8 decrypt vector");
-		} else {
+		} else
 			printFailure("CFB8 decrypt vector");
-		}
 		total++;
 
 		/* Cleanup */
@@ -623,12 +596,13 @@ int testAes128Cfb8(void) {
 			isZeroed(ctx.cfbCtx.shiftRegister, sizeof(ctx.cfbCtx.shiftRegister)) &&
 			isZeroed(ctx.cfbCtx.inputBuf, sizeof(ctx.cfbCtx.inputBuf))) {
 			passed++; printSuccess("CFB8 context cleared");
-		} else {
+		} else
 			printFailure("CFB8 context not cleared");
-		}
 		total++;
 	}
 	ft_printf("AES-128-CFB8: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -658,7 +632,7 @@ int testAes128Cfb1(void) {
 		outLen = writtenLen;
 		aesCfb1Final(&ctx, result + outLen, &writtenLen);
 		outLen += writtenLen;
-		if (outLen == plainLen && compareBytes(cipher, result, plainLen)) {
+		if (outLen == plainLen && (ft_memcmp(cipher, result, plainLen) == 0)) {
 			passed++; printSuccess("CFB1 encrypt vector");
 		} else {
 			printFailure("CFB1 encrypt vector");
@@ -673,11 +647,10 @@ int testAes128Cfb1(void) {
 		outLen = writtenLen;
 		aesCfb1Final(&ctx, result + outLen, &writtenLen);
 		outLen += writtenLen;
-		if (outLen == plainLen && compareBytes(plain, result, plainLen)) {
+		if (outLen == plainLen && (ft_memcmp(plain, result, plainLen) == 0)) {
 			passed++; printSuccess("CFB1 decrypt vector");
-		} else {
+		} else
 			printFailure("CFB1 decrypt vector");
-		}
 		total++;
 
 		/* Cleanup */
@@ -687,12 +660,13 @@ int testAes128Cfb1(void) {
 			isZeroed(ctx.cfbCtx.shiftRegister, sizeof(ctx.cfbCtx.shiftRegister)) &&
 			isZeroed(ctx.cfbCtx.inputBuf, sizeof(ctx.cfbCtx.inputBuf))) {
 			passed++; printSuccess("CFB1 context cleared");
-		} else {
+		} else
 			printFailure("CFB1 context not cleared");
-		}
 		total++;
 	}
 	ft_printf("AES-128-CFB1: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -721,11 +695,10 @@ int testAes128Ctr(void) {
 		outLen = written;
 		aesCtrFinal(&ctx, result + outLen, &written);
 		outLen += written;
-		if (compareBytes(cipher, result, plainLen)) {
+		if (ft_memcmp(cipher, result, plainLen) == 0) {
 			passed++; printSuccess("CTR encrypt vector");
-		} else {
+		} else
 			printFailure("CTR encrypt vector");
-		}
 		total++;
 
 		/* Decryption */
@@ -735,11 +708,10 @@ int testAes128Ctr(void) {
 		outLen = written;
 		aesCtrFinal(&ctx, result + outLen, &written);
 		outLen += written;
-		if (compareBytes(plain, result, plainLen)) {
+		if (ft_memcmp(plain, result, plainLen) == 0) {
 			passed++; printSuccess("CTR decrypt vector");
-		} else {
+		} else
 			printFailure("CTR decrypt vector");
-		}
 		total++;
 
 		/* Cleanup */
@@ -749,12 +721,13 @@ int testAes128Ctr(void) {
 			isZeroed(ctx.ctrCtx.counter, sizeof(ctx.ctrCtx.counter)) &&
 			isZeroed(ctx.ctrCtx.keystream, sizeof(ctx.ctrCtx.keystream))) {
 			passed++; printSuccess("CTR context cleared");
-		} else {
+		} else
 			printFailure("CTR context not cleared");
-		}
 		total++;
 	}
 	ft_printf("AES-128-CTR: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -783,11 +756,10 @@ int testAes128Ofb(void) {
 		outLen = written;
 		aesOfbFinal(&ctx, result + outLen, &written);
 		outLen += written;
-		if (compareBytes(cipher, result, plainLen)) {
+		if (ft_memcmp(cipher, result, plainLen) == 0) {
 			passed++; printSuccess("OFB encrypt vector");
-		} else {
+		} else
 			printFailure("OFB encrypt vector");
-		}
 		total++;
 
 		/* Decryption */
@@ -797,11 +769,10 @@ int testAes128Ofb(void) {
 		outLen = written;
 		aesOfbFinal(&ctx, result + outLen, &written);
 		outLen += written;
-		if (compareBytes(plain, result, plainLen)) {
+		if (ft_memcmp(plain, result, plainLen) == 0) {
 			passed++; printSuccess("OFB decrypt vector");
-		} else {
+		} else
 			printFailure("OFB decrypt vector");
-		}
 		total++;
 
 		/* Cleanup */
@@ -811,12 +782,13 @@ int testAes128Ofb(void) {
 			isZeroed(ctx.ofbCtx.keystream, sizeof(ctx.ofbCtx.keystream)) &&
 			isZeroed(ctx.ofbCtx.inputBuf, sizeof(ctx.ofbCtx.inputBuf))) {
 			passed++; printSuccess("OFB context cleared");
-		} else {
+		} else
 			printFailure("OFB context not cleared");
-		}
 		total++;
 	}
 	ft_printf("AES-128-OFB: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -846,7 +818,7 @@ int testAes128Pcbc(void) {
 		aesPcbcFinal(&ctx, result + outLen, &written);
 		outLen += written;
 
-		if (outLen == 32 && compareBytes(cipher, result, 32)) {
+		if (outLen == 32 && ft_memcmp(cipher, result, 32) == 0) {
 			passed++; printSuccess("PCBC multi-block encrypt vector");
 		} else {
 			printFailure("PCBC multi-block encrypt vector");
@@ -865,7 +837,7 @@ int testAes128Pcbc(void) {
 		aesPcbcFinal(&ctx, result + outLen, &written);
 		outLen += written;
 
-		if (outLen == 16 && compareBytes(plain, result, 16)) {
+		if (outLen == 16 && ft_memcmp(plain, result, 16) == 0) {
 			passed++; printSuccess("PCBC multi-block decrypt vector");
 		} else {
 			printFailure("PCBC multi-block decrypt vector");
@@ -881,12 +853,13 @@ int testAes128Pcbc(void) {
 			isZeroed(ctx.pcbcCtx.prevPlain, sizeof(ctx.pcbcCtx.prevPlain)) &&
 			isZeroed(ctx.pcbcCtx.buffer, sizeof(ctx.pcbcCtx.buffer))) {
 			passed++; printSuccess("PCBC context cleared");
-		} else {
+		} else
 			printFailure("PCBC context not cleared");
-		}
 		total++;
 	}
 	ft_printf("AES-128-PCBC multi-block: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -928,11 +901,11 @@ int testAes128Gcm(void) {
 		outLen += written;
 		
 		int encOk = 1;
-		if (plainLen > 0 && !compareBytes(cipher, result, plainLen))
+		if (plainLen > 0 && ft_memcmp(cipher, result, plainLen) != 0)
 			encOk = 0;
 
 		if (outLen >= plainLen + 16) {
-			if (!compareBytes(expectedTag, result + plainLen, 16))
+			if (ft_memcmp(expectedTag, result + plainLen, 16) != 0)
 				encOk = 0;
 		}
 
@@ -963,7 +936,7 @@ int testAes128Gcm(void) {
 		int isTagValid = aesGcmVerifyTag(&ctx, expectedTag, tagLen);
 
 		int decOk = 1;
-		if (plainLen > 0 && !compareBytes(plain, result, plainLen)) decOk = 0;
+		if (plainLen > 0 && ft_memcmp(plain, result, plainLen) != 0) decOk = 0;
 		if (!isTagValid) decOk = 0;
 
 		if (decOk) {
@@ -980,5 +953,7 @@ int testAes128Gcm(void) {
 	}
 	
 	ft_printf("AES-128-GCM: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }

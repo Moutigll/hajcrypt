@@ -1,7 +1,5 @@
-#include "../../hajlib/include/hmath.h"
 #include "../../hajlib/include/hmemory.h"
 #include "../../hajlib/include/hprintf.h"
-#include "../../hajlib/include/hstring.h"
 
 #include "../../includes/cipher/des.h"
 #include "../test.h"
@@ -141,19 +139,6 @@ static const struct {
 	{ NULL, NULL, NULL, NULL }
 };
 
-/* ---------- Helper functions ---------- */
-
-static int hexToBytes(const char *hex, uint8_t *out, size_t maxLen) {
-	size_t	hexLen = ft_strlen(hex);
-	if (hexLen % 2 != 0 || hexLen / 2 > maxLen)
-		return (-1);
-	for (size_t i = 0; i < hexLen / 2; i++) {
-		char byteStr[3] = { hex[i*2], hex[i*2+1], 0 };
-		out[i] = (uint8_t)ft_strtol(byteStr, NULL, 16);
-	}
-	return (int)(hexLen / 2);
-}
-
 /* ---------- ECB ---------- */
 int testDesEcb(void) {
 	int passed = 0, total = 0;
@@ -206,6 +191,8 @@ int testDesEcb(void) {
 		total++;
 	}
 	ft_printf("DES-ECB: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -261,6 +248,8 @@ int testDesCbc(void) {
 		total++;
 	}
 	ft_printf("DES-CBC: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -304,6 +293,8 @@ int testDesMultiBlock(void) {
 		desCbcFree(&ctx);
 	}
 	ft_printf("DES-CBC multi-block: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -359,6 +350,8 @@ int testDesCfb(void) {
 		total++;
 	}
 	ft_printf("DES-CFB: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -414,6 +407,8 @@ int testDesCfb8(void) {
 		total++;
 	}
 	ft_printf("DES-CFB8: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -471,6 +466,8 @@ int testDesCfb1(void) {
 		total++;
 	}
 	ft_printf("DES-CFB1: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -526,6 +523,8 @@ int testDesOfb(void) {
 		total++;
 	}
 	ft_printf("DES-OFB: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -581,6 +580,8 @@ int testDesCtr(void) {
 		total++;
 	}
 	ft_printf("DES-CTR: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -636,5 +637,7 @@ int testDesPcbc(void) {
 		total++;
 	}
 	ft_printf("DES-PCBC: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }

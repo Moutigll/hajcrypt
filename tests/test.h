@@ -37,6 +37,9 @@ typedef struct {
 	int			(*func)(void);
 } testEntry_t;
 
+extern int g_totalTests;
+extern int g_passedTests;
+
 /* Utility functions for test reporting and comparison */
 void printSuccess(const char *msg);
 void printFailure(const char *msg);
@@ -44,6 +47,7 @@ void printInfo(const char *msg);
 int compareHex(const char *expected, const uint8_t *actual, size_t len);
 void hexDump(const uint8_t *data, size_t len);
 int isZeroed(const void *ptr, size_t len);
+int hexToBytes(const char *hex, uint8_t *out, size_t maxLen);
 
 /* Test function declarations */
 int testMd5Basic(void);

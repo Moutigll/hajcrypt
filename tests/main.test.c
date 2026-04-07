@@ -3,6 +3,9 @@
 
 #include "test.h"
 
+int g_totalTests = 0;
+int g_passedTests = 0;
+
 static testEntry_t all_tests[] = {
 	{"MD5 basic", testMd5Basic},
 	{"MD5 update", testMd5Update},
@@ -66,7 +69,9 @@ int main(int argc, char **argv) {
 	
 	/* Summary */
 	ft_printf(COLOR_CYAN "\n=== SUMMARY ===\n" COLOR_RESET);
-	ft_printf("Tests passed: %d/%d\n", passed, total);
+	ft_printf("Sections passed: %d/%d\n", passed, total);
+	double passRate = (g_totalTests > 0) ? ((double)g_passedTests / g_totalTests) * 100 : 0.0;
+	ft_printf("Assertions passed: %d/%d (%.2f%%)\n", g_passedTests, g_totalTests, passRate);
 	
 	if (passed == total) {
 		ft_printf(COLOR_GREEN "\n✓ ALL TESTS PASSED\n" COLOR_RESET);

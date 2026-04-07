@@ -37,8 +37,8 @@ uint64_t des3DecryptBlock(uint64_t block,
 						  const uint64_t subkeys2[16],
 						  const uint64_t subkeys3[16])
 {
-	block = desDecryptBlock(block, subkeys1);   /* D(K1) */
-	block = desEncryptBlock(block, subkeys2);   /* E(K2) */
 	block = desDecryptBlock(block, subkeys3);   /* D(K3) */
+	block = desEncryptBlock(block, subkeys2);   /* E(K2) */
+	block = desDecryptBlock(block, subkeys1);   /* D(K1) */
 	return (block);
 }

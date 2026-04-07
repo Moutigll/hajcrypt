@@ -40,6 +40,8 @@ int testSha256Basic(void) {
 	}
 	
 	ft_printf("SHA-256 basic: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -68,6 +70,8 @@ int testSha256Update(void) {
 	}
 	
 	ft_printf("SHA-256 update: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -98,5 +102,7 @@ int testSha256Large(void) {
 		printFailure("1 million 'a's");
 	
 	ft_printf("SHA-256 large: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
