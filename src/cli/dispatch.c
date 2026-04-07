@@ -9,6 +9,7 @@
 #include "../../includes/cipher/des.h"
 #include "../../includes/cipher/des3.h"
 #include "../../includes/cipher/aes.h"
+#include "../../includes/cipher/blowfish.h"
 
 const t_hashDispatch g_hashTable[] = {
 	{ ALGO_MD5,		&g_md5Hash },
@@ -76,7 +77,18 @@ const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_AES_256_OFB,	&g_aes256OfbCipher },
 	{ ALGO_AES_256_CTR,	&g_aes256CtrCipher },
 	{ ALGO_AES_256_PCBC,	&g_aes256PcbcCipher },
-	
+
+	/* Blowfish family */
+	{ ALGO_BLOWFISH,		&g_blowfishCipher },
+	{ ALGO_BLOWFISH_ECB,	&g_blowfishEcbCipher },
+	{ ALGO_BLOWFISH_CBC,	&g_blowfishCbcCipher },
+	{ ALGO_BLOWFISH_CFB,	&g_blowfishCfbCipher },
+	{ ALGO_BLOWFISH_CFB1,	&g_blowfishCfb1Cipher },
+	{ ALGO_BLOWFISH_CFB8,	&g_blowfishCfb8Cipher },
+	{ ALGO_BLOWFISH_OFB,	&g_blowfishOfbCipher },
+	{ ALGO_BLOWFISH_CTR,	&g_blowfishCtrCipher },
+	{ ALGO_BLOWFISH_PCBC,	&g_blowfishPcbcCipher },
+
 	{ ALGO_NONE, NULL }
 };
 

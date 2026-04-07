@@ -44,6 +44,12 @@ LIB_SRC = \
 	$(SRC_DIR)/cipher/modes/pcbc.c \
 	$(SRC_DIR)/cipher/base64.c \
 	$(SRC_DIR)/cipher/blowfish/transform.c \
+	$(SRC_DIR)/cipher/blowfish/ecb.c \
+	$(SRC_DIR)/cipher/blowfish/cbc.c \
+	$(SRC_DIR)/cipher/blowfish/cfb.c \
+	$(SRC_DIR)/cipher/blowfish/ofb.c \
+	$(SRC_DIR)/cipher/blowfish/ctr.c \
+	$(SRC_DIR)/cipher/blowfish/pcbc.c \
 	$(SRC_DIR)/cipher/des/transform.c \
 	$(SRC_DIR)/cipher/des/ecb.c \
 	$(SRC_DIR)/cipher/des/cbc.c \
