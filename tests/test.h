@@ -90,4 +90,14 @@ int testDesPcbc(void);
 int testDes3Ecb(void);
 int testDes3Cbc(void);
 
+/* Blowfish tests */
+int testBlowfishEcb(void);
+int testBlowfishCbc(void);
+int testBlowfishCfb(void);
+int testBlowfishCfb8(void);
+int testBlowfishCfb1(void);
+int testBlowfishOfb(void);
+int testBlowfishCtr(void);
+int testBlowfishPcbc(void);
+
 #endif /* HAJCRYPT_TEST_H */

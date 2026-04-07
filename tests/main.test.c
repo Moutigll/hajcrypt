@@ -33,6 +33,14 @@ static testEntry_t all_tests[] = {
 	{"DES PCBC", testDesPcbc},
 	{"3DES ECB", testDes3Ecb},
 	{"3DES CBC", testDes3Cbc},
+	{"Blowfish ECB", testBlowfishEcb},
+	{"Blowfish CBC", testBlowfishCbc},
+	{"Blowfish CFB", testBlowfishCfb},
+	{"Blowfish CFB8", testBlowfishCfb8},
+	{"Blowfish CFB1", testBlowfishCfb1},
+	{"Blowfish OFB", testBlowfishOfb},
+	{"Blowfish CTR", testBlowfishCtr},
+	{"Blowfish PCBC", testBlowfishPcbc},
 	{NULL, NULL}
 };
 
