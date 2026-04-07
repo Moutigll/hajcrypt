@@ -19,6 +19,15 @@ static testEntry_t all_tests[] = {
 	{"AES-128 CTR", testAes128Ctr},
 	{"AES-128 GCM", testAes128Gcm},
 	{"AES-128 PCBC", testAes128Pcbc},
+	{"DES ECB", testDesEcb},
+	{"DES CBC", testDesCbc},
+	{"DES Multi-block", testDesMultiBlock},
+	{"DES CFB", testDesCfb},
+	{"DES CFB8", testDesCfb8},
+	{"DES CFB1", testDesCfb1},
+	{"DES OFB", testDesOfb},
+	{"DES CTR", testDesCtr},
+	{"DES PCBC", testDesPcbc},
 	{NULL, NULL}
 };
 

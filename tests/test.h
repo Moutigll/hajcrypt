@@ -71,4 +71,15 @@ int testAes128Ctr(void);
 int testAes128Gcm(void);
 int testAes128Pcbc(void);
 
+/* DES tests */
+int testDesEcb(void);
+int testDesCbc(void);
+int testDesMultiBlock(void);
+int testDesCfb(void);
+int testDesCfb8(void);
+int testDesCfb1(void);
+int testDesOfb(void);
+int testDesCtr(void);
+int testDesPcbc(void);
+
 #endif /* HAJCRYPT_TEST_H */

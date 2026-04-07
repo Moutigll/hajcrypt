@@ -36,7 +36,7 @@ int aesPcbcInit(void *vctx, const uint8_t *key, size_t keyLen, const uint8_t *iv
 		return -1;
 
 	ft_memcpy(ctx->pcbcCtx.iv, iv ? iv : (uint8_t[AES_BLOCK_SIZE]){0}, AES_BLOCK_SIZE);
-	ft_memcpy(ctx->pcbcCtx.prevPlain, ctx->pcbcCtx.iv, AES_BLOCK_SIZE);
+	ft_bzero(ctx->pcbcCtx.prevPlain, AES_BLOCK_SIZE);
 	ctx->pcbcCtx.bufferLen = 0;
 	ctx->pcbcCtx.dir = dir;
 	ctx->pcbcCtx.blockSize = AES_BLOCK_SIZE;

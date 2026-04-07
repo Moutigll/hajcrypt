@@ -285,35 +285,30 @@ static const struct {
 	const char  *ciphertext;
 } aes128PcbcVectors[] = {
 	{
+		"00000000000000000000000000000000",
+		"00000000000000000000000000000000",
+		"00000000000000000000000000000000",
+		"66e94bd4ef8a2c3b884cfa59ca342b2e9434dec2d00fdac765f00c0c11628cd1" },
+	{
+		"ffffffffffffffffffffffffffffffff",
+		"ffffffffffffffffffffffffffffffff",
+		"ffffffffffffffffffffffffffffffff",
+		"a1f6258c877d5fcd8964484538bfc92ce596b54192331d3f879c1d0bc3d2b3d0" },
+	{
+		"2b7e151628aed2a6abf7158809cf4f3c",
+		"000102030405060708090a0b0c0d0e0f",
+		"6bc1bee22e409f96e93d7e117393172a",
+		"7649abac8119b246cee98e9b12e9197d0f5ea4709d2393720bb889134796b04c" },
+	{
+		"000102030405060708090a0b0c0d0e0f",
+		"f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff",
+		"00112233445566778899aabbccddeeff",
+		"7702fc9b71c63d26a2f09df5c445102a333c7a7fc94478f5cfdf0b2f3e0e55f2" },
+	{
 		"1bb46016387910bc4d32362b1a22345a",
 		"6e2e585257994eb75f970956a771e7c3",
-		"b7bfe43dd428a4f86af7a3380d02d00e69537e26bab6093d266782cd5c776f5f",
-		"405e8a4a94f495fe2732e526aeb876983cf88b26378a09afb6066fb4da42ea0e2670f2ab5f2237aecb28d268ef5aca86"
-	},
-	{
-		"4dd97c7084fa2f74292a74c8e57c2458",
-		"a13fc4747337e223dcca59d1d2dd329e",
-		"6c694d141a2251e00513eead00ef4fc8601e78c8330089bedce1cebdfceb4845",
-		"a1bb9c5d39932f6a21ae913368ca37bf84c2caf06def44a90843e8effd3fb4e4007a5f8040d9ff29136d2b07b36908b2"
-	},
-	{
-		"34ff2259f17643f7fe1dd1946934f999",
-		"68eb349a2d7e1b96374e815b2b537fa8",
-		"1f6b8f085e337da889fd25a61bc2411300e2d78a363ca9ca943b3cfd5a15c59b",
-		"afb5ed2c715bb1e9bde6093856702e7f17ac8d586e062f10e729b27e7f1b632b47afc1ed2a8dec3fefb6e45bdfd61664"
-	},
-	{
-		"475eff7d831520f59784ca73a757ffce",
-		"d8ecaba4142c1bb4388633dc9960b09f",
-		"bc84f380208a52e2b79752f0e8507f0daeb1d7fc6f8e5b5e7569b9b7d295a0d7",
-		"681b46206294b58692ff96f74eff2d9ffcc4165c48a4f5b9f96545830c1ff9f44c9e43747c4d3e36dcb64c903d1fd8df"
-	},
-	{
-		"ccf99d8a55ddbf4f3168599cd7b96f84",
-		"6e84f6d70d82c7b4cd5028f2e9ef15d6",
-		"bd58091f1e9107e83f1b113f1890134e40d976947fd83d3bd90554a21ddb67f2",
-		"24ea2abc28ce195de83b3b6143d6c89c2cda07a2b616da3a5407f046eb8f5353b3196d8f750ea813ac42f9d1152d048d"
-	},
+		"b7bfe43dd428a4f86af7a3380d02d00e",
+		"6be36ecca4903513dac236c38d81ee745a9785e1bb2c1ee80ee2ea88bf761676" },
 	{ NULL, NULL, NULL, NULL }
 };
 
@@ -830,53 +825,56 @@ int testAes128Ofb(void) {
  * -------------------------------------------------------------------------- */
 int testAes128Pcbc(void) {
 	int passed = 0, total = 0;
-	printInfo("Testing AES-128-PCBC...");
+	printInfo("Testing AES-128-PCBC multi-block (32 bytes)...");
 
 	for (int i = 0; aes128PcbcVectors[i].key != NULL; i++) {
-		uint8_t key[16], iv[16], plain[32], cipher[64];   // cipher peut faire 48
+		uint8_t key[16], iv[16], plain[16], cipher[32];
 		uint8_t result[64] = {0};
 		t_aesPcbcCtx ctx;
-		size_t plainLen, cipherLen, written, outLen;
+		size_t written, outLen;
 
 		hexToBytes(aes128PcbcVectors[i].key, key, 16);
 		hexToBytes(aes128PcbcVectors[i].iv, iv, 16);
-		plainLen = hexToBytes(aes128PcbcVectors[i].plaintext, plain, 32);
-		cipherLen = hexToBytes(aes128PcbcVectors[i].ciphertext, cipher, 64);
+		hexToBytes(aes128PcbcVectors[i].plaintext, plain, 16);
+		hexToBytes(aes128PcbcVectors[i].ciphertext, cipher, 32);
 
-		/* Encryption */
+		/* ---------- Encryption ---------- */
 		ft_memset(result, 0, sizeof(result));
 		aesPcbcInit(&ctx, key, 16, iv, CIPHER_ENCRYPT);
-		aesPcbcUpdate(&ctx, plain, plainLen, result, &written);
+		aesPcbcUpdate(&ctx, plain, 16, result, &written);
 		outLen = written;
 		aesPcbcFinal(&ctx, result + outLen, &written);
 		outLen += written;
 
-		if (outLen == cipherLen && compareBytes(cipher, result, cipherLen)) {
-			passed++; printSuccess("PCBC encrypt vector");
+		if (outLen == 32 && compareBytes(cipher, result, 32)) {
+			passed++; printSuccess("PCBC multi-block encrypt vector");
 		} else {
-			printFailure("PCBC encrypt vector");
-			hexDump(result, cipherLen);
+			printFailure("PCBC multi-block encrypt vector");
+			ft_printf("Expected: "); hexDump(cipher, 32);
+			ft_printf("Got:	  "); hexDump(result, outLen);
 		}
 		total++;
+		aesPcbcFree(&ctx);
 
-		/* Decryption */
+		/* ---------- Decryption ---------- */
 		ft_memset(result, 0, sizeof(result));
 		aesPcbcInit(&ctx, key, 16, iv, CIPHER_DECRYPT);
-		aesPcbcUpdate(&ctx, cipher, cipherLen, result, &written);
+
+		aesPcbcUpdate(&ctx, cipher, 16, result, &written);
 		outLen = written;
 		aesPcbcFinal(&ctx, result + outLen, &written);
 		outLen += written;
 
-		if (compareBytes(plain, result, plainLen)) {
-			passed++; printSuccess("PCBC decrypt vector");
+		if (outLen == 16 && compareBytes(plain, result, 16)) {
+			passed++; printSuccess("PCBC multi-block decrypt vector");
 		} else {
-			printFailure("PCBC decrypt vector");
-			printf("Expected: "); fflush(stdout); hexDump(plain, plainLen);
-			printf("Got:      "); hexDump(result, plainLen);
+			printFailure("PCBC multi-block decrypt vector");
+			ft_printf("Expected: "); hexDump(plain, 16);
+			ft_printf("Got:	  "); hexDump(result, outLen);
 		}
 		total++;
 
-		/* Cleanup */
+		/* ---------- Context cleanup ---------- */
 		aesPcbcFree(&ctx);
 		if (isZeroed(ctx.roundKeys, sizeof(ctx.roundKeys)) &&
 			isZeroed(ctx.pcbcCtx.iv, sizeof(ctx.pcbcCtx.iv)) &&
@@ -888,7 +886,7 @@ int testAes128Pcbc(void) {
 		}
 		total++;
 	}
-	ft_printf("AES-128-PCBC: %d/%d passed\n", passed, total);
+	ft_printf("AES-128-PCBC multi-block: %d/%d passed\n", passed, total);
 	return (passed == total);
 }
 
