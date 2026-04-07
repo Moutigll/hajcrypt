@@ -103,11 +103,12 @@ typedef struct s_blowfishPcbcCtx
  * The key is used to initialize the P-array and S-boxes through the
  * key expansion process defined in the Blowfish specification.
  * 
- * @param ctx Pointer to Blowfish context containing P and S arrays
- * @param key Key bytes
- * @param keyLen Length of key in bytes (4-56)
+ * @param P Output array for the initialized P-array (18 entries)
+ * @param S Output array for the initialized S-boxes (4 arrays of 256 entries)
+ * @param key Input key for initialization
+ * @param keyLen Length of the input key in bytes
  */
-void	blowfishInitKey(t_blowfishEcbCtx *ctx, const uint8_t *key, size_t keyLen);
+void	blowfishInitKey(uint32_t *P, uint32_t (*S)[256], const uint8_t *key, size_t keyLen);
 
 /**
  * @brief Encrypts a single 64-bit block using Blowfish.
@@ -116,11 +117,13 @@ void	blowfishInitKey(t_blowfishEcbCtx *ctx, const uint8_t *key, size_t keyLen);
  * The encryption process consists of 16 rounds of Feistel network using the
  * P-array, followed by a final swap and XOR with the last two P-array entries.
  * 
- * @param ctx Pointer to Blowfish context with initialized key schedule
- * @param block 64-bit plaintext block
- * @return 64-bit ciphertext block
+ * @param P P-array subkeys for encryption
+ * @param S S-boxes for encryption
+ * @param in 64-bit input block to encrypt (8 bytes)
+ * @param out 64-bit output block after encryption (8 bytes)
+ * @return 64-bit encrypted output block
  */
-uint64_t	blowfishEncryptBlock(const t_blowfishEcbCtx *ctx, uint64_t block);
+void	blowfishEncryptBlock(const uint32_t *P, const uint32_t (*S)[256], const uint8_t in[8], uint8_t out[8]);
 
 /**
  * @brief Decrypts a single 64-bit block using Blowfish.
@@ -129,11 +132,13 @@ uint64_t	blowfishEncryptBlock(const t_blowfishEcbCtx *ctx, uint64_t block);
  * the P-array entries in reverse order. The Feistel network structure makes
  * encryption and decryption symmetric except for key order.
  * 
- * @param ctx Pointer to Blowfish context with initialized key schedule
- * @param block 64-bit ciphertext block
- * @return 64-bit plaintext block
+ * @param P P-array subkeys for decryption
+ * @param S S-boxes for decryption
+ * @param in 64-bit input block to decrypt (8 bytes)
+ * @param out 64-bit output block after decryption (8 bytes)
+ * @return 64-bit decrypted output block
  */
-uint64_t	blowfishDecryptBlock(const t_blowfishEcbCtx *ctx, uint64_t block);
+void	blowfishDecryptBlock(const uint32_t *P, const uint32_t (*S)[256], const uint8_t in[8], uint8_t out[8]);
 
 /* ---------- ECB mode functions ---------- */
 
@@ -172,9 +177,6 @@ void	blowfishEcbUpdate(void			*ctx,
 
 /**
  * @brief Finalizes Blowfish ECB operation, handling padding.
- * 
- * For encryption: applies PKCS#7 padding to the last block.
- * For decryption: verifies and removes padding.
  * 
  * @param ctx Pointer to Blowfish ECB context
  * @param out Output buffer for final data

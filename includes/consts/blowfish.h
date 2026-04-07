@@ -278,10 +278,4 @@ static const uint32_t g_blowfish_S_init[4][256] = {
 	}
 };
 
-static inline uint32_t	blowfishFFast(const uint32_t x, const uint32_t S[4][256])
-{
-	return ((S[0][x >> 24] + S[1][(x >> 16) & 0xFF]) ^
-			S[2][(x >> 8) & 0xFF]) + S[3][x & 0xFF];
-}
-
 #endif /* HAJCRYPT_BLOWFISH_CONST_H */

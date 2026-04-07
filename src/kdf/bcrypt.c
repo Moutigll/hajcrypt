@@ -31,9 +31,8 @@ static void blowfishExpandWithKey(t_blowfishEcbCtx *ctx, const uint8_t *key, siz
 	uint32_t	i;
 	uint32_t	j;
 	uint32_t	data;
-	uint32_t	l;
-	uint32_t	r;
-	uint64_t	block;
+	uint8_t		currentBlock[8] = {0};
+	uint8_t		outBlock[8];
 
 	/* XOR P-array with key */
 	j = 0;
@@ -48,16 +47,14 @@ static void blowfishExpandWithKey(t_blowfishEcbCtx *ctx, const uint8_t *key, siz
 	}
 
 	/* Re-encrypt zero block to update P-array */
-	l = 0;
-	r = 0;
 	for (i = 0; i < 18; i += 2)
 	{
-		block = ((uint64_t)l << 32) | r;
-		block = blowfishEncryptBlock(ctx, block);
-		l = block >> 32;
-		r = block & 0xFFFFFFFF;
-		ctx->P[i] = l;
-		ctx->P[i + 1] = r;
+		blowfishEncryptBlock(ctx->P, ctx->S, currentBlock, outBlock);
+		ctx->P[i] = ((uint32_t)outBlock[0] << 24) | ((uint32_t)outBlock[1] << 16) |
+					((uint32_t)outBlock[2] << 8) | (uint32_t)outBlock[3];
+		ctx->P[i + 1] = ((uint32_t)outBlock[4] << 24) | ((uint32_t)outBlock[5] << 16) |
+						((uint32_t)outBlock[6] << 8) | (uint32_t)outBlock[7];
+		ft_memcpy(currentBlock, outBlock, 8);
 	}
 
 	/* Update S-boxes */
@@ -65,12 +62,12 @@ static void blowfishExpandWithKey(t_blowfishEcbCtx *ctx, const uint8_t *key, siz
 	{
 		for (j = 0; j < 256; j += 2)
 		{
-			block = ((uint64_t)l << 32) | r;
-			block = blowfishEncryptBlock(ctx, block);
-			l = block >> 32;
-			r = block & 0xFFFFFFFF;
-			ctx->S[i][j] = l;
-			ctx->S[i][j + 1] = r;
+			blowfishEncryptBlock(ctx->P, ctx->S, currentBlock, outBlock);
+			ctx->S[i][j] = ((uint32_t)outBlock[0] << 24) | ((uint32_t)outBlock[1] << 16) |
+						   ((uint32_t)outBlock[2] << 8) | (uint32_t)outBlock[3];
+			ctx->S[i][j + 1] = ((uint32_t)outBlock[4] << 24) | ((uint32_t)outBlock[5] << 16) |
+							   ((uint32_t)outBlock[6] << 8) | (uint32_t)outBlock[7];
+			ft_memcpy(currentBlock, outBlock, 8);
 		}
 	}
 }
@@ -86,31 +83,30 @@ static void blowfishExpandWithSalt(t_blowfishEcbCtx *ctx, const uint8_t salt[16]
 	uint32_t	i;
 	uint32_t	j;
 	uint32_t	saltWord;
-	uint32_t	l;
-	uint32_t	r;
-	uint64_t	block;
+	uint8_t		currentBlock[8] = {0};
+	uint8_t		outBlock[8];
 
-	/* XOR salt into P-array (salt is 16 bytes, so we have 4 words) */
-	for (i = 0; i < 4; i++)
+	/* XOR salt into P-array cyclically across all 18 elements! */
+	j = 0;
+	for (i = 0; i < 18; i++)
 	{
-		saltWord = ((uint32_t)salt[i * 4] << 24) |
-				   ((uint32_t)salt[i * 4 + 1] << 16) |
-				   ((uint32_t)salt[i * 4 + 2] << 8) |
-				   (uint32_t)salt[i * 4 + 3];
+		saltWord = ((uint32_t)salt[j] << 24) |
+				   ((uint32_t)salt[j + 1] << 16) |
+				   ((uint32_t)salt[j + 2] << 8) |
+				   (uint32_t)salt[j + 3];
 		ctx->P[i] ^= saltWord;
+		j = (j + 4) % 16;
 	}
 
 	/* Re-encrypt zero block to update P-array */
-	l = 0;
-	r = 0;
 	for (i = 0; i < 18; i += 2)
 	{
-		block = ((uint64_t)l << 32) | r;
-		block = blowfishEncryptBlock(ctx, block);
-		l = block >> 32;
-		r = block & 0xFFFFFFFF;
-		ctx->P[i] = l;
-		ctx->P[i + 1] = r;
+		blowfishEncryptBlock(ctx->P, ctx->S, currentBlock, outBlock);
+		ctx->P[i] = ((uint32_t)outBlock[0] << 24) | ((uint32_t)outBlock[1] << 16) |
+					((uint32_t)outBlock[2] << 8) | (uint32_t)outBlock[3];
+		ctx->P[i + 1] = ((uint32_t)outBlock[4] << 24) | ((uint32_t)outBlock[5] << 16) |
+						((uint32_t)outBlock[6] << 8) | (uint32_t)outBlock[7];
+		ft_memcpy(currentBlock, outBlock, 8);
 	}
 
 	/* Update S-boxes */
@@ -118,12 +114,12 @@ static void blowfishExpandWithSalt(t_blowfishEcbCtx *ctx, const uint8_t salt[16]
 	{
 		for (j = 0; j < 256; j += 2)
 		{
-			block = ((uint64_t)l << 32) | r;
-			block = blowfishEncryptBlock(ctx, block);
-			l = block >> 32;
-			r = block & 0xFFFFFFFF;
-			ctx->S[i][j] = l;
-			ctx->S[i][j + 1] = r;
+			blowfishEncryptBlock(ctx->P, ctx->S, currentBlock, outBlock);
+			ctx->S[i][j] = ((uint32_t)outBlock[0] << 24) | ((uint32_t)outBlock[1] << 16) |
+						   ((uint32_t)outBlock[2] << 8) | (uint32_t)outBlock[3];
+			ctx->S[i][j + 1] = ((uint32_t)outBlock[4] << 24) | ((uint32_t)outBlock[5] << 16) |
+							   ((uint32_t)outBlock[6] << 8) | (uint32_t)outBlock[7];
+			ft_memcpy(currentBlock, outBlock, 8);
 		}
 	}
 }
@@ -145,18 +141,21 @@ static void eksBlowfishSetup(t_bcryptCtx	*ctx,
 {
 	uint32_t	rounds;
 	uint32_t	i;
+	uint32_t	j;
 
-	/* Initialize Blowfish with standard constants */
-	blowfishInitKey(&ctx->blowfishCtx, key, keyLen);
+	/* Initialize Blowfish with standard constants (New API signature) */
+	blowfishInitKey(ctx->blowfishCtx.P, ctx->blowfishCtx.S, key, keyLen);
 
-	/* XOR salt into P-array (first 4 words) */
-	for (i = 0; i < 4; i++)
+	/* XOR salt into P-array cyclically across all 18 elements */
+	j = 0;
+	for (i = 0; i < 18; i++)
 	{
-		uint32_t saltWord = ((uint32_t)salt[i * 4] << 24) |
-							((uint32_t)salt[i * 4 + 1] << 16) |
-							((uint32_t)salt[i * 4 + 2] << 8) |
-							(uint32_t)salt[i * 4 + 3];
+		uint32_t saltWord = ((uint32_t)salt[j] << 24) |
+							((uint32_t)salt[j + 1] << 16) |
+							((uint32_t)salt[j + 2] << 8) |
+							(uint32_t)salt[j + 3];
 		ctx->blowfishCtx.P[i] ^= saltWord;
+		j = (j + 4) % 16;
 	}
 
 	/* Perform 2^cost rounds of key expansion with salt and key */
@@ -176,10 +175,9 @@ static void eksBlowfishSetup(t_bcryptCtx	*ctx,
  */
 static void bcryptEncryptMagic(const t_bcryptCtx *ctx, uint8_t output[24])
 {
-	uint8_t	 data[24];
+	uint8_t		data[24];
 	uint32_t	i;
 	uint32_t	j;
-	uint64_t	block;
 
 	/* Copy magic string */
 	ft_memcpy(data, BCRYPT_MAGIC_STR, 24);
@@ -187,31 +185,9 @@ static void bcryptEncryptMagic(const t_bcryptCtx *ctx, uint8_t output[24])
 	/* 64 rounds of encryption */
 	for (i = 0; i < 64; i++)
 	{
-		/* Encrypt each 8-byte block */
+		/* Encrypt each 8-byte block in place */
 		for (j = 0; j < 24; j += 8)
-		{
-			/* Assemble 64-bit block in big-endian order */
-			block = ((uint64_t)data[j] << 56) |
-					((uint64_t)data[j + 1] << 48) |
-					((uint64_t)data[j + 2] << 40) |
-					((uint64_t)data[j + 3] << 32) |
-					((uint64_t)data[j + 4] << 24) |
-					((uint64_t)data[j + 5] << 16) |
-					((uint64_t)data[j + 6] << 8) |
-					(uint64_t)data[j + 7];
-
-			block = blowfishEncryptBlock(&ctx->blowfishCtx, block);
-
-			/* Store back */
-			data[j] = (block >> 56) & 0xFF;
-			data[j + 1] = (block >> 48) & 0xFF;
-			data[j + 2] = (block >> 40) & 0xFF;
-			data[j + 3] = (block >> 32) & 0xFF;
-			data[j + 4] = (block >> 24) & 0xFF;
-			data[j + 5] = (block >> 16) & 0xFF;
-			data[j + 6] = (block >> 8) & 0xFF;
-			data[j + 7] = block & 0xFF;
-		}
+			blowfishEncryptBlock(ctx->blowfishCtx.P, ctx->blowfishCtx.S, &data[j], &data[j]);
 	}
 
 	/* Copy result */
