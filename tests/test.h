@@ -100,4 +100,6 @@ int testBlowfishOfb(void);
 int testBlowfishCtr(void);
 int testBlowfishPcbc(void);
 
+int testBase64(void);
+
 #endif /* HAJCRYPT_TEST_H */

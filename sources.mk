@@ -101,7 +101,8 @@ TEST_SRC = \
 	tests/src/aes128.test.c \
 	tests/src/des.test.c \
 	tests/src/des3.test.c \
-	tests/src/blowfish.test.c
+	tests/src/blowfish.test.c \
+	tests/src/base64.test.c
 
 CONST_OBJ = $(patsubst $(CONST_DIR)/%.c, $(BUILD_DIR)/consts/%.o, $(CONST_SRC))
 LIB_SRC_OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(LIB_SRC))
