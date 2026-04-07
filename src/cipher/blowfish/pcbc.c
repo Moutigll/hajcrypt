@@ -5,26 +5,12 @@
 
 static void	blowfishProcessBlock(const uint8_t *in, uint8_t *out, const void *key, int encrypt)
 {
-	const uint64_t	*subkeys = key;
-	const t_blowfishPcbcCtx *ctx = (const t_blowfishPcbcCtx *)key;
-	uint64_t block = 0;
-
-	(void)subkeys;
-
-	for (int i = 0; i < 8; i++)
-		block = (block << 8) | in[i];
-
-	t_blowfishEcbCtx	tmp;
-	ft_memcpy(tmp.P, ctx->P, sizeof(tmp.P));
-	ft_memcpy(tmp.S, ctx->S, sizeof(tmp.S));
+	const t_blowfishPcbcCtx	*ctx = key;
 
 	if (encrypt)
-		block = blowfishEncryptBlock(&tmp, block);
+		blowfishEncryptBlock(ctx->P, ctx->S, in, out);
 	else
-		block = blowfishDecryptBlock(&tmp, block);
-
-	for (int i = 0; i < 8; i++)
-		out[i] = (block >> (56 - i * 8)) & 0xFF;
+		blowfishDecryptBlock(ctx->P, ctx->S, in, out);
 }
 
 int	blowfishPcbcInit(void				*vctx,
@@ -39,12 +25,7 @@ int	blowfishPcbcInit(void				*vctx,
 		return (-1);
 
 	/* Initialize key schedule */
-	{
-		t_blowfishEcbCtx	tmp;
-		blowfishInitKey(&tmp, key, keyLen);
-		ft_memcpy(ctx->P, tmp.P, sizeof(ctx->P));
-		ft_memcpy(ctx->S, tmp.S, sizeof(ctx->S));
-	}
+	blowfishInitKey(ctx->P, ctx->S, key, keyLen);
 
 	ft_memcpy(ctx->pcbcCtx.iv, iv ? iv : (uint8_t[8]){0}, 8);
 	ft_memcpy(ctx->pcbcCtx.prevPlain, ctx->pcbcCtx.iv, 8);

@@ -15,7 +15,7 @@ int	blowfishEcbInit(void				*vctx,
 
 	(void)iv;	/* ECB does not use an IV */
 
-	blowfishInitKey(ctx, key, keyLen);
+	blowfishInitKey(ctx->P, ctx->S, key, keyLen);
 	ctx->bufferLen = 0;
 	ctx->dir = dir;
 	return (0);
@@ -28,24 +28,21 @@ void	blowfishEcbUpdate(void			*vctx,
 						  size_t		*outLen)
 {
 	t_blowfishEcbCtx	*ctx = vctx;
-	uint64_t			block;
-	size_t				i, j;
+	size_t				i;
+	uint8_t				block[8];
+	size_t				j;
 
 	*outLen = 0;
 
 	for (i = 0; i + 8 <= inLen; i += 8)
 	{
-		block = 0;
-		for (j = 0; j < 8; j++)
-			block = (block << 8) | in[i + j];
-
 		if (ctx->dir == CIPHER_ENCRYPT)
-			block = blowfishEncryptBlock(ctx, block);
+			blowfishEncryptBlock(ctx->P, ctx->S, in + i, block);
 		else
-			block = blowfishDecryptBlock(ctx, block);
+			blowfishDecryptBlock(ctx->P, ctx->S, in + i, block);
 
 		for (j = 0; j < 8; j++)
-			out[(*outLen)++] = (block >> (56 - j * 8)) & 0xFF;
+			out[(*outLen)++] = block[j];
 	}
 
 	/* Save remaining bytes for final */
@@ -62,6 +59,7 @@ void blowfishEcbFinal(void *vctx, uint8_t *out, size_t *outLen)
     (void)out;
     *outLen = 0;   /* Rien à faire, le padding est géré par le dispatcher */
 }
+
 void	blowfishEcbFree(void *vctx)
 {
 	t_blowfishEcbCtx	*ctx = vctx;
