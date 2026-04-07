@@ -105,38 +105,29 @@ uint64_t	blowfishEncryptBlock(const t_blowfishEcbCtx *ctx, uint64_t block)
  * Decrypt a single 64-bit block using Blowfish
  * Uses same P-array but in reverse order
  */
-uint64_t	blowfishDecryptBlock(const t_blowfishEcbCtx *ctx, uint64_t block)
+uint64_t blowfishDecryptBlock(const t_blowfishEcbCtx *ctx, uint64_t block)
 {
-	uint32_t	l;
-	uint32_t	r;
-	uint32_t	temp;
-	int			i;
+	uint32_t l = block >> 32;
+	uint32_t r = block & 0xFFFFFFFF;
+	uint32_t temp;
+	int i;
 
-	/* Split 64-bit block into two 32-bit halves */
-	l = block >> 32;
-	r = block & 0xFFFFFFFF;
-
-	/* XOR left half with last P-array entry (reversed order) */
+	/* 1. Undo the last P[17] XOR */
 	l ^= ctx->P[17];
 
-	/* 16 rounds in reverse order */
-	for (i = 15; i > 0; i -= 2)
-	{
-		/* Round i */
+	/* 2. Undo the 16 Feistel rounds (P[16] down to P[1]) */
+	for (i = 16; i >= 2; i -= 2) {
 		r ^= blowfishFFast(l, ctx->S) ^ ctx->P[i];
-		
-		/* Round i-1 */
 		l ^= blowfishFFast(r, ctx->S) ^ ctx->P[i - 1];
 	}
 
-	/* XOR right half with first P-array entry */
+	/* 3. Undo the first P[0] XOR (no Feistel F-function here!) */
 	r ^= ctx->P[0];
 
-	/* Final swap */
-	temp = l;
-	l = r;
+	/* 4. Final swap to restore the original (L, R) order */
+	temp = l; 
+	l = r; 
 	r = temp;
 
-	/* Recombine into 64-bit block */
 	return (((uint64_t)l << 32) | r);
 }
