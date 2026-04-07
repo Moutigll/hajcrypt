@@ -31,6 +31,8 @@ static testEntry_t all_tests[] = {
 	{"DES OFB", testDesOfb},
 	{"DES CTR", testDesCtr},
 	{"DES PCBC", testDesPcbc},
+	{"3DES ECB", testDes3Ecb},
+	{"3DES CBC", testDes3Cbc},
 	{NULL, NULL}
 };
 

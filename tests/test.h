@@ -86,4 +86,8 @@ int testDesOfb(void);
 int testDesCtr(void);
 int testDesPcbc(void);
 
+/* 3DES tests */
+int testDes3Ecb(void);
+int testDes3Cbc(void);
+
 #endif /* HAJCRYPT_TEST_H */
