@@ -102,4 +102,10 @@ int testBlowfishPcbc(void);
 
 int testBase64(void);
 
+/* BLAKE2b tests */
+int testBlake2bUnkeyed(void);
+int testBlake2bIncremental(void);
+int testBlake2bKeyed(void);
+int testBlake2bLong(void);
+
 #endif /* HAJCRYPT_TEST_H */

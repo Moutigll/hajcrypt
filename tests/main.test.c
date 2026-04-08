@@ -42,6 +42,10 @@ static testEntry_t all_tests[] = {
 	{"Blowfish CTR", testBlowfishCtr},
 	{"Blowfish PCBC", testBlowfishPcbc},
 	{"Base64", testBase64},
+	{"BLAKE2b unkeyed", testBlake2bUnkeyed},
+	{"BLAKE2b incremental", testBlake2bIncremental},
+	{"BLAKE2b keyed", testBlake2bKeyed},
+	{"BLAKE2b long output", testBlake2bLong},
 	{NULL, NULL}
 };
 
