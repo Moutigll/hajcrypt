@@ -648,6 +648,13 @@ void	aesPcbcUpdate(void			*ctx,
  */
 void	aesPcbcFinal(void *ctx, uint8_t *out, size_t *outLen);
 
+/**
+ * @brief Frees AES PCBC context resources.
+ * 
+ * @param ctx Pointer to AES PCBC context
+ */
+void	aesPcbcFree(void *ctx);
+
 /* ---------- ARM64 optimized functions ---------- */
 
 /**

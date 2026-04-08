@@ -8,62 +8,62 @@
  * @brief Triple DES ECB context structure.
  */
 typedef struct s_des3EcbCtx {
-    uint64_t            subkeys1[16];   /* subkeys for K1 */
-    uint64_t            subkeys2[16];   /* subkeys for K2 */
-    uint64_t            subkeys3[16];   /* subkeys for K3 */
-    uint8_t             buffer[8];
-    size_t              bufferLen;
-    t_cipherDirection   dir;
+	uint64_t			subkeys1[16];   /* subkeys for K1 */
+	uint64_t			subkeys2[16];   /* subkeys for K2 */
+	uint64_t			subkeys3[16];   /* subkeys for K3 */
+	uint8_t				buffer[8];
+	size_t				bufferLen;
+	t_cipherDirection	dir;
 } t_des3EcbCtx;
 
 /**
  * @brief Triple DES CBC context structure.
  */
 typedef struct s_des3CbcCtx {
-    t_cbcGenCtx         cbcCtx;
-    uint64_t            subkeys1[16];
-    uint64_t            subkeys2[16];
-    uint64_t            subkeys3[16];
+	t_cbcGenCtx	cbcCtx;
+	uint64_t	subkeys1[16];
+	uint64_t	subkeys2[16];
+	uint64_t	subkeys3[16];
 } t_des3CbcCtx;
 
 /**
  * @brief Triple DES CFB context structure.
  */
 typedef struct s_des3CfbCtx {
-    t_cfbGenCtx         cfbCtx;
-    uint64_t            subkeys1[16];
-    uint64_t            subkeys2[16];
-    uint64_t            subkeys3[16];
+	t_cfbGenCtx	cfbCtx;
+	uint64_t	subkeys1[16];
+	uint64_t	subkeys2[16];
+	uint64_t	subkeys3[16];
 } t_des3CfbCtx;
 
 /**
  * @brief Triple DES OFB context structure.
  */
 typedef struct s_des3OfbCtx {
-    t_ofbGenCtx         ofbCtx;
-    uint64_t            subkeys1[16];
-    uint64_t            subkeys2[16];
-    uint64_t            subkeys3[16];
+	t_ofbGenCtx	ofbCtx;
+	uint64_t	subkeys1[16];
+	uint64_t	subkeys2[16];
+	uint64_t	subkeys3[16];
 } t_des3OfbCtx;
 
 /**
  * @brief Triple DES CTR context structure.
  */
 typedef struct s_des3CtrCtx {
-    t_ctrGenCtx         ctrCtx;
-    uint64_t            subkeys1[16];
-    uint64_t            subkeys2[16];
-    uint64_t            subkeys3[16];
+	t_ctrGenCtx	ctrCtx;
+	uint64_t	subkeys1[16];
+	uint64_t	subkeys2[16];
+	uint64_t	subkeys3[16];
 } t_des3CtrCtx;
 
 /**
  * @brief Triple DES PCBC context structure.
  */
 typedef struct s_des3PcbcCtx {
-    t_pcbcGenCtx        pcbcCtx;
-    uint64_t            subkeys1[16];
-    uint64_t            subkeys2[16];
-    uint64_t            subkeys3[16];
+	t_pcbcGenCtx	pcbcCtx;
+	uint64_t		subkeys1[16];
+	uint64_t		subkeys2[16];
+	uint64_t		subkeys3[16];
 } t_des3PcbcCtx;
 
 /* ---------- Core 3DES operations ---------- */
@@ -74,34 +74,34 @@ typedef struct s_des3PcbcCtx {
  * @param key24  24‑byte key (K1, K2, K3)
  * @param subkeys1, subkeys2, subkeys3 output arrays of 16 subkeys each
  */
-void    des3GenerateSubkeys(const uint8_t	key24[24],
-                            uint64_t		subkeys1[16],
-                            uint64_t		subkeys2[16],
-                            uint64_t		subkeys3[16]);
+void	des3GenerateSubkeys(const uint8_t	key24[24],
+							uint64_t		subkeys1[16],
+							uint64_t		subkeys2[16],
+							uint64_t		subkeys3[16]);
 
 /**
  * @brief Encrypts a single 64‑bit block using 3‑key Triple DES (EDE).
  *
- * @param block      plaintext block
+ * @param block	  plaintext block
  * @param subkeys1, subkeys2, subkeys3 subkey arrays for K1, K2, K3
  * @return encrypted block
  */
 uint64_t des3EncryptBlock(uint64_t			block,
-                          const uint64_t	subkeys1[16],
-                          const uint64_t	subkeys2[16],
-                          const uint64_t	subkeys3[16]);
+						  const uint64_t	subkeys1[16],
+						  const uint64_t	subkeys2[16],
+						  const uint64_t	subkeys3[16]);
 
 /**
  * @brief Decrypts a single 64‑bit block using 3‑key Triple DES (EDE).
  *
- * @param block      ciphertext block
+ * @param block	  ciphertext block
  * @param subkeys1, subkeys2, subkeys3 subkey arrays for K1, K2, K3
  * @return decrypted block
  */
 uint64_t des3DecryptBlock(uint64_t			block,
-                          const uint64_t	subkeys1[16],
-                          const uint64_t	subkeys2[16],
-                          const uint64_t	subkeys3[16]);
+						  const uint64_t	subkeys1[16],
+						  const uint64_t	subkeys2[16],
+						  const uint64_t	subkeys3[16]);
 
 /* ---------- Mode-specific functions ---------- */
 
@@ -117,10 +117,10 @@ uint64_t des3DecryptBlock(uint64_t			block,
  * @param dir Encryption or decryption direction
  * @return 0 on success, -1 on invalid parameters
  */
-int     des3EcbInit(void				*vctx,
+int	 des3EcbInit(void					*vctx,
 					const uint8_t		*key,
 					size_t				keyLen,
-                    const uint8_t		*iv,
+					const uint8_t		*iv,
 					t_cipherDirection	dir);
 
 /**
@@ -132,10 +132,10 @@ int     des3EcbInit(void				*vctx,
  * @param out Output data
  * @param outLen Length of output data
  */
-void    des3EcbUpdate(void			*vctx,
+void	des3EcbUpdate(void			*vctx,
 					  const uint8_t	*in,
 					  size_t		inLen,
-                      uint8_t		*out,
+					  uint8_t		*out,
 					  size_t		*outLen);
 
 /**
@@ -148,14 +148,14 @@ void    des3EcbUpdate(void			*vctx,
  * @param out Output buffer for final data
  * @param outLen Number of bytes written to output
  */
-void    des3EcbFinal(void *vctx, uint8_t *out, size_t *outLen);
+void	des3EcbFinal(void *vctx, uint8_t *out, size_t *outLen);
 
 /**
  * @brief Frees Triple DES ECB context resources.
  *
  * @param ctx Pointer to Triple DES ECB context
  */
-void    des3EcbFree(void *vctx);
+void	des3EcbFree(void *vctx);
 
 
 
@@ -171,10 +171,10 @@ void    des3EcbFree(void *vctx);
  * @param dir Encryption or decryption direction
  * @return 0 on success, -1 on invalid parameters
  */
-int     des3CbcInit(void				*vctx,
+int	 des3CbcInit(void					*vctx,
 					const uint8_t		*key,
 					size_t				keyLen,
-                    const uint8_t		*iv,
+					const uint8_t		*iv,
 					t_cipherDirection	dir);
 
 /**
@@ -186,10 +186,10 @@ int     des3CbcInit(void				*vctx,
  * @param out Output data
  * @param outLen Length of output data
  */
-void    des3CbcUpdate(void				*vctx,
+void	des3CbcUpdate(void				*vctx,
 					  const uint8_t		*in,
 					  size_t			inLen,
-                      uint8_t			*out,
+					  uint8_t			*out,
 					  size_t			*outLen);
 
 /**
@@ -202,14 +202,14 @@ void    des3CbcUpdate(void				*vctx,
  * @param out Output buffer for final data
  * @param outLen Number of bytes written to output
  */
-void    des3CbcFinal(void *vctx, uint8_t *out, size_t *outLen);
+void	des3CbcFinal(void *vctx, uint8_t *out, size_t *outLen);
 
 /**
  * @brief Frees Triple DES CBC context resources.
  *
  * @param ctx Pointer to Triple DES CBC context
  */
-void    des3CbcFree(void *vctx);
+void	des3CbcFree(void *vctx);
 
 
 
@@ -227,10 +227,10 @@ void    des3CbcFree(void *vctx);
  * @param dir Encryption or decryption direction
  * @return 0 on success, -1 on invalid parameters
  */
-int     des3CfbInit(void				*vctx,
+int	 des3CfbInit(void					*vctx,
 					const uint8_t		*key,
 					size_t				keyLen,
-                    const uint8_t		*iv,
+					const uint8_t		*iv,
 					t_cipherDirection	dir);
 
 /**
@@ -280,10 +280,10 @@ int	 des3Cfb8Init(void					*vctx,
  * @param out Output data
  * @param outLen Length of output data
  */
-void    des3CfbUpdate(void			*vctx,
+void	des3CfbUpdate(void			*vctx,
 					  const uint8_t	*in,
 					  size_t		inLen,
-                      uint8_t		*out,
+					  uint8_t		*out,
 					  size_t		*outLen);
 
 /**
@@ -311,7 +311,7 @@ void	des3Cfb1Update(void				*vctx,
  * @param out Output buffer for final data
  * @param outLen Number of bytes written to output
  */
-void    des3CfbFinal(void *vctx, uint8_t *out, size_t *outLen);
+void	des3CfbFinal(void *vctx, uint8_t *out, size_t *outLen);
 
 /**
  * @brief Finalizes Triple DES CFB1 operation.
@@ -328,7 +328,7 @@ void	des3Cfb1Final(void *vctx, uint8_t *out, size_t *outBits);
  *
  * @param ctx Pointer to Triple DES CFB context
  */
-void    des3CfbFree(void *vctx);
+void	des3CfbFree(void *vctx);
 
 
 
@@ -344,10 +344,10 @@ void    des3CfbFree(void *vctx);
  * @param dir Encryption or decryption direction
  * @return 0 on success, -1 on invalid parameters
  */
-int     des3OfbInit(void				*vctx,
+int	 des3OfbInit(void				*vctx,
 					const uint8_t		*key,
 					size_t				keyLen,
-                    const uint8_t		*iv,
+					const uint8_t		*iv,
 					t_cipherDirection	dir);
 
 /**
@@ -359,10 +359,10 @@ int     des3OfbInit(void				*vctx,
  * @param out Output data
  * @param outLen Length of output data
  */
-void    des3OfbUpdate(void			*vctx,
+void	des3OfbUpdate(void			*vctx,
 					  const uint8_t	*in,
 					  size_t		inLen,
-                      uint8_t		*out,
+					  uint8_t		*out,
 					  size_t		*outLen);
 
 /**
@@ -372,14 +372,14 @@ void    des3OfbUpdate(void			*vctx,
  * @param out Output buffer for final data
  * @param outLen Number of bytes written to output
  */
-void    des3OfbFinal(void *vctx, uint8_t *out, size_t *outLen);
+void	des3OfbFinal(void *vctx, uint8_t *out, size_t *outLen);
 
 /**
  * @brief Frees Triple DES OFB context resources.
  *
  * @param ctx Pointer to Triple DES OFB context
  */
-void    des3OfbFree(void *vctx);
+void	des3OfbFree(void *vctx);
 
 
 
@@ -395,10 +395,10 @@ void    des3OfbFree(void *vctx);
  * @param dir Encryption or decryption direction
  * @return 0 on success, -1 on invalid parameters
  */
-int     des3CtrInit(void				*vctx,
+int	 des3CtrInit(void					*vctx,
 					const uint8_t		*key,
 					size_t				keyLen,
-                    const uint8_t		*iv,
+					const uint8_t		*iv,
 					t_cipherDirection	dir);
 
 /**
@@ -410,10 +410,10 @@ int     des3CtrInit(void				*vctx,
  * @param out Output data
  * @param outLen Length of output data
  */
-void    des3CtrUpdate(void			*vctx,
+void	des3CtrUpdate(void			*vctx,
 					  const uint8_t	*in,
 					  size_t		inLen,
-                      uint8_t		*out,
+					  uint8_t		*out,
 					  size_t		*outLen);
 
 /**
@@ -423,14 +423,14 @@ void    des3CtrUpdate(void			*vctx,
  * @param out Output buffer for final data
  * @param outLen Number of bytes written to output
  */
-void    des3CtrFinal(void *vctx, uint8_t *out, size_t *outLen);
+void	des3CtrFinal(void *vctx, uint8_t *out, size_t *outLen);
 
 /**
  * @brief Frees Triple DES CTR context resources.
  *
  * @param ctx Pointer to Triple DES CTR context
  */
-void    des3CtrFree(void *vctx);
+void	des3CtrFree(void *vctx);
 
 
 
@@ -446,10 +446,10 @@ void    des3CtrFree(void *vctx);
  * @param dir Encryption or decryption direction
  * @return 0 on success, -1 on invalid parameters
  */
-int     des3PcbcInit(void				*vctx,
+int	 des3PcbcInit(void					*vctx,
 					 const uint8_t		*key,
 					 size_t				keyLen,
-                     const uint8_t		*iv,
+					 const uint8_t		*iv,
 					 t_cipherDirection	dir);
 
 /**
@@ -461,7 +461,7 @@ int     des3PcbcInit(void				*vctx,
  * @param out Output data
  * @param outLen Length of output data
  */
-void    des3PcbcUpdate(void				*vctx,
+void	des3PcbcUpdate(void				*vctx,
 					   const uint8_t	*in,
 					   size_t			inLen,
 					   uint8_t			*out,
@@ -477,14 +477,14 @@ void    des3PcbcUpdate(void				*vctx,
  * @param out Output buffer for final data
  * @param outLen Number of bytes written to output
  */
-void    des3PcbcFinal(void *vctx, uint8_t *out, size_t *outLen);
+void	des3PcbcFinal(void *vctx, uint8_t *out, size_t *outLen);
 
 /**
  * @brief Frees Triple DES PCBC context resources.
  *
  * @param ctx Pointer to Triple DES PCBC context
  */
-void    des3PcbcFree(void *vctx);
+void	des3PcbcFree(void *vctx);
 
 /* ---------- Global cipher structures ---------- */
 

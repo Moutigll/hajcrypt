@@ -1,3 +1,5 @@
+#include "../../../includes/utils/utils.h"
+
 #include "../../../includes/cipher/des.h"
 
 int desEcbInit(void					*vctx,
@@ -58,7 +60,9 @@ void desEcbFinal(void *vctx, uint8_t *out, size_t *outLen)
 
 void desEcbFree(void *vctx)
 {
-	(void)vctx;
+	t_desEcbCtx *ctx = vctx;
+	secureZeroMemory(ctx->subkeys, sizeof(ctx->subkeys));
+	secureZeroMemory(ctx->buffer, sizeof(ctx->buffer));
 }
 
 const t_cipher g_desEcbCipher = {

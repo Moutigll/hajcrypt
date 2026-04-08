@@ -48,6 +48,7 @@ void	aesOfbFree(void *vctx)
 	secureZeroMemory(ctx->roundKeys, sizeof(ctx->roundKeys));
 	secureZeroMemory(ctx->ofbCtx.iv, sizeof(ctx->ofbCtx.iv));
 	secureZeroMemory(ctx->ofbCtx.keystream, sizeof(ctx->ofbCtx.keystream));
+	secureZeroMemory(ctx->ofbCtx.inputBuf, sizeof(ctx->ofbCtx.inputBuf));
 }
 
 void	aesOfbUpdate(void			*vctx,

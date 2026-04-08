@@ -44,7 +44,7 @@ int desPcbcInit(void				*vctx,
 	/* Initialize IV: use provided IV or default to zeros */
 	ft_memcpy(ctx->pcbcCtx.iv, iv ? iv : (uint8_t[8]){0}, 8);
 	/* PCBC initial previous plaintext is the IV */
-	ft_memcpy(ctx->pcbcCtx.prevPlain, ctx->pcbcCtx.iv, 8);
+	ft_bzero(ctx->pcbcCtx.prevPlain, 8);
 
 	ctx->pcbcCtx.bufferLen = 0;
 	ctx->pcbcCtx.dir = dir;

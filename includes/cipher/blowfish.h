@@ -97,6 +97,14 @@ typedef struct s_blowfishPcbcCtx
 /* ---------- Core Blowfish operations ---------- */
 
 /**
+ * @brief Initialize the Blowfish state with default values
+ * 
+ * @param P   P-array (18 elements)
+ * @param S   S-boxes (4 arrays of 256 elements each)
+ */
+void blowfishInitState(uint32_t *P, uint32_t (*S)[256]);
+
+/**
  * @brief Initializes the Blowfish key schedule from a variable-length key.
  *
  * Blowfish accepts keys from 32 to 448 bits (4 to 56 bytes).

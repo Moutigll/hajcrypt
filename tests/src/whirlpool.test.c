@@ -45,5 +45,7 @@ int testWhirlpoolBasic(void) {
 	}
 	
 	ft_printf("Whirlpool basic: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }

@@ -37,7 +37,7 @@ int des3PcbcInit(void				*vctx,
 	des3GenerateSubkeys(key, ctx->subkeys1, ctx->subkeys2, ctx->subkeys3);
 
 	ft_memcpy(ctx->pcbcCtx.iv, iv ? iv : (uint8_t[8]){0}, 8);
-	ft_memcpy(ctx->pcbcCtx.prevPlain, ctx->pcbcCtx.iv, 8);
+	ft_bzero(ctx->pcbcCtx.prevPlain, 8);
 	ctx->pcbcCtx.bufferLen = 0;
 	ctx->pcbcCtx.dir = dir;
 	ctx->pcbcCtx.blockSize = 8;

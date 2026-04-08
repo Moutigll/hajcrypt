@@ -46,6 +46,8 @@ int testMd5Basic(void) {
 	}
 	
 	ft_printf("MD5 basic: %d/%d passed\n", passed, total);
+	g_totalTests += total;
+	g_passedTests += passed;
 	return (passed == total);
 }
 
@@ -66,8 +68,10 @@ int testMd5Update(void) {
 	md5Update(&ctx, (const uint8_t*)msg + 10, len - 10);
 	md5Final(digest2, &ctx);
 	
+	g_totalTests += 1;
 	if (ft_memcmp(digest1, digest2, 16) == 0) {
 		printSuccess("MD5 update consistency");
+		g_passedTests += 1;
 		return (1);
 	} else {
 		printFailure("MD5 update consistency");

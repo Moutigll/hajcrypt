@@ -13,8 +13,33 @@
 
 #include "../../includes/hash/blake2b.h"
 #include "../../includes/cipher/base64.h"
+#include "../../includes/consts/base64.h"
 
 #include "../../includes/kdf/argon2.h"
+
+static size_t base64EncodeNoPad(const uint8_t *input, size_t inputLen, char *output, size_t outputSize)
+{
+	if (outputSize < ((inputLen + 2) / 3) * 4 + 1)
+		return (0);
+
+	t_base64Ctx ctx;
+	base64Init(&ctx, NULL, 0, NULL, CIPHER_ENCRYPT);
+	
+	size_t outLen1 = 0;
+	base64Update(&ctx, input, inputLen, (uint8_t*)output, &outLen1);
+	
+	size_t outLen2 = 0;
+	/* Finalize without padding */
+	if (ctx.bits > 0) {
+		ctx.buffer <<= (6 - ctx.bits);
+		output[outLen1 + outLen2++] = g_base64_enc[ctx.buffer & 0x3F];
+	}
+	
+	size_t totalLen = outLen1 + outLen2;
+	if (totalLen < outputSize)
+		output[totalLen] = '\0';
+	return (totalLen);
+}
 
 /**
  * @brief Fills a memory block using the previous block and a reference block.
@@ -529,6 +554,8 @@ void argon2Free(t_argon2Ctx *ctx)
 
 
 void argon2InitDefault(t_argon2Ctx *ctx) {
+	if (!ctx)
+		return;
 	ft_bzero(ctx, sizeof(t_argon2Ctx));
 	ctx->password = NULL;
 	ctx->passwordLen = 0;
@@ -550,14 +577,21 @@ void argon2InitDefault(t_argon2Ctx *ctx) {
 #endif
 }
 
-void argon2Init(t_argon2Ctx		*ctx,
+int argon2Init(t_argon2Ctx		*ctx,
 				const uint8_t	*password,	size_t	passLen,
 				const uint8_t	*salt,		size_t	saltLen,
 				uint32_t		memory,
 				uint32_t		iterations,
 				uint32_t		parallelism,
-				t_argon2Type type)
+				t_argon2Type	type)
 {
+	if (!ctx)
+		return (-1);
+
+	if (memory < (8 * parallelism)) return (-1);
+	if (iterations < 1) return (-1);
+	if (parallelism < 1 || parallelism > 0x00FFFFFF) return (-1);
+	if (passLen > ARGON2_MAX_PWD_LENGTH || saltLen < 8) return (-1);
 	ft_bzero(ctx, sizeof(t_argon2Ctx));
 
 	ctx->memory = memory;
@@ -580,6 +614,7 @@ void argon2Init(t_argon2Ctx		*ctx,
 	
 	if (salt && saltLen > 0)
 		argon2SetSalt(ctx, salt, saltLen);
+	return (0);
 }
 
 int argon2Hash(const t_argon2Ctx *ctx, uint8_t *output, size_t outputLen)
@@ -592,6 +627,7 @@ int argon2Hash(const t_argon2Ctx *ctx, uint8_t *output, size_t outputLen)
 	uint32_t	lanes = local.parallelism;
 	uint32_t	blocksPerLane;
 
+	if (!ctx || !output || outputLen == 0) return (-1);
 	if (outputLen != local.outputLen) return (-1);
 	if (lanes == 0) return (-1);
 	blocksPerLane = totalBlocks / lanes;
@@ -705,12 +741,12 @@ int argon2Encode(const t_argon2Ctx	*ctx,
 	
 	/* Base64 encode salt */
 	if (ctx->salt && ctx->saltLen > 0)
-		base64Encode(ctx->salt, ctx->saltLen, salt_b64, sizeof(salt_b64));
+		base64EncodeNoPad(ctx->salt, ctx->saltLen, salt_b64, sizeof(salt_b64));
 	else
 		salt_b64[0] = '\0';
 	
 	/* Base64 encode hash */
-	base64Encode(hash, hashLen, hash_b64, sizeof(hash_b64));
+	base64EncodeNoPad(hash, hashLen, hash_b64, sizeof(hash_b64));
 	
 	/* Write encoded string */
 	if (ft_snprintf(output, outputSize, "$%s$v=%u$m=%u,t=%u,p=%u$%s$%s",
