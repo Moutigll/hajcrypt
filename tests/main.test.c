@@ -56,7 +56,11 @@ static testEntry_t all_tests[] = {
 	{"Argon2id one-shot", testArgon2idOneShot},
 	{"Argon2 encode/decode", testArgon2EncodeDecode},
 	{"Argon2 edge cases", testArgon2EdgeCases},
-	
+	{"Bcrypt hash", testBcryptHash},
+	{"Bcrypt verify", testBcryptVerify},
+	{"Bcrypt gen salt", testBcryptGenSalt},
+	{"Bcrypt edge cases", testBcryptEdgeCases},
+	{"Bcrypt hash with salt string", testBcryptHashWithSaltStr},
 	{NULL, NULL}
 };
 

@@ -40,6 +40,19 @@ static inline void	copy32(const uint8_t src[4], uint8_t dst[4])
 	dst[3] = src[3];
 }
 
+void blowfishInitState(uint32_t *P, uint32_t (*S)[256])
+{
+    uint32_t	i;
+    uint32_t	j;
+ 
+    for (i = 0; i < 18; i++)
+        P[i] = g_blowfish_P_init[i];
+ 
+    for (i = 0; i < 4; i++)
+        for (j = 0; j < 256; j++)
+            S[i][j] = g_blowfish_S_init[i][j];
+}
+
 void	blowfishInitKey(uint32_t *P, uint32_t (*S)[256], const uint8_t *key, size_t keyLen)
 {
 	uint32_t	i;
@@ -48,15 +61,8 @@ void	blowfishInitKey(uint32_t *P, uint32_t (*S)[256], const uint8_t *key, size_t
 	uint8_t		currentBlock[8] = {0};
 	uint8_t		outBlock[8];
 
-	/* 1. Initialize P-array and S-boxes with hex digits of Pi */
-	for (i = 0; i < 18; i++)
-		P[i] = g_blowfish_P_init[i];
-
-	for (i = 0; i < 4; i++)
-	{
-		for (j = 0; j < 256; j++)
-			S[i][j] = g_blowfish_S_init[i][j];
-	}
+	/* 1. Initialize P and S with standard constants */
+	blowfishInitState(P, S);
 
 	/* 2. XOR P-array with key bytes */
 	j = 0;

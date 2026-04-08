@@ -123,4 +123,11 @@ int testArgon2EncodeDecode(void);
 int testArgon2Verify(void);
 int testArgon2EdgeCases(void);
 
+/* Bcrypt tests */
+int testBcryptHash(void);
+int testBcryptVerify(void);
+int testBcryptGenSalt(void);
+int testBcryptEdgeCases(void);
+int testBcryptHashWithSaltStr(void);
+
 #endif /* HAJCRYPT_TEST_H */
