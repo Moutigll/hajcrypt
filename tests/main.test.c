@@ -46,6 +46,11 @@ static testEntry_t all_tests[] = {
 	{"BLAKE2b incremental", testBlake2bIncremental},
 	{"BLAKE2b keyed", testBlake2bKeyed},
 	{"BLAKE2b long output", testBlake2bLong},
+	{"PBKDF2-HMAC-SHA256", testPbkdf2Sha256},
+	{"PBKDF2-HMAC-MD5", testPbkdf2Md5},
+	{"PBKDF2 derive key", testPbkdf2DeriveKeyIv},
+	{"PBKDF2 edge cases", testPbkdf2EdgeCases},
+	
 	{NULL, NULL}
 };
 

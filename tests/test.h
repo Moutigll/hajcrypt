@@ -108,4 +108,10 @@ int testBlake2bIncremental(void);
 int testBlake2bKeyed(void);
 int testBlake2bLong(void);
 
+/* PBKDF2 tests */
+int testPbkdf2Sha256(void);
+int testPbkdf2Md5(void);
+int testPbkdf2DeriveKeyIv(void);
+int testPbkdf2EdgeCases(void);
+
 #endif /* HAJCRYPT_TEST_H */
