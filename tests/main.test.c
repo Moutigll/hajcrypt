@@ -50,6 +50,12 @@ static testEntry_t all_tests[] = {
 	{"PBKDF2-HMAC-MD5", testPbkdf2Md5},
 	{"PBKDF2 derive key", testPbkdf2DeriveKeyIv},
 	{"PBKDF2 edge cases", testPbkdf2EdgeCases},
+	{"Argon2d", testArgon2d},
+	{"Argon2i", testArgon2i},
+	{"Argon2id", testArgon2id},
+	{"Argon2id one-shot", testArgon2idOneShot},
+	{"Argon2 encode/decode", testArgon2EncodeDecode},
+	{"Argon2 edge cases", testArgon2EdgeCases},
 	
 	{NULL, NULL}
 };

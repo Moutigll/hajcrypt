@@ -121,8 +121,9 @@ void argon2InitDefault(t_argon2Ctx *ctx);
  * @param iterations The number of iterations (passes) to perform.
  * @param parallelism The degree of parallelism (number of lanes).
  * @param type The variant of Argon2 to use (ARGON2_D, ARGON2_I, or ARGON2_ID).
+ * @return 0 on success, non-zero on failure (e.g., invalid parameters).
  */
-void argon2Init(t_argon2Ctx		*ctx,
+int argon2Init(t_argon2Ctx		*ctx,
 				const uint8_t	*password,	size_t	passLen,
 				const uint8_t	*salt,		size_t	saltLen,
 				uint32_t		memory,

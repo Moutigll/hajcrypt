@@ -114,4 +114,13 @@ int testPbkdf2Md5(void);
 int testPbkdf2DeriveKeyIv(void);
 int testPbkdf2EdgeCases(void);
 
+/* Argon2 tests */
+int testArgon2d(void);
+int testArgon2i(void);
+int testArgon2id(void);
+int testArgon2idOneShot(void);
+int testArgon2EncodeDecode(void);
+int testArgon2Verify(void);
+int testArgon2EdgeCases(void);
+
 #endif /* HAJCRYPT_TEST_H */
