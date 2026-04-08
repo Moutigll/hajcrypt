@@ -17,7 +17,7 @@
 
 #include "../../includes/kdf/argon2.h"
 
-size_t base64EncodeNoPad(const uint8_t *input, size_t inputLen, char *output, size_t outputSize)
+static size_t base64EncodeNoPad(const uint8_t *input, size_t inputLen, char *output, size_t outputSize)
 {
 	if (outputSize < ((inputLen + 2) / 3) * 4 + 1)
 		return (0);

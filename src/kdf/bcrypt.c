@@ -45,32 +45,46 @@ int bcryptDecodeBase64(uint8_t *dst, const char *src, size_t maxLen)
 	uint32_t	i = 0;
 	uint32_t	j = 0;
 	uint32_t	v[4];
-	char		*pos;
+	size_t		len;
 	int			k;
 	int			valid_chars;
-	int			end = 0;
 
-	while (src[i] && j < maxLen)
+	if (!src || !dst)
+		return (-1);
+
+	len = ft_strlen(src);
+
+	while (i < len && j < maxLen)
 	{
 		valid_chars = 0;
 		for (k = 0; k < 4; k++)
 		{
-			if (end || src[i + k] == '\0') {
-				end = 1;
+			if (i + k >= len)
+			{
 				v[k] = 0;
-			} else if (src[i + k] == '=') {
+				continue;
+			}
+			if (src[i + k] == '=')
+			{
 				v[k] = 0;
-			} else {
-				pos = ft_strchr(g_bcryptBase64, src[i + k]);
-				if (!pos) return (-1);
+			}
+			else
+			{
+				char	*pos = ft_strchr(g_bcryptBase64, src[i + k]);
+				if (!pos)
+					return (-1);
 				v[k] = pos - g_bcryptBase64;
 				valid_chars++;
 			}
 		}
-		if (valid_chars >= 2 && j < maxLen) dst[j++] = (v[0] << 2) | (v[1] >> 4);
-		if (valid_chars >= 3 && j < maxLen) dst[j++] = ((v[1] & 0x0F) << 4) | (v[2] >> 2);
-		if (valid_chars == 4 && j < maxLen) dst[j++] = ((v[2] & 0x03) << 6) | v[3];
-		if (valid_chars < 4) break;
+		if (valid_chars >= 2 && j < maxLen)
+			dst[j++] = (v[0] << 2) | (v[1] >> 4);
+		if (valid_chars >= 3 && j < maxLen)
+			dst[j++] = ((v[1] & 0x0F) << 4) | (v[2] >> 2);
+		if (valid_chars == 4 && j < maxLen)
+			dst[j++] = ((v[2] & 0x03) << 6) | v[3];
+		if (valid_chars < 4)
+			break;
 		i += 4;
 	}
 	return ((int)j);

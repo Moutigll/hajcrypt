@@ -131,7 +131,9 @@ static int runPbkdf2Tests(const t_hash			*hash,
 						  const char			*algo_name)
 {
 	int passed = 0, total = 0;
-	printInfo("Testing PBKDF2-HMAC-%s...");
+	char outHex[65];
+	ft_snprintf(outHex, sizeof(outHex), "Testing PBKDF2-%s...", algo_name);
+	printInfo(outHex);
 
 	for (int i = 0; vectors[i].expected != NULL; i++) {
 		t_pbkdf2Ctx	ctx;
