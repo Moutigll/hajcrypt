@@ -101,7 +101,7 @@ static void blowfishExpand0StateKey(t_blowfishEcbCtx *ctx, const uint8_t *key, s
 		j = (j + 4) % keyLen;
 	}
 
-	/* Re-encrypt zero block (no data injection) — update P then S-boxes */
+	/* Re-encrypt zero block to update P-array */
 	for (i = 0; i < 18; i += 2)
 	{
 		blowfishEncryptBlock(ctx->P, ctx->S, block, out);
