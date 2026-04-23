@@ -12,4 +12,21 @@
  */
 int	hajSecRandBytes(uint8_t *buf, size_t len);
 
+/**
+ * Generate a cryptographically secure random 64-bit unsigned integer.
+ *
+ * @return A random 64-bit value, or 0 on error.
+ */
+uint64_t hajRandomUint64(void);
+
+/**
+ * Generate a random 64-bit integer within [min, max] (inclusive).
+ * Uses rejection sampling to avoid modulo bias.
+ *
+ * @param min Minimum value (inclusive)
+ * @param max Maximum value (inclusive)
+ * @return Random value in [min, max]
+ */
+uint64_t hajRandomRange(uint64_t min, uint64_t max);
+
 #endif /* HACRYPT_RANDOM_H */
