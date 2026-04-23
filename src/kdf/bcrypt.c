@@ -392,7 +392,7 @@ int bcryptHash(const char		*password,
 
 int bcryptVerify(const char *password, const char *hash)
 {
-	char		newHash[BCRYPT_STRING_LEN];
+	char		newHash[BCRYPT_STRING_LEN + 1];
 	uint8_t		salt[16];
 	uint32_t	cost;
 	char		saltBuf[23];

@@ -158,7 +158,7 @@ cleanup:
 int testBcryptEdgeCases(void)
 {
 	int		passed = 0, total = 0;
-	char	output[BCRYPT_STRING_LEN];
+	char	output[BCRYPT_STRING_LEN + 1];
 	uint8_t	salt[BCRYPT_SALT_LEN];
 	int		ret;
 	char	longpass[80];
@@ -219,7 +219,7 @@ int testBcryptEdgeCases(void)
 int testBcryptHashWithSaltStr(void)
 {
 	int		passed = 0, total = 0;
-	char	output[BCRYPT_STRING_LEN];
+	char	output[BCRYPT_STRING_LEN + 1];
 	int		ret;
 
 	printInfo("Testing bcryptHashWithSalt...");
