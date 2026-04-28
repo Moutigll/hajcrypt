@@ -1,4 +1,5 @@
 #include "../../hajlib/include/hmath.h"
+#include "../../hajlib/include/hprintf.h"
 
 #include "../../includes/rsa/rsa.h"
 
@@ -107,15 +108,25 @@ t_bigInt *rsaGeneratePrime(int bits, double certainty)
 {
 	t_bigInt	*candidate;
 	int			rounds;
+	int			count = 0;
 
 	rounds = (certainty <= 0.0) ? 5 : (int)(-ft_log2(1.0 - certainty)) + 1;
 	if (rounds < 5) rounds = 5;
 	if (rounds > 12) rounds = 12;
+	
 	candidate = bigIntNew((bits + 63) / 64);
 	if (!candidate) return (NULL);
+	
 	while (1) {
 		bigIntRandom(candidate, bits);
-		if (rsaIsPrimeMillerRabin(candidate, rounds))
+		
+		if (rsaIsPrimeMillerRabin(candidate, rounds)) {
+			ft_dprintf(STDERR_FILENO, "++++++++++++\n");
 			return (candidate);
+		}
+		
+		count++;
+		if (count % 3 == 0)
+			ft_dprintf(STDERR_FILENO, ".");
 	}
 }

@@ -11,6 +11,7 @@
 typedef enum e_algo
 {
 	ALGO_NONE,
+	ALGO_GENRSA,
 	ALGO_MD5,
 	ALGO_SHA256,
 	ALGO_WHIRLPOOL,

@@ -43,6 +43,8 @@ typedef struct s_blockData
 }	t_blockData;
 
 
+int cmdGenrsa(t_sslOptions *opts);
+
 /**
  * @brief Processes a file descriptor using the specified hash algorithm and SSL options.
  *

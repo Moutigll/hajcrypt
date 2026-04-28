@@ -7,7 +7,8 @@
 
 typedef enum e_cmdType {
 	CMD_HASH,
-	CMD_CIPHER
+	CMD_CIPHER,
+	CMD_GENRSA
 } t_cmdType;
 
 typedef enum e_kdfChoice {

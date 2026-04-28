@@ -78,7 +78,11 @@ LIB_SRC = \
 	$(SRC_DIR)/kdf/bytesToKey.c \
 	$(SRC_DIR)/kdf/pbkdf2.c \
 	$(SRC_DIR)/kdf/bcrypt.c \
-	$(SRC_DIR)/kdf/argon2.c
+	$(SRC_DIR)/kdf/argon2.c \
+	$(SRC_DIR)/rsa/keygen.c \
+	$(SRC_DIR)/rsa/pem.c \
+	$(SRC_DIR)/rsa/primality.c \
+	$(SRC_DIR)/rsa/bigint.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s
@@ -90,7 +94,8 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/processHash.c \
 	$(SRC_DIR)/cli/processCipher.c \
 	$(SRC_DIR)/cli/cipherIo.c \
-	$(SRC_DIR)/cli/prompt.c
+	$(SRC_DIR)/cli/prompt.c \
+	$(SRC_DIR)/cli/rsa.c
 
 TEST_SRC = \
 	tests/main.test.c \

@@ -4,12 +4,15 @@ void rsaGenerateKey(t_rsaKey *key, size_t bits, uint64_t e_val)
 {
 	t_bigInt *pm1 = NULL, *qm1 = NULL, *phi = NULL, *one = bigIntFromUint64(1);
 	key->e = bigIntFromUint64(e_val);
+
 	while (1) {
 		key->p = rsaGeneratePrime(bits / 2, 0.999999);
 		key->q = rsaGeneratePrime(bits - (bits / 2), 0.999999);
 
-		if (bigIntCmp(key->p, key->q) == 0)
-			rsaFreeKey(key); continue;
+		if (bigIntCmp(key->p, key->q) == 0) {
+			rsaFreeKey(key);
+			continue;
+		}
 
 		key->n = bigIntNew(key->p->numWords + key->q->numWords);
 		bigIntMul(key->n, key->p, key->q);

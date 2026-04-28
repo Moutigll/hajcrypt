@@ -57,6 +57,8 @@ static int executeSsl(t_sslOptions *opts)
 			processFd(STDIN_FILENO, hash, opts, NULL);
 	} else if (opts->cmdType == CMD_CIPHER) {
 		return (executeCipher(opts));
+	} else if (opts->cmdType == CMD_GENRSA) {
+		return (cmdGenrsa(opts));
 	}
 
 	return (0);

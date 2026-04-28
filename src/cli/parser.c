@@ -110,7 +110,7 @@ static void	printUsage(void)
 	char	prevRoot[32];
 	char	currRoot[32];
 
-	ft_printf("Standard commands:\n");
+	ft_printf("Standard commands:\n\tgenrsa\n");
 	
 	ft_printf("\nMessage Digest commands:\n");
 	i = 0;
@@ -244,6 +244,12 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 			opts->cmdType = CMD_CIPHER;
 			return (0);
 		}
+	}
+
+	if (ft_strcmp(arg, "genrsa") == 0) {
+		opts->algo = ALGO_GENRSA;
+		opts->cmdType = CMD_GENRSA;
+		return (0);
 	}
 
 	ft_dprintf(STDERR_FILENO, "ft_ssl: Error: '%s' is an invalid command.\n\n", arg);
