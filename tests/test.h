@@ -130,4 +130,12 @@ int testBcryptGenSalt(void);
 int testBcryptEdgeCases(void);
 int testBcryptHashWithSaltStr(void);
 
+/* BigInt tests */
+int testBigIntIsOddEven(void);
+int testBigIntAdd(void);
+int testBigIntSub(void);
+int testBigIntMul(void);
+int testBigIntDivMod(void);
+int testModularArithmetic(void);
+
 #endif /* HAJCRYPT_TEST_H */
