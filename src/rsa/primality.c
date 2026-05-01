@@ -1,5 +1,6 @@
 #include "../../hajlib/include/hmath.h"
 #include "../../hajlib/include/hprintf.h"
+#include "../../hajlib/include/hio.h"
 
 #include "../../includes/rsa/rsa.h"
 
@@ -125,6 +126,8 @@ t_bigInt *rsaGeneratePrime(int bits, double certainty)
 			return (candidate);
 		}
 		
+		if (count % 192 == 0)
+			ft_putchar_fd('\n', STDERR_FILENO);
 		count++;
 		if (count % 3 == 0)
 			ft_dprintf(STDERR_FILENO, ".");

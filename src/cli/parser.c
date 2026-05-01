@@ -323,7 +323,18 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		}
 
 		if (status == FT_GETOPT_POSITIONAL)
-			break; /* stop option parsing on first non-option */
+		{
+			if (opts->fileCount < opts->maxInputs)
+				opts->fileInputs[opts->fileCount++] = st.argv[st.index];
+			else
+			{
+				ft_dprintf(STDERR_FILENO, "ft_ssl: too many inputs\n");
+				freeSslOptions(opts);
+				return (1);
+			}
+			st.index++;
+			continue;
+		}
 
 		if (status == FT_GETOPT_OK)
 		{

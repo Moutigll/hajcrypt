@@ -80,9 +80,13 @@ LIB_SRC = \
 	$(SRC_DIR)/kdf/bcrypt.c \
 	$(SRC_DIR)/kdf/argon2.c \
 	$(SRC_DIR)/rsa/keygen.c \
-	$(SRC_DIR)/rsa/pem.c \
+	$(SRC_DIR)/rsa/rsaX509.c \
 	$(SRC_DIR)/rsa/primality.c \
-	$(SRC_DIR)/rsa/bigint.c
+	$(SRC_DIR)/rsa/bigint.c \
+	$(SRC_DIR)/x509/asn1Decode.c \
+	$(SRC_DIR)/x509/asn1Encode.c \
+	$(SRC_DIR)/x509/pemDecode.c \
+	$(SRC_DIR)/x509/pemEncode.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s
