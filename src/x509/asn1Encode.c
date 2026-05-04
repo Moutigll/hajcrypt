@@ -106,3 +106,27 @@ uint8_t *asn1EncodeBitString(const uint8_t *data, size_t dataLen, size_t *outLen
 	ft_memcpy(bs + headerLen + 1, data, dataLen);
 	return (bs);
 }
+
+uint8_t *asn1EncodeOctetString(const uint8_t *data, size_t dataLen, size_t *outLen)
+{
+	size_t headerLen = 1 + asn1EncodeLength(NULL, dataLen);
+	*outLen = headerLen + dataLen;
+	uint8_t *os = malloc(*outLen);
+	if (!os) return (NULL);
+
+	os[0] = ASN1_OCTET_STRING;
+	asn1EncodeLength(os + 1, dataLen);
+	ft_memcpy(os + headerLen, data, dataLen);
+	return (os);
+}
+
+uint8_t *asn1EncodeNull(size_t *outLen)
+{
+	*outLen = 2;
+	uint8_t *der = malloc(*outLen);
+	if (!der) return (NULL);
+
+	der[0] = ASN1_NULL;
+	der[1] = 0x00;
+	return (der);
+}

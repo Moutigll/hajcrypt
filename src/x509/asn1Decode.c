@@ -16,21 +16,19 @@ int asn1DecodeLength(const uint8_t *data, size_t *len, size_t *bytesRead)
 	return (1);
 }
 
-int asn1ParseTlv(const uint8_t *data, size_t maxLen, t_asn1_tlv *tlv, size_t *consumed)
+int asn1ParseTlv(const uint8_t *data, size_t maxLen, t_asn1Tlv *tlv, size_t *consumed)
 {
 	size_t lenBytes;
-
 	if (maxLen < 2) return (0);
 	tlv->tag = data[0];
 	if (!asn1DecodeLength(data + 1, &tlv->length, &lenBytes))
 		return (0);
-
 	size_t headerLen = 1 + lenBytes;
 	if (headerLen + tlv->length > maxLen)
 		return (0);
-
 	tlv->value = (uint8_t *)(data + headerLen);
-	*consumed = headerLen + tlv->length;
+	if (consumed)
+		*consumed = headerLen + tlv->length;
 	return (1);
 }
 
@@ -38,7 +36,7 @@ int asn1ParseInteger(const		uint8_t *data,	size_t	maxLen,
 					 uint8_t	**value,		size_t	*valueLen,
 					 size_t		*consumed)
 {
-	t_asn1_tlv tlv;
+	t_asn1Tlv tlv;
 
 	if (!asn1ParseTlv(data, maxLen, &tlv, consumed))
 		return (0);
@@ -60,7 +58,7 @@ int asn1ParseSequence(const uint8_t	*data,		size_t	maxLen,
 					  uint8_t		**content,	size_t	*contentLen,
 					  size_t		*consumed)
 {
-	t_asn1_tlv tlv;
+	t_asn1Tlv tlv;
 
 	if (!asn1ParseTlv(data, maxLen, &tlv, consumed))
 		return (0);
@@ -69,5 +67,48 @@ int asn1ParseSequence(const uint8_t	*data,		size_t	maxLen,
 
 	*content = tlv.value;
 	*contentLen = tlv.length;
+	return (1);
+}
+
+int asn1ParseOctetString(const uint8_t	*data,	size_t	maxLen,
+						 uint8_t		**out,	size_t	*outLen,
+						 size_t			*consumed)
+{
+	t_asn1Tlv tlv;
+
+	if (!asn1ParseTlv(data, maxLen, &tlv, consumed))
+		return (0);
+	if (tlv.tag != ASN1_OCTET_STRING)
+		return (0);
+	*out = tlv.value;
+	*outLen = tlv.length;
+	return (1);
+}
+
+int asn1ParseAny(const uint8_t	*data,	size_t	maxLen,
+				 uint8_t		**out,	size_t	*outLen,
+				 size_t			*consumed)
+{
+	t_asn1Tlv tlv;
+
+	if (!asn1ParseTlv(data, maxLen, &tlv, consumed))
+		return (0);
+	*out = tlv.value;
+	*outLen = tlv.length;
+	return (1);
+}
+
+int asn1ParseOid(const uint8_t	*data, size_t	maxLen,
+				 uint8_t		**out, size_t	*outLen,
+				 size_t			*consumed)
+{
+	t_asn1Tlv tlv;
+
+	if (!asn1ParseTlv(data, maxLen, &tlv, consumed))
+		return (0);
+	if (tlv.tag != ASN1_OID)
+		return (0);
+	*out = tlv.value;
+	*outLen = tlv.length;
 	return (1);
 }
