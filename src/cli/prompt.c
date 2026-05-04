@@ -9,7 +9,7 @@
 #include "../../includes/kdf/bcrypt.h"
 #include "../../includes/kdf/argon2.h"
 
-#include "../../includes/cli/prompt.h"
+#include "../../includes/cli/password.h"
 
 /* ---------- Static helpers ---------- */
 
@@ -220,7 +220,8 @@ int generateKeyFromPrompt(t_kdfParams *params, uint8_t *key, size_t keyLen)
 	switch (params->choice) {
 		case KDF_BYTESTOKEY: {
 			uint8_t iv[8];
-			ret = pbkdfBytesToKeyExtended(params->password,
+			ret = pbkdfBytesToKeyExtended(&g_sha256Hash,
+										 params->password,
 										 ft_strlen(params->password),
 										 params->salt,
 										 keyLen,
@@ -295,7 +296,7 @@ int promptForCipherParams(t_sslOptions *opts)
 	
 	ft_printf("\n=== Missing parameters for %s ===\n", cipher->name);
 
-	ft_memset(&params, 0, sizeof(params));
+	ft_bzero(&params, sizeof(params));
 
 	params.password = promptPassword("enter encryption password: ");
 	if (!params.password) return (-1);

@@ -3,12 +3,14 @@
 
 #include <stddef.h>
 
-#include "client.h"
+#include "../x509/pemCipher.h"
+#include "../utils/dispatch.h"
 
 typedef enum e_cmdType {
 	CMD_HASH,
 	CMD_CIPHER,
-	CMD_GENRSA
+	CMD_GENRSA,
+	CMD_RSA
 } t_cmdType;
 
 typedef enum e_kdfChoice {
@@ -95,14 +97,6 @@ int	parseSslArgs(int argc, char **argv, t_sslOptions *opts);
  *       use-after-free errors.
  */
 void freeSslOptions(t_sslOptions *opts);
-
-/**
- * @brief Retrieves the name of the algorithm as a string.
- * 
- * @param algo The algorithm enumeration value.
- * @return const char* A pointer to a null-terminated string containing the name of the algorithm.
- */
-const char *getAlgoName(t_algo algo);
 
 /**
  * @brief Prints the name of the specified algorithm to standard output.

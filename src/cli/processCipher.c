@@ -9,7 +9,7 @@
 #include "../../includes/cli/algoHandling.h"
 #include "../../includes/cipher/base64.h"
 #include "../../includes/cli/parser.h"
-#include "../../includes/cli/prompt.h"
+#include "../../includes/cli/password.h"
 
 /* ---------- Stream cipher processing ---------- */
 

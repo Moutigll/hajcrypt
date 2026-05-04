@@ -2,24 +2,8 @@
 #include <unistd.h>
 
 #include "../../hajlib/include/hajlib.h"	/* IWYU pragma: keep */
+
 #include "../../includes/cli/parser.h"
-
-const char *getAlgoName(t_algo algo)
-{
-	for (size_t i = 0; g_hashTable[i].hash; i++)
-	{
-		if (g_hashTable[i].algo == algo)
-			return (g_hashTable[i].hash->name);
-	}
-
-	for (size_t i = 0; g_cipherTable[i].cipher; i++)
-	{
-		if (g_cipherTable[i].algo == algo)
-			return (g_cipherTable[i].cipher->name);
-	}
-
-	return (NULL);
-}
 
 void printAlgoName(t_algo algo)
 {
@@ -252,6 +236,12 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 		return (0);
 	}
 
+	if (ft_strcmp(arg, "rsa") == 0) {
+		opts->algo = ALGO_NONE;
+		opts->cmdType = CMD_RSA;
+		return (0);
+	}
+
 	ft_dprintf(STDERR_FILENO, "ft_ssl: Error: '%s' is an invalid command.\n\n", arg);
 	printUsage();
 	return (1);
@@ -296,6 +286,9 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		opts->readFromStdin = 1;
 		return (0);
 	}
+
+	if (opts->cmdType == CMD_RSA) /* hand options parsing to rsa-specific function */
+		return (0);
 
 	if (opts->cmdType == CMD_HASH)
 		shortOpts = "pqrs:";

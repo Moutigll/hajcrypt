@@ -24,6 +24,21 @@ CONST_SRC = \
 LIB_SRC = \
 	$(SRC_DIR)/utils.c \
 	$(SRC_DIR)/hajSecRandBytes.c \
+	$(SRC_DIR)/dispatch.c \
+	$(SRC_DIR)/x509/asn1Decode.c \
+	$(SRC_DIR)/x509/asn1Encode.c \
+	$(SRC_DIR)/x509/pemDecode.c \
+	$(SRC_DIR)/x509/pemEncode.c \
+	$(SRC_DIR)/x509/pemCipher.c \
+	$(SRC_DIR)/kdf/kdf.c \
+	$(SRC_DIR)/kdf/bytesToKey.c \
+	$(SRC_DIR)/kdf/pbkdf2.c \
+	$(SRC_DIR)/kdf/bcrypt.c \
+	$(SRC_DIR)/kdf/argon2.c \
+	$(SRC_DIR)/rsa/key.c \
+	$(SRC_DIR)/rsa/x509.c \
+	$(SRC_DIR)/rsa/primality.c \
+	$(SRC_DIR)/rsa/bigint.c \
 	$(SRC_DIR)/hash/common/padding.c \
 	$(SRC_DIR)/hash/common/endian.c \
 	$(SRC_DIR)/hash/md5/md5.c \
@@ -73,20 +88,7 @@ LIB_SRC = \
 	$(SRC_DIR)/cipher/aes/gcm.c \
 	$(SRC_DIR)/cipher/aes/pcbc.c \
 	$(SRC_DIR)/cipher/aes/transform_arm64.c \
-	$(SRC_DIR)/cipher/aes/transform_x86.c \
-	$(SRC_DIR)/kdf/kdf.c \
-	$(SRC_DIR)/kdf/bytesToKey.c \
-	$(SRC_DIR)/kdf/pbkdf2.c \
-	$(SRC_DIR)/kdf/bcrypt.c \
-	$(SRC_DIR)/kdf/argon2.c \
-	$(SRC_DIR)/rsa/keygen.c \
-	$(SRC_DIR)/rsa/rsaX509.c \
-	$(SRC_DIR)/rsa/primality.c \
-	$(SRC_DIR)/rsa/bigint.c \
-	$(SRC_DIR)/x509/asn1Decode.c \
-	$(SRC_DIR)/x509/asn1Encode.c \
-	$(SRC_DIR)/x509/pemDecode.c \
-	$(SRC_DIR)/x509/pemEncode.c
+	$(SRC_DIR)/cipher/aes/transform_x86.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s
@@ -94,11 +96,11 @@ LIB_ASM_ARM_SRC = \
 CLI_SRC = \
 	$(SRC_DIR)/cli/main.c \
 	$(SRC_DIR)/cli/parser.c \
-	$(SRC_DIR)/cli/dispatch.c \
 	$(SRC_DIR)/cli/processHash.c \
 	$(SRC_DIR)/cli/processCipher.c \
 	$(SRC_DIR)/cli/cipherIo.c \
 	$(SRC_DIR)/cli/prompt.c \
+	$(SRC_DIR)/cli/password.c \
 	$(SRC_DIR)/cli/rsa.c
 
 TEST_SRC = \

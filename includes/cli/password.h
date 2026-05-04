@@ -1,7 +1,16 @@
-#ifndef CLI_PROMPT_H
-#define CLI_PROMPT_H
+#ifndef CLI_PASSWORD_H
+#define CLI_PASSWORD_H
 
 #include "parser.h"
+
+typedef enum e_passType {
+	PASSWORD_TYPE_PASS,			/* pass:secret */
+	PASSWORD_TYPE_ENV,			/* env:VARNAME */
+	PASSWORD_TYPE_FILE,			/* file:path/to/file */
+	PASSWORD_TYPE_FD,			/* fd:3 */
+	PASSWORD_TYPE_STDIN,		/* stdin */
+	PASSWORD_TYPE_INTERACTIVE	/* no argument, prompt user */
+} t_passType;
 
 typedef struct s_kdfParams {
 	t_kdfChoice	choice;
@@ -14,6 +23,35 @@ typedef struct s_kdfParams {
 	int			keyLen;			/* Desired key length in bytes */
 } t_kdfParams;
 
+/**
+ * @brief Retrieves a password based on the specified argument and verification requirements.
+ *
+ * This function processes the provided argument to determine how to obtain the password. It supports
+ * various methods of password retrieval, including direct input, environment variables, files, file
+ * descriptors, standard input, and interactive prompts. If the `verify` flag is set, it will also
+ * prompt the user to confirm the password by entering it twice.
+ *
+ * @param arg The argument specifying how to retrieve the password (e.g., "pass:secret", "env:VARNAME").
+ * @param env An array of environment variables (in "KEY=VALUE" format) that can be used for retrieving passwords from environment variables.
+ *
+ * @return A dynamically allocated string containing the retrieved password on success, or NULL on failure.
+ *         The caller is responsible for freeing the returned string.
+ */
+char *getPassword(const char *arg, char **env);
+
+/**
+ * @brief Prompts the user to input a password with an optional verification step.
+ *
+ * This function interactively prompts the user to enter a password. If the `verify` flag
+ * is set, it will ask the user to enter the password twice and verify that both entries match.
+ *
+ * @param prompt The message to display when asking for the password.
+ * @param verify If non-zero, the function will require the user to enter the password twice for verification.
+ *
+ * @return A dynamically allocated string containing the entered password on success, or NULL on failure.
+ *         The caller is responsible for freeing the returned string.
+ */
+char *promptPassword(const char *prompt);
 
 /**
  * @brief Prompts the user to input cipher parameters and stores them in the provided options structure.
@@ -70,4 +108,4 @@ int generateIvFromPrompt(uint8_t *iv, size_t ivLen);
  */
 void cleanupSslOptions(t_sslOptions *opts);
 
-#endif
+#endif /* CLI_PASSWORD_H */
