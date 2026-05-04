@@ -127,6 +127,26 @@ t_bigInt *bigIntFromHex(const char *hex, size_t numWords)
 	return (n);
 }
 
+t_bigInt	*bigIntFromBytes(const uint8_t *bytes, size_t len)
+{
+	size_t		words = (len + 7) / 8;
+	t_bigInt	*n = bigIntNew(words);
+	if (!n)
+		return (NULL);
+
+	for (size_t i = 0; i < len; i++) {
+		size_t	wordIdx = i / 8;
+		size_t	byteIdx = i % 8;
+		n->words[wordIdx] |= ((uint64_t)bytes[len - 1 - i]) << (byteIdx * 8);
+	}
+
+	n->used = words;
+	while (n->used > 0 && n->words[n->used - 1] == 0)
+		n->used--;
+
+	return (n);
+}
+
 void bigIntFree(t_bigInt *n)
 {
 	if (!n)

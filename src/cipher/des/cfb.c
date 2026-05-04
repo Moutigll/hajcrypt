@@ -105,6 +105,8 @@ void desCfb1Final(void *vctx, uint8_t *out, size_t *outBits)
 const t_cipher g_desCfbCipher = {
 	.name		= "des-cfb",
 	.mode		= CIPHER_MODE_CFB,
+	.oid		= OID_DEF("DES-CFB", DES_CFB_NIST_OID),
+	.oiwOid		= OIW_DEF("DES-CFB", DES_CFB_OIW_OID),
 	.isEncoder	= 1,
 
 	.blockSize	= 8,
@@ -126,6 +128,8 @@ const t_cipher g_desCfbCipher = {
 const t_cipher g_desCfb8Cipher = {
 	.name		= "des-cfb8",
 	.mode		= CIPHER_MODE_CFB8,
+	.oid		= OID_NONE,
+	.oiwOid		= OID_NONE,
 	.isEncoder	= 1,
 
 	.blockSize	= 8,
@@ -145,22 +149,20 @@ const t_cipher g_desCfb8Cipher = {
 };
 
 const t_cipher g_desCfb1Cipher = {
-	.name		= "des-cfb1",
-	.mode		= CIPHER_MODE_CFB1,
-	.isEncoder	= 1,
-
-	.blockSize	= 8,
-	.keySize	= 8,
-	.ivSize		= 8,
-	.ctxSize	= sizeof(t_desCfbCtx),
-
-	.init	= desCfb1Init,
-	.update	= desCfb1Update,
-	.final	= desCfb1Final,
-	.free	= desCfbFree,
-
-	.pad	= NULL,
-	.unpad	= NULL,
-
+	.name			= "des-cfb1",
+	.mode			= CIPHER_MODE_CFB1,
+	.oid			= OID_NONE,
+	.oiwOid			= OID_NONE,
+	.isEncoder		= 1,
+	.blockSize		= 8,
+	.keySize		= 8,
+	.ivSize			= 8,
+	.ctxSize		= sizeof(t_desCfbCtx),
+	.init			= desCfb1Init,
+	.update			= desCfb1Update,
+	.final			= desCfb1Final,
+	.free			= desCfbFree,
+	.pad			= NULL,
+	.unpad			= NULL,
 	.supportsWrap	= 0
 };

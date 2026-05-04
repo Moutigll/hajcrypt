@@ -88,9 +88,11 @@ void aesCfb1Final(void *vctx, uint8_t *out, size_t *outBits)
 	/* CFB1 doesn't require any special finalization since it processes bit by bit */
 }
 
-#define AES_CFB_CIPHER(nameStr, size) { \
+#define AES_CFB_CIPHER(nameStr, size, oidDef) { \
 	.name			= nameStr,			\
 	.mode			= CIPHER_MODE_CFB,	\
+	.oid			= oidDef,			\
+	.oiwOid			= OID_NONE,			\
 	.isEncoder		= 1,				\
 	.blockSize		= AES_BLOCK_SIZE,	\
 	.keySize		= size,				\
@@ -108,6 +110,8 @@ void aesCfb1Final(void *vctx, uint8_t *out, size_t *outBits)
 #define AES_CFB8_CIPHER(nameStr, size) { \
 	.name			= nameStr,			\
 	.mode			= CIPHER_MODE_CFB8,	\
+	.oid			= OID_NONE,			\
+	.oiwOid			= OID_NONE,			\
 	.isEncoder		= 1,				\
 	.blockSize		= AES_BLOCK_SIZE,	\
 	.keySize		= size,				\
@@ -125,6 +129,8 @@ void aesCfb1Final(void *vctx, uint8_t *out, size_t *outBits)
 #define AES_CFB1_CIPHER(nameStr, size) { \
 	.name			= nameStr,			\
 	.mode			= CIPHER_MODE_CFB1,	\
+	.oid			= OID_NONE,			\
+	.oiwOid			= OID_NONE,			\
 	.isEncoder		= 1,				\
 	.blockSize		= AES_BLOCK_SIZE,	\
 	.keySize		= size,				\
@@ -139,9 +145,9 @@ void aesCfb1Final(void *vctx, uint8_t *out, size_t *outBits)
 	.supportsWrap	= 0					\
 }
 
-const t_cipher g_aes128CfbCipher	= AES_CFB_CIPHER("aes-128-cfb", AES_KEY_SIZE_128);
-const t_cipher g_aes192CfbCipher	= AES_CFB_CIPHER("aes-192-cfb", AES_KEY_SIZE_192);
-const t_cipher g_aes256CfbCipher	= AES_CFB_CIPHER("aes-256-cfb", AES_KEY_SIZE_256);
+const t_cipher g_aes128CfbCipher	= AES_CFB_CIPHER("aes-128-cfb", AES_KEY_SIZE_128, OID_DEF("AES-128-CFB", AES128_CFB_OID));
+const t_cipher g_aes192CfbCipher	= AES_CFB_CIPHER("aes-192-cfb", AES_KEY_SIZE_192, OID_DEF("AES-192-CFB", AES192_CFB_OID));
+const t_cipher g_aes256CfbCipher	= AES_CFB_CIPHER("aes-256-cfb", AES_KEY_SIZE_256, OID_DEF("AES-256-CFB", AES256_CFB_OID));
 
 const t_cipher g_aes128Cfb8Cipher	= AES_CFB8_CIPHER("aes-128-cfb8", AES_KEY_SIZE_128);
 const t_cipher g_aes192Cfb8Cipher	= AES_CFB8_CIPHER("aes-192-cfb8", AES_KEY_SIZE_192);

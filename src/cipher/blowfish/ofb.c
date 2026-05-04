@@ -62,6 +62,8 @@ void	blowfishOfbFree(void *vctx)
 const t_cipher	g_blowfishOfbCipher = {
 	.name			= "blowfish-ofb",
 	.mode			= CIPHER_MODE_OFB,
+	.oid			= OID_DEF("BLOWFISH-OFB", BLOWFISH_OFB_OID),
+	.oiwOid			= OID_NONE,
 	.isEncoder		= 1,
 	.blockSize		= BLOWFISH_BLOCK_SIZE,
 	.keySize		= BLOWFISH_DEFAULT_KEY_SIZE,

@@ -66,22 +66,20 @@ void desEcbFree(void *vctx)
 }
 
 const t_cipher g_desEcbCipher = {
-	.name = "des-ecb",
-	.mode = CIPHER_MODE_ECB,
-	.isEncoder = 1,
-
-	.blockSize = 8,
-	.keySize = 8,
-	.ivSize = 0,
-	.ctxSize = sizeof(t_desEcbCtx),
-
-	.init = desEcbInit,
-	.update = desEcbUpdate,
-	.final = desEcbFinal,
-	.free = desEcbFree,
-
-	.pad = pkcs7Pad,
-	.unpad = pkcs7Unpad,
-
-	.supportsWrap = 0
+	.name			= "des-ecb",
+	.mode			= CIPHER_MODE_ECB,
+	.oid			= OID_DEF("DES-ECB", DES_ECB_NIST_OID),
+	.oiwOid			= OIW_DEF("DES-ECB", DES_ECB_OIW_OID),
+	.isEncoder		= 1,
+	.blockSize		= 8,
+	.keySize		= 8,
+	.ivSize			= 0,
+	.ctxSize		= sizeof(t_desEcbCtx),
+	.init			= desEcbInit,
+	.update			= desEcbUpdate,
+	.final			= desEcbFinal,
+	.free			= desEcbFree,
+	.pad			= pkcs7Pad,
+	.unpad  		= pkcs7Unpad,
+	.supportsWrap	= 0
 };

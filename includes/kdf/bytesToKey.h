@@ -2,6 +2,7 @@
 #define HAJCRYPT_PBKDF_BYTESTOKEY_H
 
 #include "kdf.h"
+#include "../hash/hash.h"
 
 #define PBKDF_BTK_KEY_SIZE_8	8
 #define PBKDF_BTK_KEY_SIZE_24	24
@@ -19,6 +20,7 @@
  * 16 bytes of key material. The first 8 bytes are used as the encryption key, and the
  * following 8 bytes are used as the initialization vector (IV).
  * 
+ * @param hash       Pointer to a hash function structure
  * @param password   The password string used for key derivation (non-NULL)
  * @param passLen    Length of the password string in bytes
  * @param salt       Pointer to 8-byte salt value. If NULL, a zero-filled salt is used
@@ -36,7 +38,8 @@
  * 
  * @see pbkdfBytesToKeyExtended for algorithms requiring longer keys (e.g., Triple DES)
  */
-int	pbkdfBytesToKeySimple(const char	*password,
+int	pbkdfBytesToKeySimple(const t_hash	*hash,
+						  const char	*password,
 						  size_t		passLen,
 						  const uint8_t	*salt,
 						  uint8_t		*key,
@@ -55,6 +58,7 @@ int	pbkdfBytesToKeySimple(const char	*password,
  * - For keyLen <= 24: 2 iterations (hash_1 + hash_2 provides up to 24 bytes)
  * - For keyLen <= 32: 3 iterations (hash_1 + hash_2 + hash_3 provides up to 32 bytes)
  * 
+ * @param hash       Pointer to a hash function structure
  * @param password   The password string used for key derivation (non-NULL)
  * @param passLen    Length of the password string in bytes
  * @param salt       Pointer to 8-byte salt value. If NULL, a zero-filled salt is used
@@ -75,7 +79,8 @@ int	pbkdfBytesToKeySimple(const char	*password,
  * 
  * @see pbkdfBytesToKeySimple for algorithms requiring exactly 8-byte keys and IVs
  */
-int	pbkdfBytesToKeyExtended(const char		*password,
+int	pbkdfBytesToKeyExtended(const t_hash	*hash,
+							const char		*password,
 							size_t			passLen,
 							const uint8_t	*salt,
 							size_t			keyLen,
@@ -89,6 +94,7 @@ int	pbkdfBytesToKeyExtended(const char		*password,
  * Generates cryptographic key material and an initialization vector from a
  * password and hexadecimal-encoded salt using a PBKDF-based key derivation function.
  * 
+ * @param hash          Pointer to a hash function structure.
  * @param password      Null-terminated string containing the password to derive from.
  * @param saltHex       Null-terminated hexadecimal string representing the salt.
  * @param keyLen        Desired length of the derived key in bytes.
@@ -101,7 +107,8 @@ int	pbkdfBytesToKeyExtended(const char		*password,
  * @note                The salt should be provided as a hexadecimal string and will
  *                      be decoded internally.
  */
-int	pbkdfBytesToKeyFromHex(const char	*password,
+int	pbkdfBytesToKeyFromHex(const t_hash	*hash,
+						   const char	*password,
 						   const char	*saltHex,
 						   size_t		keyLen,
 						   uint8_t		*key,
@@ -113,6 +120,7 @@ int	pbkdfBytesToKeyFromHex(const char	*password,
  * This function generates a random salt, then uses the password-based key derivation function (PBKDF)
  * to produce a key and initialization vector (IV) suitable for cryptographic operations.
  *
+ * @param hash             Pointer to a hash function structure to use in the PBKDF algorithm.
  * @param password         The input password as a null-terminated string.
  * @param keyLen           The desired length of the derived key in bytes.
  * @param key              Pointer to a buffer where the derived key will be stored. Must be at least keyLen bytes.
@@ -121,7 +129,8 @@ int	pbkdfBytesToKeyFromHex(const char	*password,
  *                         The buffer must be large enough to hold the salt (implementation-defined size).
  * @return                 0 on success, non-zero on failure.
  */
-int	pbkdfBytesToKeyWithRandomSalt(const char	*password,
+int	pbkdfBytesToKeyWithRandomSalt(const t_hash	*hash,
+								  const char	*password,
 								  size_t		keyLen,
 								  uint8_t		*key,
 								  uint8_t		*iv,

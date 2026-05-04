@@ -80,6 +80,8 @@ void desCbcFinal(void *vctx, uint8_t *out, size_t *outLen)
 const t_cipher g_desCbcCipher = {
 	.name		= "des-cbc",
 	.mode		= CIPHER_MODE_CBC,
+	.oid		= OID_DEF("DES-CBC", DES_CBC_NIST_OID),
+	.oiwOid		= OIW_DEF("DES-CBC", DES_CBC_OIW_OID),
 	.isEncoder	= 1,
 
 	.blockSize	= 8,
@@ -99,22 +101,20 @@ const t_cipher g_desCbcCipher = {
 };
 
 const t_cipher g_desCipher = {
-	.name		= "des",
-	.mode		= CIPHER_MODE_CBC,
-	.isEncoder	= 1,
-
-	.blockSize	= 8,
-	.keySize	= 8,
-	.ivSize		= 8,
-	.ctxSize	= sizeof(t_desCbcCtx),
-
-	.init	= desCbcInit,
-	.update	= desCbcUpdate,
-	.final	= desCbcFinal,
-	.free	= desCbcFree,
-
-	.pad	= pkcs7Pad,
-	.unpad	= pkcs7Unpad,
-
+	.name			= "des",
+	.mode			= CIPHER_MODE_CBC,
+	.isEncoder		= 1,
+	.oid			= OID_DEF("DES-CBC", DES_CBC_NIST_OID),
+	.oiwOid			= OIW_DEF("DES-CBC", DES_CBC_OIW_OID),
+	.blockSize		= 8,
+	.keySize		= 8,
+	.ivSize			= 8,
+	.ctxSize		= sizeof(t_desCbcCtx),
+	.init			= desCbcInit,
+	.update			= desCbcUpdate,
+	.final			= desCbcFinal,
+	.free			= desCbcFree,
+	.pad			= pkcs7Pad,
+	.unpad			= pkcs7Unpad,
 	.supportsWrap	= 0
 };

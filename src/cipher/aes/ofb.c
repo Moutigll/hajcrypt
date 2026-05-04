@@ -69,9 +69,11 @@ void	aesOfbFinal(void *vctx, uint8_t *out, size_t *outLen)
 	ofbGenFinal(&ctx->ofbCtx, out, outLen);
 }
 
-#define AES_OFB_CIPHER(nameStr, size) {		\
+#define AES_OFB_CIPHER(nameStr, size, oidDef) {		\
 	.name			= nameStr,				\
 	.mode			= CIPHER_MODE_OFB,		\
+	.oid			= oidDef,				\
+	.oiwOid			= OID_NONE,				\
 	.isEncoder		= 1,					\
 	.blockSize		= AES_BLOCK_SIZE,		\
 	.keySize		= size,					\
@@ -86,6 +88,6 @@ void	aesOfbFinal(void *vctx, uint8_t *out, size_t *outLen)
 	.supportsWrap	= 0						\
 }
 
-const t_cipher g_aes128OfbCipher	= AES_OFB_CIPHER("aes-128-ofb", AES_KEY_SIZE_128);
-const t_cipher g_aes192OfbCipher	= AES_OFB_CIPHER("aes-192-ofb", AES_KEY_SIZE_192);
-const t_cipher g_aes256OfbCipher	= AES_OFB_CIPHER("aes-256-ofb", AES_KEY_SIZE_256);
+const t_cipher g_aes128OfbCipher	= AES_OFB_CIPHER("aes-128-ofb", AES_KEY_SIZE_128, OID_DEF("AES-128-OFB", AES128_OFB_OID));
+const t_cipher g_aes192OfbCipher	= AES_OFB_CIPHER("aes-192-ofb", AES_KEY_SIZE_192, OID_DEF("AES-192-OFB", AES192_OFB_OID));
+const t_cipher g_aes256OfbCipher	= AES_OFB_CIPHER("aes-256-ofb", AES_KEY_SIZE_256, OID_DEF("AES-256-OFB", AES256_OFB_OID));

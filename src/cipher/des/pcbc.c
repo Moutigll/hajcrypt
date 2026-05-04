@@ -80,22 +80,20 @@ void desPcbcFinal(void *vctx, uint8_t *out, size_t *outLen)
 /* ---------- Global cipher structures ---------- */
 
 const t_cipher g_desPcbcCipher = {
-	.name	   = "des-pcbc",
-	.mode	   = CIPHER_MODE_PCBC,
-	.isEncoder  = 1,
-
-	.blockSize  = 8,
+	.name		= "des-pcbc",
+	.mode		= CIPHER_MODE_PCBC,
+	.oid		= OID_DEF("DES-PCBC", DES_PCBC_NIST_OID),
+	.oiwOid		= OIW_DEF("DES-PCBC", DES_PCBC_OIW_OID),
+	.isEncoder	= 1,
+	.blockSize	= 8,
 	.keySize	= 8,
-	.ivSize	 = 8,
+	.ivSize		= 8,
 	.ctxSize	= sizeof(t_desPcbcCtx),
-
-	.init   = desPcbcInit,
-	.update = desPcbcUpdate,
-	.final  = desPcbcFinal,
-	.free   = desPcbcFree,
-
-	.pad	= pkcs7Pad,
-	.unpad  = pkcs7Unpad,
-
+	.init		= desPcbcInit,
+	.update 	= desPcbcUpdate,
+	.final  	= desPcbcFinal,
+	.free   	= desPcbcFree,
+	.pad		= pkcs7Pad,
+	.unpad  	= pkcs7Unpad,
 	.supportsWrap = 0
 };

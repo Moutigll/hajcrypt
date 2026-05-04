@@ -53,6 +53,19 @@ t_bigInt	*bigIntFromUint64(uint64_t val);
 t_bigInt	*bigIntFromHex(const char *hexStr, size_t hexStrLen);
 
 /**
+ * @brief Converts a byte array to a big integer.
+ * 
+ * Allocates and initializes a new big integer structure from the given
+ * byte array representation.
+ * 
+ * @param bytes The byte array to convert.
+ * @param len The length of the byte array.
+ * @return A pointer to a newly allocated t_bigInt structure containing
+ *         the value, or NULL if memory allocation fails.
+ */
+t_bigInt	*bigIntFromBytes(const uint8_t *bytes, size_t len);
+
+/**
  * @brief Frees the memory allocated for a big integer structure.
  * 
  * Deallocates all dynamically allocated memory associated with the given

@@ -74,6 +74,8 @@ void	desCtrFinal(void *vctx, uint8_t *out, size_t *outLen)
 const t_cipher g_desCtrCipher = {
 	.name			= "des-ctr",
 	.mode			= CIPHER_MODE_CTR,
+	.oid			= OID_DEF("DES-CTR", DES_CTR_NIST_OID),
+	.oiwOid			= OIW_DEF("DES-CTR", DES_CTR_OIW_OID),
 	.isEncoder		= 1,
 	.blockSize		= 8,
 	.keySize		= 8,

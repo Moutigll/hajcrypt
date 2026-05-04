@@ -66,6 +66,8 @@ void	blowfishCbcFree(void *vctx)
 const t_cipher	g_blowfishCbcCipher = {
 	.name			= "blowfish-cbc",
 	.mode			= CIPHER_MODE_CBC,
+	.oid			= OID_DEF("BLOWFISH-CBC", BLOWFISH_CBC_OID),
+	.oiwOid			= OID_NONE,
 	.isEncoder		= 1,
 	.blockSize		= BLOWFISH_BLOCK_SIZE,
 	.keySize		= BLOWFISH_DEFAULT_KEY_SIZE,
@@ -83,6 +85,8 @@ const t_cipher	g_blowfishCbcCipher = {
 const t_cipher	g_blowfishCipher = {
 	.name			= "blowfish",
 	.mode			= CIPHER_MODE_CBC,
+	.oid			= OID_DEF("BLOWFISH-CBC", BLOWFISH_CBC_OID),
+	.oiwOid			= OID_NONE,
 	.isEncoder		= 1,
 	.blockSize		= BLOWFISH_BLOCK_SIZE,
 	.keySize		= BLOWFISH_DEFAULT_KEY_SIZE,
