@@ -101,7 +101,7 @@ char *pkcs1EncryptPem(const char		*keyType,
 		return (NULL);
 
 	if (cipher->keySize > 24 || cipher->ivSize != 8) {
-		ft_dprintf(STDERR_FILENO, "Cipher %s not supported for PKCS#1 legacy format\n", cipher->name);
+		HAJCRYPT_DPRINT("Cipher %s not supported for PKCS#1 legacy format\n", cipher->name);
 		return (NULL);
 	}
 
@@ -196,7 +196,7 @@ char *pkcs8EncryptPem(const uint8_t			*pkcs8Der,
 
 	/* Generate random IV with size determined by cipher */
 	if (cipher->ivSize > sizeof(iv)) {
-		ft_dprintf(STDERR_FILENO, "IV size unsupported\n");
+		HAJCRYPT_DPRINT("IV size unsupported\n");
 		return (NULL);
 	}
 	hajSecRandBytes(iv, cipher->ivSize);

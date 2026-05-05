@@ -311,7 +311,7 @@ int cmdRsa(int argc, char **argv, char **env)
 	}
 	if (opt.check)
 	{
-		if (rsaCheckKey(&key))
+		if (rsaCheckKey(&key, 64))
 			ft_printf("RSA key ok\n");
 		else
 			ft_printf("RSA key check failed\n");

@@ -1,6 +1,7 @@
 #ifndef HAJCRYPT_CIPHER_H
 #define HAJCRYPT_CIPHER_H
 
+#include "../hajcrypt.h"
 #include "../x509/oid.h"
 
 /**

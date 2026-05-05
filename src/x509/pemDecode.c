@@ -3,7 +3,9 @@
 #include "../../hajlib/include/hchar.h"
 #include "../../hajlib/include/hmath.h"
 #include "../../hajlib/include/hmemory.h"
+#include "../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
 #include "../../hajlib/include/hstring.h"
+#include "../../includes/hajcrypt.h"
 #include "../../includes/utils/dispatch.h"
 #include "../../includes/cipher/base64.h"
 #include "../../includes/hash/sha256.h"
@@ -27,8 +29,6 @@ static int hexToBytes(const char *hex, uint8_t *bytes, size_t len)
 	}
 	return (0);
 }
-
-#include "../../hajlib/include/hprintf.h"
 
 /**
  * @brief Extracts and decodes the Base64 content from a PEM-formatted string.
@@ -66,7 +66,7 @@ static char *extractBase64FromPem(const char *pem, int isEncryptedPkcs1, size_t 
 		const char *empty = ft_strstr(dataStart, "\n\n");
 		if (!empty) empty = ft_strstr(dataStart, "\r\n\r\n");
 		if (!empty) {
-			ft_dprintf(STDERR_FILENO, "No empty line found after DEK-Info\n");
+			HAJCRYPT_DPRINT("No empty line found after DEK-Info\n");
 			return (NULL);
 		}
 		dataStart = empty + 2;  /* skip the two newlines */
@@ -186,13 +186,13 @@ uint8_t *pkcs1DecryptedDer(const char *pem, const char *password, size_t *outLen
 	/* Step 1: Extract cipher name and salt from DEK-Info header */
 	const char *dek = ft_strstr(pem, "DEK-Info: ");
 	if (!dek) {
-		ft_dprintf(STDERR_FILENO, "PKCS#1: DEK-Info header not found\n");
+		HAJCRYPT_DPRINT("PKCS#1: DEK-Info header not found\n");
 		return (NULL);
 	}
 	
 	const char *comma = ft_strchr(dek, ',');
 	if (!comma) {
-		ft_dprintf(STDERR_FILENO, "PKCS#1: invalid DEK-Info format\n");
+		HAJCRYPT_DPRINT("PKCS#1: invalid DEK-Info format\n");
 		return (NULL);
 	}
 	
@@ -206,14 +206,14 @@ uint8_t *pkcs1DecryptedDer(const char *pem, const char *password, size_t *outLen
 	
 	cipher = getCipherByName(cipherName);
 	if (!cipher) {
-		ft_dprintf(STDERR_FILENO, "PKCS#1: unknown cipher '%s'\n", cipherName);
+		HAJCRYPT_DPRINT("PKCS#1: unknown cipher '%s'\n", cipherName);
 		return (NULL);
 	}
 
 	/* Parse salt from hex string (16 hex characters = 8 bytes) */
 	ft_strlcpy(saltHex, comma + 1, 17);
 	if (hexToBytes(saltHex, salt, 8) != 0) {
-		ft_dprintf(STDERR_FILENO, "PKCS#1: invalid salt hex\n");
+		HAJCRYPT_DPRINT("PKCS#1: invalid salt hex\n");
 		return (NULL);
 	}
 
@@ -247,7 +247,7 @@ uint8_t *pkcs1DecryptedDer(const char *pem, const char *password, size_t *outLen
 	free(encDer);
 	
 	if (!decDer) {
-		ft_dprintf(STDERR_FILENO, "PKCS#1: decryption failed\n");
+		HAJCRYPT_DPRINT("PKCS#1: decryption failed\n");
 		return (NULL);
 	}
 	
@@ -277,7 +277,7 @@ uint8_t *pkcs8DecryptedDer(const char *pem, const char *password, size_t *outLen
 
 	/* Verify the PEM header is for encrypted private key */
 	if (ft_strcmp(block.header, "ENCRYPTED PRIVATE KEY") != 0) {
-		ft_dprintf(STDERR_FILENO, "PKCS#8: unexpected PEM header\n");
+		HAJCRYPT_DPRINT("PKCS#8: unexpected PEM header\n");
 		pemFreeBlock(&block);
 		return (NULL);
 	}
@@ -332,7 +332,7 @@ uint8_t *pkcs8DecryptedDer(const char *pem, const char *password, size_t *outLen
 	pemFreeBlock(&block);
 
 	if (!decDer) {
-		ft_dprintf(STDERR_FILENO, "PKCS#8: decryption failed\n");
+		HAJCRYPT_DPRINT("PKCS#8: decryption failed\n");
 		return (NULL);
 	}
 

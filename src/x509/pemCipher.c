@@ -288,51 +288,51 @@ int parsePbes2Params(const uint8_t	*algoDer,
 	/* --- Outer SEQUENCE (AlgorithmIdentifier) --- */
 	if (algoDer[0] == 0x30) {
 		if (!asn1ParseSequence(algoDer, algoLen, &seqContent, &seqContentLen, NULL))
-			return (ft_dprintf(STDERR_FILENO, "PKCS#8: invalid outer sequence\n"), 0);
+			return (HAJCRYPT_DPRINT("PKCS#8: invalid outer sequence\n"), 0);
 	} else if (algoDer[0] == 0x06) {
 		seqContent = (uint8_t *)algoDer;
 		seqContentLen = algoLen;
 	} else
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: invalid start tag 0x%02X\n", algoDer[0]), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: invalid start tag 0x%02X\n", algoDer[0]), 0);
 
 	/* --- PBES2 OID --- */
 	if (!asn1ParseOid(seqContent, seqContentLen, &oid, &oidLen, &consumed))
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: PBES2 OID not found\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: PBES2 OID not found\n"), 0);
 	if (oidLen != sizeof(pkcs5Pbes2Oid) || ft_memcmp(oid, pkcs5Pbes2Oid, oidLen) != 0)
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: not a PBES2 OID\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: not a PBES2 OID\n"), 0);
 
 	/* --- PBES2 params SEQUENCE --- */
 	if (!asn1ParseSequence(seqContent + consumed, seqContentLen - consumed, &pbes2Params, &pbes2ParamsLen, NULL))
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: PBES2 params sequence missing\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: PBES2 params sequence missing\n"), 0);
 
 	/* --- KDF AlgorithmIdentifier --- */
 	consumed = 0;
 	if (!asn1ParseSequence(pbes2Params, pbes2ParamsLen, &kdfIdContent, &kdfIdLen, &consumed))
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: KDF AlgorithmIdentifier missing\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: KDF AlgorithmIdentifier missing\n"), 0);
 
 	/* Parse KDF OID from the KDF AlgorithmIdentifier */
 	size_t kdfConsumed = 0;
 	if (!asn1ParseOid(kdfIdContent, kdfIdLen, &oid, &oidLen, &kdfConsumed))
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: KDF OID not found\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: KDF OID not found\n"), 0);
 	if (oidLen != sizeof(pkcs5Pbkdf2Oid) || ft_memcmp(oid, pkcs5Pbkdf2Oid, oidLen) != 0)
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: KDF is not PBKDF2\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: KDF is not PBKDF2\n"), 0);
 
 	/* --- PBKDF2-params SEQUENCE --- */
 	if (!asn1ParseSequence(kdfIdContent + kdfConsumed, kdfIdLen - kdfConsumed, &pbkdf2SubParams, &pbkdf2SubParamsLen, NULL))
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: PBKDF2-params missing\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: PBKDF2-params missing\n"), 0);
 
 	/* --- Salt --- */
 	size_t pbkdf2Consumed = 0;
 	if (!asn1ParseOctetString(pbkdf2SubParams, pbkdf2SubParamsLen, &saltVal, &sLen, &pbkdf2Consumed))
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: salt missing\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: salt missing\n"), 0);
 	if (sLen > sizeof(params->salt))
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: salt too long (%zu > %zu)\n", sLen, sizeof(params->salt)), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: salt too long (%zu > %zu)\n", sLen, sizeof(params->salt)), 0);
 	ft_memcpy(params->salt, saltVal, sLen);
 	params->saltLen = sLen;
 
 	/* --- Iteration count --- */
 	if (!asn1ParseInteger(pbkdf2SubParams + pbkdf2Consumed, pbkdf2SubParamsLen - pbkdf2Consumed, &iterVal, &iterValLen, NULL))
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: iteration count missing\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: iteration count missing\n"), 0);
 	params->iterations = 0;
 	for (size_t i = 0; i < iterValLen; i++)
 		params->iterations = (params->iterations << 8) | iterVal[i];
@@ -341,27 +341,27 @@ int parsePbes2Params(const uint8_t	*algoDer,
 	size_t encStart = consumed;  // consumed from parsing the KDF sequence
 	if (!asn1ParseSequence(pbes2Params + encStart, pbes2ParamsLen - encStart, 
 						   &encSchemeContent, &encSchemeLen, NULL))
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: encryption scheme missing\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: encryption scheme missing\n"), 0);
 
 	/* --- Cipher OID --- */
 	size_t encConsumed = 0;
 	if (!asn1ParseOid(encSchemeContent, encSchemeLen, &encOid, &encOidLen, &encConsumed))
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: encryption OID missing\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: encryption OID missing\n"), 0);
 
 	*cipher = getCipherByOid(encOid, encOidLen);
 	if (!*cipher) {
-		ft_dprintf(STDERR_FILENO, "PKCS#8: unknown or unsupported cipher OID: ");
+		HAJCRYPT_DPRINT("PKCS#8: unknown or unsupported cipher OID: ");
 		for (size_t i = 0; i < encOidLen; i++)
-			ft_dprintf(STDERR_FILENO, "%02X", encOid[i]);
-		ft_dprintf(STDERR_FILENO, "\n");
+			HAJCRYPT_DPRINT("%02X", encOid[i]);
+		HAJCRYPT_DPRINT("\n");
 		return (0);
 	}
 
 	/* --- IV --- */
 	if (!asn1ParseOctetString(encSchemeContent + encConsumed, encSchemeLen - encConsumed, &ivVal, &iLen, NULL))
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: IV missing\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: IV missing\n"), 0);
 	if (iLen > sizeof(params->iv))
-		return (ft_dprintf(STDERR_FILENO, "PKCS#8: IV too long\n"), 0);
+		return (HAJCRYPT_DPRINT("PKCS#8: IV too long\n"), 0);
 	ft_memcpy(params->iv, ivVal, iLen);
 	params->ivLen = iLen;
 

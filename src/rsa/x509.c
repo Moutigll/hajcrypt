@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
 #include "../../hajlib/include/hmemory.h"
-#include "../../hajlib/include/hprintf.h"
+#include "../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
 #include "../../hajlib/include/hstring.h"
 #include "../../includes/x509/asn1.h"
 #include "../../includes/x509/pem.h"
@@ -437,51 +437,51 @@ static int rsaPrivateKeyFromDer(const uint8_t *der, size_t derLen, t_rsaKey *key
 
 	if (!asn1ParseSequence(der, derLen, &content, &contentLen, &consumed))
 	{
-		ft_dprintf(STDERR_FILENO, "rsaPrivateKeyFromDer: failed to parse SEQUENCE\n");
+		HAJCRYPT_DPRINT("rsaPrivateKeyFromDer: failed to parse SEQUENCE\n");
 		return (0);
 	}
 
 	/* Parse version (should be 0) */
 	if (!asn1ParseInteger(content + offset, contentLen - offset, &versionValue, &vLen, &consumed))
-		{ft_dprintf(STDERR_FILENO, "rsaPrivateKeyFromDer: failed to parse version\n"); goto cleanup;}
+		{HAJCRYPT_DPRINT("rsaPrivateKeyFromDer: failed to parse version\n"); goto cleanup;}
 	offset += consumed;
 	
 	if (vLen != 1 || versionValue[0] != 0x00) {
 		/* Only version 0 (two-prime RSA) is supported */
-		ft_dprintf(STDERR_FILENO, "rsaPrivateKeyFromDer: unsupported version\n");
+		HAJCRYPT_DPRINT("rsaPrivateKeyFromDer: unsupported version\n");
 		goto cleanup;
 	}
 	
 	if (!asn1ParseInteger(content + offset, contentLen - offset, &nValue, &nLen, &consumed))
-		{ft_dprintf(STDERR_FILENO, "rsaPrivateKeyFromDer: failed to parse modulus\n"); goto cleanup;}
+		{HAJCRYPT_DPRINT("rsaPrivateKeyFromDer: failed to parse modulus\n"); goto cleanup;}
 	offset += consumed;
 	
 	if (!asn1ParseInteger(content + offset, contentLen - offset, &eValue, &eLen, &consumed))
-		{ft_dprintf(STDERR_FILENO, "rsaPrivateKeyFromDer: failed to parse public exponent\n"); goto cleanup;}
+		{HAJCRYPT_DPRINT("rsaPrivateKeyFromDer: failed to parse public exponent\n"); goto cleanup;}
 	offset += consumed;
 	
 	if (!asn1ParseInteger(content + offset, contentLen - offset, &dValue, &dLen, &consumed))
-		{ft_dprintf(STDERR_FILENO, "rsaPrivateKeyFromDer: failed to parse private exponent\n"); goto cleanup;}
+		{HAJCRYPT_DPRINT("rsaPrivateKeyFromDer: failed to parse private exponent\n"); goto cleanup;}
 	offset += consumed;
 	
 	if (!asn1ParseInteger(content + offset, contentLen - offset, &pValue, &pLen, &consumed))
-		{ft_dprintf(STDERR_FILENO, "rsaPrivateKeyFromDer: failed to parse prime1\n"); goto cleanup;}
+		{HAJCRYPT_DPRINT("rsaPrivateKeyFromDer: failed to parse prime1\n"); goto cleanup;}
 	offset += consumed;
 	
 	if (!asn1ParseInteger(content + offset, contentLen - offset, &qValue, &qLen, &consumed))
-		{ft_dprintf(STDERR_FILENO, "rsaPrivateKeyFromDer: failed to parse prime2\n"); goto cleanup;}
+		{HAJCRYPT_DPRINT("rsaPrivateKeyFromDer: failed to parse prime2\n"); goto cleanup;}
 	offset += consumed;
 	
 	if (!asn1ParseInteger(content + offset, contentLen - offset, &dpValue, &dpLen, &consumed))
-		{ft_dprintf(STDERR_FILENO, "rsaPrivateKeyFromDer: failed to parse dp\n"); goto cleanup;}
+		{HAJCRYPT_DPRINT("rsaPrivateKeyFromDer: failed to parse dp\n"); goto cleanup;}
 	offset += consumed;
 	
 	if (!asn1ParseInteger(content + offset, contentLen - offset, &dqValue, &dqLen, &consumed))
-		{ft_dprintf(STDERR_FILENO, "rsaPrivateKeyFromDer: failed to parse dq\n"); goto cleanup;}
+		{HAJCRYPT_DPRINT("rsaPrivateKeyFromDer: failed to parse dq\n"); goto cleanup;}
 	offset += consumed;
 	
 	if (!asn1ParseInteger(content + offset, contentLen - offset, &qinvValue, &qinvLen, &consumed))
-		{ft_dprintf(STDERR_FILENO, "rsaPrivateKeyFromDer: failed to parse qinv\n"); goto cleanup;}
+		{HAJCRYPT_DPRINT("rsaPrivateKeyFromDer: failed to parse qinv\n"); goto cleanup;}
 
 	n = bigIntFromBytes(nValue, nLen);
 	e = bigIntFromBytes(eValue, eLen);
@@ -493,7 +493,7 @@ static int rsaPrivateKeyFromDer(const uint8_t *der, size_t derLen, t_rsaKey *key
 	qinv = bigIntFromBytes(qinvValue, qinvLen);
 
 	if (!n || !e || !d || !p || !q || !dp || !dq || !qinv)
-		{ft_dprintf(STDERR_FILENO, "rsaPrivateKeyFromDer: failed to create big integers\n"); goto cleanup;}
+		{HAJCRYPT_DPRINT("rsaPrivateKeyFromDer: failed to create big integers\n"); goto cleanup;}
 
 	key->n = n;
 	key->e = e;
@@ -597,7 +597,7 @@ int rsaKeyFromPem(const char *pem, t_rsaKey *key, int isPrivate, const char *pas
 			pemFreeBlock(&block);
 			return (ret);
 		}
-		ft_dprintf(STDERR_FILENO, "Unsupported public key PEM header\n");
+		HAJCRYPT_DPRINT("Unsupported public key PEM header\n");
 		return (0);
 	}
 
@@ -609,7 +609,7 @@ int rsaKeyFromPem(const char *pem, t_rsaKey *key, int isPrivate, const char *pas
 			return (-2); /* Indicate that password is required for encrypted key */
 		decryptedDer = pkcs8DecryptedDer(pem, password, &decryptedLen);
 		if (!decryptedDer) {
-			ft_dprintf(STDERR_FILENO, "PKCS#8 decryption failed\n");
+			HAJCRYPT_DPRINT("PKCS#8 decryption failed\n");
 			return (0);
 		}
 		ret = rsaPrivateKeyFromPkcs8Der(decryptedDer, decryptedLen, key);
@@ -635,7 +635,7 @@ int rsaKeyFromPem(const char *pem, t_rsaKey *key, int isPrivate, const char *pas
 				return (-2); /* Indicate that password is required for encrypted key */
 			decryptedDer = pkcs1DecryptedDer(pem, password, &decryptedLen);
 			if (!decryptedDer) {
-				ft_dprintf(STDERR_FILENO, "Legacy decryption failed\n");
+				HAJCRYPT_DPRINT("Legacy decryption failed\n");
 				return (0);
 			}
 			ret = rsaPrivateKeyFromDer(decryptedDer, decryptedLen, key);
@@ -652,6 +652,6 @@ int rsaKeyFromPem(const char *pem, t_rsaKey *key, int isPrivate, const char *pas
 	}
 
 	/* No recognized header */
-	ft_dprintf(STDERR_FILENO, "Unsupported PEM header for private key\n");
+	HAJCRYPT_DPRINT("Unsupported PEM header for private key\n");
 	return (0);
 }

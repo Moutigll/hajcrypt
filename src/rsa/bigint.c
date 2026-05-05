@@ -190,7 +190,21 @@ t_bigInt *bigIntCopy(t_bigInt *dst, const t_bigInt *src)
 	return (dst);
 }
 
-
+int	bigIntSetUint64(t_bigInt *n, uint64_t val)
+{
+	if (!n)
+		return (0);
+	
+	/* Clear all words */
+	ft_bzero(n->words, n->numWords * sizeof(uint64_t));
+	
+	/* Set the first word */
+	n->words[0] = val;
+	n->used = (val != 0) ? 1 : 0;
+	n->sign = 0;
+	
+	return (1);
+}
 
 /* ---------- Comparisons ---------- */
 
@@ -206,16 +220,22 @@ int bigIntCmp(const t_bigInt *a, const t_bigInt *b)
 
 int bigIntIsZero(const t_bigInt *n)
 {
+	if (!n)
+		return (1);
 	return (n->used == 0);
 }
 
 int bigIntIsOdd(const t_bigInt *n)
 {
+	if (!n)
+		return (0);
 	return (n->used > 0 && (n->words[0] & 1)); /* Check if the least significant bit is 1 */
 }
 
 int bigIntIsEven(const t_bigInt *n)
 {
+	if (!n)
+		return (0);
 	return (!bigIntIsOdd(n));
 }
 
@@ -341,7 +361,7 @@ static unsigned bigIntNormalize(t_bigInt *a, t_bigInt *b) {
 		bigIntShiftLeft(b, shift);
 	}
 
-	if (a->used <= b->used) { /* Ensure a has enough space for the division algorithm */
+	if (a->used <= b->used && a->used < a->numWords) { /* Ensure a has enough space for the division algorithm */
 		a->words[a->used] = 0;
 		a->used++;
 	}
@@ -395,6 +415,9 @@ static void bigIntDivModKnuth(t_bigInt *quot, t_bigInt *rem, const t_bigInt *a, 
 	if (b->used == 1) {
 		uint64_t divisor = b->words[0];
 		uint64_t remainder = 0;
+		if (quot && quot->numWords < a->used)
+			return; /* Insufficient space for quotient */
+
 		for (size_t i = a->used; i-- > 0; ) {
 			__uint128_t num = ((__uint128_t)remainder << 64) | a->words[i];
 			if (quot)
@@ -426,6 +449,15 @@ static void bigIntDivModKnuth(t_bigInt *quot, t_bigInt *rem, const t_bigInt *a, 
 
 	unsigned shift = bigIntNormalize(A, B);
 	size_t n = B->used;
+	
+	if (A->used < n) { /* Dividend is smaller than divisor */
+		if (quot)
+			bigIntZero(quot);
+		if (rem)
+			bigIntCopy(rem, a);
+		return;
+	}
+
 	size_t m = A->used - n;
 
 	if (quot) {
@@ -976,4 +1008,99 @@ void bigIntShr(t_bigInt *n)
 	}
 	if (n->used > 0 && n->words[n->used - 1] == 0)
 		n->used--;
+}
+
+int	bigIntAbs(t_bigInt *n)
+{
+	if (!n) return (0);
+	if (n->sign == 1) return (1);
+	n->sign = 1;
+	return (1);
+}
+
+int	bigIntSqrtNewton(t_bigInt *result, const t_bigInt *n)
+{
+	t_bigInt	*x0;
+	t_bigInt	*x1;
+	t_bigInt	*quot;
+	t_bigInt	*sum;
+	t_bigInt	*two;
+	t_bigInt	*one;
+	t_bigInt	*temp;
+	int			bits;
+	int			cmp;
+	
+	if (!result || !n)
+		return (0);
+	if (bigIntIsZero(n)) {
+		bigIntZero(result);
+		return (1);
+	}
+	if (n->sign < 0)
+		return (0);
+	
+	one = bigIntFromUint64(1);
+	if (!one)
+		return (0);
+	if (bigIntCmp(n, one) == 0) {
+		bigIntSetUint64(result, 1);
+		bigIntFree(one);
+		return (1);
+	}
+	
+	bits = bigIntBitLength(n);
+	x0 = bigIntFromUint64(1);
+	if (!x0) {
+		bigIntFree(one);
+		return (0);
+	}
+	/* Correction : bigIntShiftLeft prend 2 arguments, pas 3 */
+	bigIntShiftLeft(x0, (bits + 1) / 2);
+	
+	x1 = bigIntNew(x0->numWords + 2);
+	quot = bigIntNew(n->numWords + 2);
+	sum = bigIntNew(x0->numWords + n->numWords + 4);
+	two = bigIntFromUint64(2);
+	temp = bigIntNew(x0->numWords + 2);
+	
+	if (!x1 || !quot || !sum || !two || !temp) {
+		bigIntFree(one);
+		bigIntFree(two);
+		bigIntFree(x0);
+		bigIntFree(x1);
+		bigIntFree(quot);
+		bigIntFree(sum);
+		bigIntFree(temp);
+		return (0);
+	}
+	
+	while (1) {
+		/* Correction : appel correct à bigIntDiv (dividende en 3ème, diviseur en 4ème) */
+		bigIntDiv(quot, NULL, n, x0);
+		
+		bigIntAdd(sum, x0, quot);
+		bigIntDiv(x1, NULL, sum, two);
+		
+		cmp = bigIntCmp(x1, x0);
+		if (cmp >= 0)
+			break;
+		
+		bigIntCopy(x0, x1);
+	}
+	
+	bigIntMul(temp, x0, x0);
+	if (bigIntCmp(temp, n) > 0)
+		bigIntSub(x0, x0, one);
+	
+	bigIntCopy(result, x0);
+	
+	bigIntFree(one);
+	bigIntFree(two);
+	bigIntFree(x0);
+	bigIntFree(x1);
+	bigIntFree(quot);
+	bigIntFree(sum);
+	bigIntFree(temp);
+	
+	return (1);
 }

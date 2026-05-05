@@ -36,6 +36,7 @@ LIB_SRC = \
 	$(SRC_DIR)/kdf/bcrypt.c \
 	$(SRC_DIR)/kdf/argon2.c \
 	$(SRC_DIR)/rsa/key.c \
+	$(SRC_DIR)/rsa/keyCheck.c \
 	$(SRC_DIR)/rsa/x509.c \
 	$(SRC_DIR)/rsa/primality.c \
 	$(SRC_DIR)/rsa/bigint.c \

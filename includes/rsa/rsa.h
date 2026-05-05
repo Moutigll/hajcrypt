@@ -1,7 +1,8 @@
 #ifndef HAJCRYPT_RSA_H
 # define HAJCRYPT_RSA_H
 
-# include "bigint.h"
+#include "../hajcrypt.h"
+#include "bigint.h"
 #include "../cipher/cipher.h"
 
 #define RSA_OID_LEN 9
@@ -104,8 +105,9 @@ void		rsaPrintKey(t_rsaKey *key, int showPrivate);
  * @brief Check the consistency of an RSA key by verifying that e*d ≡ 1 (mod lcm(p-1, q-1)).
  *
  * @param key Pointer to the RSA key structure to check.
+ * @param primalityRounds The number of rounds for the Miller-Rabin primality test.
  * @return 1 if the key is consistent, 0 if it is not.
  */
-int			rsaCheckKey(t_rsaKey *key);
+int			rsaCheckKey(t_rsaKey *key, int primalityRounds);
 
 #endif

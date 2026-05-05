@@ -112,8 +112,16 @@ t_bigInt	*bigIntDup(const t_bigInt *src);
 t_bigInt	*bigIntCopy(t_bigInt *dst, const t_bigInt *src);
 
 
-
-
+/**
+ * @brief Sets a big integer to a specific unsigned 64-bit value.
+ * 
+ * Initializes the given big integer structure with the specified 64-bit unsigned integer value.
+ * 
+ * @param n Pointer to the t_bigInt structure to be set.
+ * @param val The 64-bit unsigned integer value to assign.
+ * @return 1 if the operation is successful, or 0 if an error occurs.
+ */
+int	bigIntSetUint64(t_bigInt *n, uint64_t val);
 
 /* ---------- Comparisons ---------- */
 
@@ -399,5 +407,26 @@ void		bigIntShl(t_bigInt *n);
  * @return void
  */
 void		bigIntShr(t_bigInt *n);
+
+/**
+ * @brief Gets the absolute value of a big integer.
+ * 
+ * Modifies the given big integer structure to represent its absolute value.
+ * 
+ * @param n Pointer to the t_bigInt structure for which to get the absolute value.
+ * @return 1 if successful, or 0 if an error occurs.
+ */
+int		bigIntAbs(t_bigInt *n);
+
+/**
+ * @brief Calculates the square root of a big integer using Newton's method.
+ * 
+ * Computes the integer square root of the given big integer using Newton's method.
+ * 
+ * @param result Pointer to the t_bigInt structure where the result will be stored.
+ * @param n Pointer to the t_bigInt structure for which to calculate the square root.
+ * @return 1 if successful, or 0 if an error occurs.
+ */
+int		bigIntSqrtNewton(t_bigInt *result, const t_bigInt *n);
 
 #endif
