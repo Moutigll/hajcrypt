@@ -280,4 +280,20 @@ int asn1ParseAny(const uint8_t	*data,	size_t	maxLen,
 int asn1ParseOid(const uint8_t	*data, size_t	maxLen,
 				 uint8_t		**out, size_t	*outLen,
 				 size_t			*consumed);
+
+
+/**
+ * @brief Parses an ASN.1 BIT STRING from a buffer.
+ *
+ * @param data      Pointer to the input buffer containing the BIT STRING.
+ * @param maxLen    Maximum number of bytes available in @p data.
+ * @param out       Receives a pointer to the parsed bit string content.
+ * @param outLen    Receives the length (in bytes) of the parsed content.
+ * @param consumed  Receives the number of bytes consumed from @p data.
+ *
+ * @return Integer status code indicating success or failure.
+ */
+int asn1ParseBitString(const uint8_t	*data,	size_t	maxLen,
+					 uint8_t			**out,	size_t	*outLen,
+					 size_t				*consumed);
 #endif

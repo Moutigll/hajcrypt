@@ -116,10 +116,17 @@ void sha256Final(uint8_t *digest, void *ctx)
 
 const t_hash g_sha256Hash = {
 	.name = "sha256",
+	.oid = OID_DEF("sha256", SHA256_OID),
 	.init = sha256Init,
 	.update = sha256Update,
 	.final = sha256Final,
 	.hmacInit = sha256HmacInit,
 	.ctxSize = sizeof(t_sha256Ctx),
 	.digestSize = 32
+};
+
+const uint8_t g_sha256DigestInfoHeader[] = {
+	0x30, 0x31, 0x30, 0x0D, 0x06, 0x09,
+	0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01,
+	0x05, 0x00, 0x04, 0x20
 };

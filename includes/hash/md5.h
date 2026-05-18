@@ -6,7 +6,11 @@
 
 #include "hash.h"
 
-extern const t_hash g_md5Hash;
+#define MD5_DIGEST_INFO_HEADER_LEN 18
+#define MD5_DIGEST_LEN 16
+
+extern const t_hash		g_md5Hash;
+extern const uint8_t	g_md5DigestInfoHeader[];
 
 /**
  * @brief MD5 context structure to hold state during hashing.

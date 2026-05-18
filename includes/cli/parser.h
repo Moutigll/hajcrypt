@@ -10,7 +10,8 @@ typedef enum e_cmdType {
 	CMD_HASH,
 	CMD_CIPHER,
 	CMD_GENRSA,
-	CMD_RSA
+	CMD_RSA,
+	CMD_PKEYUTL
 } t_cmdType;
 
 typedef enum e_kdfChoice {
@@ -33,6 +34,7 @@ typedef struct s_sslOptions
 	int		flagR;			/* -r for hash: reverse the format of the output */
 	int		flagK;			/* -k for cipher: for HMAC (hash) and cipher key */
 	int		useBase64;		/* -a for hash: base64 encode the output, for cipher: base64 encode input and output */
+	int		flagB;			/* -b for hash: output binary instead of hex */
 
 	char	*hmacKey;		/* -k for cipher: HMAC key */
 

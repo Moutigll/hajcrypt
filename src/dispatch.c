@@ -123,6 +123,16 @@ const t_cipher *getCipherByAlgo(t_algo algo)
 	return (NULL);
 }
 
+const t_hash *getHashByName(const char *name)
+{
+	for (size_t i = 0; g_hashTable[i].hash; i++) {
+		if (ft_strcmp(g_hashTable[i].hash->name, name) == 0) {
+			return (g_hashTable[i].hash);
+		}
+	}
+	return (NULL);
+}
+
 const t_cipher *getCipherByName(const char *name)
 {
 	for (size_t i = 0; g_cipherTable[i].cipher; i++) {

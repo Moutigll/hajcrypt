@@ -381,21 +381,30 @@ static int rsaPublicKeyFromDer(const uint8_t *der, size_t derLen, t_rsaKey *key)
 
 	/* Parse SEQUENCE */
 	if (!asn1ParseSequence(der, derLen, &content, &contentLen, &consumed))
-		return (0);
+		return (HAJCRYPT_DPRINT("rsaPublicKeyFromDer: failed to parse SEQUENCE\n"), 0);
 
 	/* Parse modulus INTEGER */
 	if (!asn1ParseInteger(content, contentLen, &nValue, &nLen, &consumed2))
+	{
+		HAJCRYPT_DPRINT("rsaPublicKeyFromDer: failed to parse modulus\n");
 		goto cleanup;
+	}
 	
 	/* Parse publicExponent INTEGER */
 	if (!asn1ParseInteger(content + consumed2, contentLen - consumed2, &eValue, &eLen, &consumed2))
+	{
+		HAJCRYPT_DPRINT("rsaPublicKeyFromDer: failed to parse public exponent\n");
 		goto cleanup;
+	}
 
 	n = bigIntFromBytes(nValue, nLen);
 	e = bigIntFromBytes(eValue, eLen);
 
 	if (!n || !e)
+	{
+		HAJCRYPT_DPRINT("rsaPublicKeyFromDer: failed to create big integers\n");
 		goto cleanup;
+	}
 
 	key->n = n;
 	key->e = e;
@@ -516,6 +525,74 @@ cleanup:
 }
 
 /**
+ * @brief Parse PKCS#8 SubjectPublicKeyInfo DER to RSA public key.
+ *
+ * @param der Pointer to PKCS#8 SubjectPublicKeyInfo DER data.
+ * @param derLen Length of the DER data.
+ * @param key Pointer to t_rsaKey structure to populate.
+ * @return 1 on success, 0 on failure.
+ */
+static int rsaPublicKeyFromPkcs8Der(const uint8_t *der, size_t derLen, t_rsaKey *key)
+{
+	uint8_t	*content;
+	size_t	contentLen;
+	size_t	consumed;
+	uint8_t	*bitString;
+	size_t	bitStringLen;
+
+	/* Parse SEQUENCE (SubjectPublicKeyInfo) */
+	if (!asn1ParseSequence(der, derLen, &content, &contentLen, &consumed))
+	{
+		HAJCRYPT_DPRINT("rsaPublicKeyFromPkcs8Der: failed to parse SEQUENCE (SubjectPublicKeyInfo)\n");
+		return (0);
+	}
+
+	/* Skip algorithmIdentifier (we only care about the BIT STRING) */
+	uint8_t	*algoSeq;
+	size_t	algoSeqLen;
+	size_t	algoConsumed;
+	if (!asn1ParseSequence(content, contentLen, &algoSeq, &algoSeqLen, &algoConsumed))
+	{
+		HAJCRYPT_DPRINT("rsaPublicKeyFromPkcs8Der: failed to parse algorithmIdentifier\n");
+		return (0);
+	}
+
+	/* Parse OID inside algorithmIdentifier */
+	uint8_t	*algoOid;
+	size_t	oidLen;
+	if (!asn1ParseOid(algoSeq, algoSeqLen, &algoOid, &oidLen, NULL))
+	{
+		HAJCRYPT_DPRINT("rsaPublicKeyFromPkcs8Der: failed to parse OID\n");
+		return (0);
+	}
+
+	/* Check if OID is RSA encryption OID */
+	if (oidLen != RSA_OID_LEN || ft_memcmp(algoOid, rsaOid, RSA_OID_LEN) != 0)
+	{
+		HAJCRYPT_DPRINT("rsaPublicKeyFromPkcs8Der: unsupported algorithm OID\n");
+		return (0);
+	}
+
+	/* Skip algorithmIdentifier and parse BIT STRING (subjectPublicKey) */
+	content += algoConsumed;
+	contentLen -= algoConsumed;
+	if (!asn1ParseBitString(content, contentLen, &bitString, &bitStringLen, &consumed))
+	{
+		HAJCRYPT_DPRINT("rsaPublicKeyFromPkcs8Der: failed to parse BIT STRING\n");
+		return (0);
+	}
+
+	/* Now parse the inner PKCS#1 RSAPublicKey */
+	if (!rsaPublicKeyFromDer(bitString, bitStringLen, key))
+	{
+		HAJCRYPT_DPRINT("rsaPublicKeyFromPkcs8Der: failed to parse inner PKCS#1 key\n");
+		return (0);
+	}
+
+	return (1);
+}
+
+/**
  * @brief Parse PKCS#8 PrivateKeyInfo DER to RSA private key.
  *
  * @param der Pointer to PKCS#8 PrivateKeyInfo DER data.
@@ -562,8 +639,6 @@ static int rsaPrivateKeyFromPkcs8Der(const uint8_t *der, size_t derLen, t_rsaKey
 	size_t	octetLen;
 	if (!asn1ParseOctetString(content + offset, contentLen - offset, &octetValue, &octetLen, &consumed))
 		return (0);
-	// No need to update offset further; octetValue and octetLen are correct.
-
 	/* Now parse the inner PKCS#1 DER */
 	ret = rsaPrivateKeyFromDer(octetValue, octetLen, key);
 	return (ret);
@@ -578,22 +653,21 @@ int rsaKeyFromPem(const char *pem, t_rsaKey *key, int isPrivate, const char *pas
 
 	if (!pem || !key)
 		return (0);
-
 	ft_bzero(key, sizeof(t_rsaKey));
-
+	
 	/* --- Public key (never encrypted) --- */
 	if (!isPrivate) {
 		if (ft_strstr(pem, "-----BEGIN RSA PUBLIC KEY-----")) {
 			if (!pemDecode(pem, &block))
-				return (0);
-			ret = rsaPublicKeyFromDer(block.der, block.derLen, key);
-			pemFreeBlock(&block);
+			return (0);
+		ret = rsaPublicKeyFromDer(block.der, block.derLen, key);
+		pemFreeBlock(&block);
 			return (ret);
 		}
 		if (ft_strstr(pem, "-----BEGIN PUBLIC KEY-----")) {
 			if (!pemDecode(pem, &block))
 				return (0);
-			ret = rsaPublicKeyFromDer(block.der, block.derLen, key);
+			ret = rsaPublicKeyFromPkcs8Der(block.der, block.derLen, key);
 			pemFreeBlock(&block);
 			return (ret);
 		}

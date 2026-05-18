@@ -25,7 +25,7 @@ typedef struct s_rsaKey {
  * @param key Pointer to the RSA key structure to encode.
  * @param isPrivate Set to 1 if the key is a private key, 0 for public key.
  * @param useTraditional If set to 1, use traditional PEM format (PKCS#1) for private keys.
- *                       For public keys, this parameter is ignored and PKCS#8 format is always used.
+ *					   For public keys, this parameter is ignored and PKCS#8 format is always used.
  * @param password Optional password for encrypting the private key. Ignored for public keys.
  * @param cipher Optional cipher to use for encrypting the private key. Ignored for public keys.
  *
@@ -67,7 +67,7 @@ void		rsaFreeKey(t_rsaKey *key);
  * @param key Pointer to the RSA key structure to convert.
  * @param isPrivate Set to 1 if the key is a private key, 0 for public key.
  * @param useTraditional If set to 1, use traditional PEM format (PKCS#1) for private keys.
- *                       For public keys, this parameter is ignored and PKCS#8 format is always used.
+ *					   For public keys, this parameter is ignored and PKCS#8 format is always used.
  * @param password Optional password for encrypting the private key. Ignored for public keys.
  * @param cipher Optional cipher to use for encrypting the private key. Ignored for public keys.
  *
@@ -109,5 +109,135 @@ void		rsaPrintKey(t_rsaKey *key, int showPrivate);
  * @return 1 if the key is consistent, 0 if it is not.
  */
 int			rsaCheckKey(t_rsaKey *key, int primalityRounds);
+
+
+/**
+ * @brief Encrypt data using PKCS#1 v1.5 padding.
+ *
+ * @param input The input data to encrypt.
+ * @param inputLen The length of the input data.
+ * @param key The RSA key to use for encryption.
+ * @param output The buffer to store the encrypted data.
+ * @param outputLen The length of the output buffer.
+ *
+ * @return 1 if encryption is successful, 0 on failure.
+ */
+int			rsaEncryptPkcs1v15(const uint8_t	*input,		size_t	inputLen,
+							   const t_rsaKey	*key,
+							   uint8_t			*output,	size_t	*outputLen);
+
+/**
+ * @brief Decrypt data using PKCS#1 v1.5 padding.
+ *
+ * @param input The input data to decrypt.
+ * @param inputLen The length of the input data.
+ * @param key The RSA key to use for decryption.
+ * @param output The buffer to store the decrypted data.
+ * @param outputLen The length of the output buffer.
+ *
+ * @return 1 if decryption is successful, 0 on failure.
+ */
+int			rsaDecryptPkcs1v15(const uint8_t	*input,		size_t	inputLen,
+							   const t_rsaKey	*key,
+							   uint8_t			*output,	size_t	*outputLen);
+
+/**
+ * @brief Sign a digest using PKCS#1 v1.5 padding.
+ *
+ * @param digest The digest to sign.
+ * @param digestLen The length of the digest.
+ * @param digestAlgo The algorithm identifier for the digest.
+ * @param digestAlgoLen The length of the algorithm identifier.
+ * @param key The RSA key to use for signing.
+ * @param sig The buffer to store the signature.
+ * @param sigLen The length of the signature buffer.
+ *
+ * @return 1 if signing is successful, 0 on failure.
+ */
+int rsaSignPkcs1v15(const uint8_t	*digest,	size_t	digestLen,
+				    const t_algoId	*digestAlgo,
+				    const t_rsaKey	*key,
+				    uint8_t			*sig,		size_t	*sigLen);
+
+/**
+ * @brief Verify a signature using PKCS#1 v1.5 padding.
+ *
+ * @param digest The digest to verify.
+ * @param digestLen The length of the digest.
+ * @param digestAlgo The algorithm identifier for the digest.
+ * @param digestAlgoLen The length of the algorithm identifier.
+ * @param key The RSA key to use for verification.
+ * @param sig The buffer containing the signature to verify.
+ * @param sigLen The length of the signature buffer.
+ *
+ * @return 1 if verification is successful, 0 on failure.
+ */
+int rsaVerifyPkcs1v15(const uint8_t		*digest,		size_t	digestLen,
+					  const t_algoId	*digestAlgo,
+					  const t_rsaKey	*key,
+					  const uint8_t		*sig,		size_t	*sigLen);
+
+
+/* ------------------------- Padding ------------------------- */
+
+/**
+ * @brief Apply PKCS#1 v1.5 padding for encryption.
+ * @param input The input data to pad.
+ * @param inputLen The length of the input data.
+ * @param key The RSA key.
+ * @param padded The buffer to store the padded data.
+ * @param paddedLen The length of the padded buffer.
+ * @return 1 if padding is successful, 0 on failure.
+ */
+int rsaPkcs1v15PadEncrypt(const uint8_t		*input,		size_t	inputLen,
+						  const t_rsaKey	*key,
+						  uint8_t			*padded,	size_t	paddedLen);
+
+
+/**
+ * @brief Remove PKCS#1 v1.5 type 2 padding from encrypted data
+ * @param padded Padded ciphertext
+ * @param paddedLen Length of padded data
+ * @param output Buffer for recovered plaintext
+ * @param outputLen Pointer to store plaintext length
+ * @return 1 on success, 0 on failure
+ */
+int rsaPkcs1v15UnpadEncrypt(const uint8_t	*padded,	size_t	paddedLen,
+							uint8_t			*output,	size_t	*outputLen);
+
+/**
+ * @brief Apply PKCS#1 v1.5 padding for signing.
+ * @param digest The digest to pad.
+ * @param digestLen The length of the digest.
+ * @param digestAlgoOid The algorithm identifier for the digest.
+ * @param key The RSA key.
+ * @param padded The buffer to store the padded data.
+ * @param paddedLen The length of the padded buffer.
+ * @return 1 if padding is successful, 0 on failure.
+ */
+int	rsaPkcs1v15PadSign(const uint8_t	*digest,		size_t	digestLen,
+					   const t_algoId	*digestAlgoOid,
+					   const t_rsaKey	*key,
+					   uint8_t			*padded,		size_t	paddedLen);
+
+/**
+ * @brief Remove PKCS#1 v1.5 type 1 padding from signed data
+ * @param padded Padded signature
+ * @param paddedLen Length of padded data
+ * @param digestOut Buffer for recovered digest
+ * @param digestLen Pointer to store digest length
+ * @param expectedAlgoOid Expected algorithm identifier
+ * @return 1 on success, 0 on failure
+ */
+int	rsaPkcs1v15UnpadSign(const uint8_t			*padded,		size_t	paddedLen,
+							  uint8_t			*digestOut,		size_t	*digestLen,
+							  const t_algoId	*expectedAlgoOid);
+
+
+
+static inline size_t	rsaModulusBytes(const t_rsaKey *key)
+{
+	return ((key->bits + 7) / 8);
+}
 
 #endif

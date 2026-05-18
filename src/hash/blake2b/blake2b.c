@@ -4,25 +4,51 @@
 #include "../../../includes/consts/blake2b.h"
 #include "../../../includes/hash/blake2b.h"
 
-void blake2bInit(void *ctx)
+void blake2bInitParam(void *ctx, size_t outlen)
 {
 	t_blake2bCtx	*b2 = (t_blake2bCtx *)ctx;
-	int i;
+	int				i;
 
+	/* Clamp outlen to valid values (20, 32, 48, 64) */
+	if (outlen != BLAKE2B_OUTLEN_160 && outlen != BLAKE2B_OUTLEN_256 &&
+		outlen != BLAKE2B_OUTLEN_384 && outlen != BLAKE2B_OUTLEN_512) {
+		outlen = BLAKE2B_OUTLEN_512;  /* Default to 512 */
+	}
 
 	/* Copy IV */
 	for (i = 0; i < 8; i++)
 		b2->h[i] = g_blake2b_IV[i];
 
-	/* XOR with outlen parameter */
-	b2->h[0] ^= 0x01010000 ^ 64;  /* outlen default = 64 bytes */
+	/* Parameter block: 
+	 * - bits 0-7:   outlen
+	 * - bits 8-15:  keylen (0 for unkeyed)
+	 * - bits 16-23: fanout (1)
+	 * - bits 24-31: depth (1)
+	 */
+	uint64_t param = (uint64_t)outlen;	/* outlen in low byte */
+	param |= (uint64_t)0x01 << 16;		/* fanout = 1 */
+	param |= (uint64_t)0x01 << 24;		/* depth = 1 */
+	
+	/* XOR parameter block with first IV word */
+	b2->h[0] ^= param;
 
 	b2->t[0] = 0;
 	b2->t[1] = 0;
 	b2->f = 0;
 	b2->buflen = 0;
-	b2->outlen = 64;  /* Default output length */
+	b2->outlen = outlen;
 }
+
+void blake2bInit(void *ctx)
+{
+	/* Default to 512-bit output */
+	blake2bInitParam(ctx, BLAKE2B_OUTLEN_512);
+}
+
+void blake2bInit160(void *ctx) { blake2bInitParam(ctx, BLAKE2B_OUTLEN_160); }
+void blake2bInit256(void *ctx) { blake2bInitParam(ctx, BLAKE2B_OUTLEN_256); }
+void blake2bInit384(void *ctx) { blake2bInitParam(ctx, BLAKE2B_OUTLEN_384); }
+void blake2bInit512(void *ctx) { blake2bInitParam(ctx, BLAKE2B_OUTLEN_512); }
 
 void blake2bSetOutlen(void *ctx, size_t outlen)
 {
@@ -215,10 +241,55 @@ void blake2bLong(uint8_t *out, size_t outLen, const uint8_t *in, size_t inLen)
 
 const t_hash g_blake2bHash = {
 	.name = "blake2b",
+	.oid = OID_DEF("blake2b", BLAKE2B_512_OID),
 	.init = blake2bInit,
 	.update = blake2bUpdate,
 	.final = blake2bFinal,
 	.hmacInit = NULL,  /* Blake2b has built-in keyed mode */
 	.ctxSize = sizeof(t_blake2bCtx),
 	.digestSize = 64   /* Default 512-bit output */
+};
+
+const t_hash g_blake2b160Hash = {
+	.name = "blake2b-160",
+	.oid = OID_DEF("blake2b", BLAKE2B_160_OID),
+	.init = blake2bInit160,
+	.update = blake2bUpdate,
+	.final = blake2bFinal,
+	.hmacInit = NULL,  /* Blake2b has built-in keyed mode */
+	.ctxSize = sizeof(t_blake2bCtx),
+	.digestSize = 20   /* 160-bit output */
+};
+
+const t_hash g_blake2b256Hash = {
+	.name = "blake2b-256",
+	.oid = OID_DEF("blake2b", BLAKE2B_256_OID),
+	.init = blake2bInit256,
+	.update = blake2bUpdate,
+	.final = blake2bFinal,
+	.hmacInit = NULL,  /* Blake2b has built-in keyed mode */
+	.ctxSize = sizeof(t_blake2bCtx),
+	.digestSize = 32   /* 256-bit output */
+};
+
+const t_hash g_blake2b384Hash = {
+	.name = "blake2b-384",
+	.oid = OID_DEF("blake2b", BLAKE2B_384_OID),
+	.init = blake2bInit384,
+	.update = blake2bUpdate,
+	.final = blake2bFinal,
+	.hmacInit = NULL,  /* Blake2b has built-in keyed mode */
+	.ctxSize = sizeof(t_blake2bCtx),
+	.digestSize = 48   /* 384-bit output */
+};
+
+const t_hash g_blake2b512Hash = {
+	.name = "blake2b-512",
+	.oid = OID_DEF("blake2b", BLAKE2B_512_OID),
+	.init = blake2bInit512,
+	.update = blake2bUpdate,
+	.final = blake2bFinal,
+	.hmacInit = NULL,  /* Blake2b has built-in keyed mode */
+	.ctxSize = sizeof(t_blake2bCtx),
+	.digestSize = 64   /* 512-bit output */
 };

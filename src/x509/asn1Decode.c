@@ -112,3 +112,23 @@ int asn1ParseOid(const uint8_t	*data, size_t	maxLen,
 	*outLen = tlv.length;
 	return (1);
 }
+
+int asn1ParseBitString(const uint8_t	*data,	size_t	maxLen,
+					 uint8_t		**out,	size_t	*outLen,
+					 size_t			*consumed)
+{
+	t_asn1Tlv tlv;
+
+	if (!asn1ParseTlv(data, maxLen, &tlv, consumed))
+		return (0);
+	if (tlv.tag != ASN1_BIT_STRING)
+		return (0);
+	if (tlv.length < 1)
+		return (0); /* At least one byte for unused bits count */
+	uint8_t unusedBits = tlv.value[0];
+	if (unusedBits > 7)
+		return (0); /* Invalid number of unused bits */
+	*out = tlv.value + 1;
+	*outLen = tlv.length - 1;
+	return (1);
+}

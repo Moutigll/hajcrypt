@@ -109,6 +109,16 @@ const t_hash	*getHashByAlgo(t_algo algo);
 const t_cipher	*getCipherByAlgo(t_algo algo);
 
 /**
+ * @brief Retrieves a hash structure based on the specified name.
+ * 
+ * @param name The name of the hash to look up (e.g., "sha256").
+ * 
+ * @return A pointer to a constant t_hash structure matching the given name,
+ *         or NULL if the name is not found.
+ */
+const t_hash *getHashByName(const char *name);
+
+/**
  * @brief Retrieves a cipher structure based on the specified name.
  * 
  * @param name The name of the cipher to look up (e.g., "aes-256-cbc").
