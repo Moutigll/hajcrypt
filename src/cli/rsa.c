@@ -31,21 +31,21 @@ static void	printRsaHelp(void)
 	ft_printf(
 		"Usage: ft_ssl rsa [options]\n"
 		"Options:\n"
-		"	  --*				Any supported cipher (e.g., --des)\n"
-		"  -I, --inform  <PEM>	Input format (only PEM supported)\n"
-		"  -O, --outform <PEM>	Output format (only PEM supported)\n"
-		"  -i, --in	  <file>   Input file (default stdin)\n"
-		"  -o, --out	 <file>   Output file (default stdout)\n"
-		"  -p, --passin  <arg>	Password for input private key\n"
-		"  -P, --passout <arg>	Password for output private key\n"
-		"  -t, --text			 Print key components in text\n"
-		"  -n, --noout			Do not output encoded key\n"
-		"  -m, --modulus		  Print modulus (n) in hex\n"
-		"  -c, --check			Verify key consistency\n"
-		"  -u, --pubin			Input is a public key\n"
-		"  -U, --pubout		   Output public key\n"
-		"  -T, --traditional	  Use traditional PEM format (PKCS#1)\n"
-		"  -h, --help			 Show this help\n"
+		"  --*                  Any supported cipher (e.g., --des)\n"
+		"  -I, --inform  <PEM>  Input format (only PEM supported)\n"
+		"  -O, --outform <PEM>  Output format (only PEM supported)\n"
+		"  -i, --in      <file> Input file (default stdin)\n"
+		"  -o, --out     <file> Output file (default stdout)\n"
+		"  -p, --passin  <arg>  Password for input private key\n"
+		"  -P, --passout <arg>  Password for output private key\n"
+		"  -t, --text           Print key components in text\n"
+		"  -n, --noout          Do not output encoded key\n"
+		"  -m, --modulus        Print modulus (n) in hex\n"
+		"  -c, --check          Verify key consistency\n"
+		"  -u, --pubin          Input is a public key\n"
+		"  -U, --pubout         Output public key\n"
+		"  -T, --traditional    Use traditional PEM format (PKCS#1)\n"
+		"  -h, --help           Show this help\n"
 	);
 }
 
@@ -58,7 +58,7 @@ static void	printRsaHelp(void)
  * @return A pointer to a dynamically allocated string containing the file content,
  *		 or NULL if the file cannot be opened or read.
  */
-static char	*readFileContent(const char *fileName)
+char	*readFileContent(const char *fileName)
 {
 	int		fd;
 	char	*buf;
@@ -116,7 +116,7 @@ mallocError:
  * @param fileName The path to the output file, or NULL to write to standard output.
  * @param data The string data to be written.
  */
-static void	writeOutput(const char *fileName, const char *data)
+void	writeRsaOutput(const char *fileName, const char *data)
 {
 	int		fd;
 	size_t	len;
@@ -258,6 +258,12 @@ int cmdRsa(int argc, char **argv, char **env)
 		return (0);
 	}
 
+	if (!opt.inFile && !opt.outFile && !opt.passin && !opt.passout)
+	{
+		printRsaHelp();
+		return (0);
+	}
+
 	/* 2. Get input password if needed */
 	if (opt.passin)
 	{
@@ -365,7 +371,7 @@ int cmdRsa(int argc, char **argv, char **env)
 			goto cleanup;
 		}
 
-		writeOutput(opt.outFile, outPem);
+		writeRsaOutput(opt.outFile, outPem);
 	}
 
 	ret = 0;
@@ -390,61 +396,237 @@ cleanup:
 
 
 /* --------------------------------------------------------------------------
- * 								genrsa command
+ *                              genrsa command
  * -------------------------------------------------------------------------- */
 
-
-#define RSA_MIN_BITS 1
+#define RSA_MIN_BITS 512
 #define RSA_DEFAULT_BITS 2048
+#define RSA_MAX_BITS 16384
 
-int cmdGenrsa(t_sslOptions *opts)
+static const tFtLongOption g_genrsaLongOpts[] = {
+	{"out",		FT_GETOPT_REQUIRED_ARGUMENT,	'o'},
+	{"passout",	FT_GETOPT_REQUIRED_ARGUMENT,	'p'},
+	{"pubout",	FT_GETOPT_REQUIRED_ARGUMENT,	'P'},
+	{"traditional",	FT_GETOPT_NO_ARGUMENT,		't'},
+	{"help",	FT_GETOPT_NO_ARGUMENT,		'h'},
+	{NULL, 0, 0}
+};
+
+static void	printGenrsaHelp(void)
 {
-	t_rsaKey	key;
-	char		*pem;
-	int			fd = STDOUT_FILENO;
-	int			bits = RSA_DEFAULT_BITS;
-	uint64_t	e = 65537;
+	ft_printf(
+		"Usage: ft_ssl genrsa [options] [bits]\n"
+		"Options:\n"
+		"  -o, --out     <file> Output file (default stdout)\n"
+		"  -p, --passout <arg>  Password for encrypting the private key\n"
+		"  -P, --pubout  <file> Output the public key in the specified file\n"
+		"  -t, --traditional    Use traditional PEM format (PKCS#1)\n"
+		"  --*                  Any supported cipher for encryption (e.g., --aes-256-cbc)\n"
+		"  -h, --help           Show this help\n"
+		"  bits                 Key size in bits (default %d, min %d, max %d)\n",
+		RSA_DEFAULT_BITS, RSA_MIN_BITS, RSA_MAX_BITS);
+}
 
-	if (opts->fileCount > 0 && opts->fileInputs[0])
+static int	parseGenrsaArgs(int				argc,
+							char			**argv,
+							t_rsaOptions	*opt,
+							const t_cipher	**cipher,
+							int				*bits)
+{
+	tFtGetopt		st;
+	tFtGetoptStatus	status;
+	const char		*shortOpts;
+	const char		*bitsStr;
+
+	ft_bzero(opt, sizeof(t_rsaOptions));
+	*cipher = NULL;
+	*bits = RSA_DEFAULT_BITS;
+	shortOpts = "o:p:P:th";
+
+	ft_getoptInit(&st, argc - 2, argv + 2);
+	st.index = 0;
+	while (1)
 	{
-		bits = ft_atoi(opts->fileInputs[0]);
-		if (bits < RSA_MIN_BITS)
+		status = ft_getoptLong(&st, shortOpts, g_genrsaLongOpts);
+		if (status == FT_GETOPT_END)
+			break;
+		if (status == FT_GETOPT_POSITIONAL)
 		{
-			ft_dprintf(STDERR_FILENO, "genrsa: RSA length must be >= %d\n", RSA_MIN_BITS);
+			bitsStr = st.optArg;
+			if (!bitsStr)
+				bitsStr = argv[2 + st.index];
+			if (!bitsStr)
+			{
+				ft_dprintf(STDERR_FILENO,
+					"ft_ssl: genrsa: missing bits argument\n");
+				return (0);
+			}
+			*bits = ft_atoi((char *)bitsStr);
+			st.index++;
+			continue;
+		}
+		if (status == FT_GETOPT_ERROR)
+		{
+			if (st.status == FT_GETOPT_MISSING_ARG)
+			{
+				ft_dprintf(STDERR_FILENO, "ft_ssl: genrsa: option '%s' requires an argument\n",
+					st.badOpt);
+				return (0);
+			}
+			else if (st.status == FT_GETOPT_UNKNOWN && st.badOpt
+				&& st.badOpt[0] == '-' && st.badOpt[1] == '-')
+			{
+				const t_cipher	*found;
+
+				found = getCipherByName(st.badOpt + 2);
+				if (found)
+				{
+					*cipher = found;
+					if (opt->cipherName) free(opt->cipherName);
+					opt->cipherName = ft_strdup(st.badOpt);
+					if (!opt->cipherName)
+					{
+						ft_dprintf(STDERR_FILENO,
+							"ft_ssl: genrsa: memory allocation failed\n");
+						return (0);
+					}
+					st.index++;
+					continue;
+				}
+			}
+			ft_dprintf(STDERR_FILENO, "ft_ssl: genrsa: invalid option\n");
+			return (0);
+		}
+		if (status == FT_GETOPT_OK)
+		{
+			switch (st.opt)
+			{
+				case 'o':
+					opt->outFile = st.optArg;
+					break;
+				case 'p':
+					opt->passout = st.optArg;
+					break;
+				case 'P':
+					opt->pubOutFile = st.optArg;
+					break;
+				case 't':
+					opt->traditional = 1;
+					break;
+				case 'h':
+					printGenrsaHelp();
+					return (-1);
+			}
+			continue;
+		}
+	}
+	while (st.index < st.argc)
+	{
+		bitsStr = st.argv[st.index];
+		if (!bitsStr)
+		{
+			ft_dprintf(STDERR_FILENO,
+				"ft_ssl: genrsa: missing bits argument\n");
+			return (0);
+		}
+		*bits = ft_atoi((char *)bitsStr);
+		st.index++;
+	
+	}
+	if (*bits < RSA_MIN_BITS || *bits > RSA_MAX_BITS)
+	{
+		ft_dprintf(STDERR_FILENO,
+			"ft_ssl: genrsa: invalid key size %d (must be between %d and %d)\n",
+			*bits, RSA_MIN_BITS, RSA_MAX_BITS);
+		return (0);
+	}
+	return (1);
+}
+
+int	cmdGenrsa(int argc, char **argv, char **env)
+{
+	t_rsaKey		key;
+	t_rsaOptions	options;
+	char			*pem;
+	int				bits;
+	const t_cipher	*cipher;
+	int				ret;
+	char			*password;
+
+	(void)env;
+
+	bits = RSA_DEFAULT_BITS;
+	cipher = NULL;
+	password = NULL;
+	ft_bzero(&options, sizeof(t_rsaOptions));
+
+	ret = parseGenrsaArgs(argc, argv, &options, &cipher, &bits);
+	if (ret <= 0)
+		return (ret == -1 ? 0 : 1);
+
+	if (options.passout && !cipher) /* If a password is provided without a cipher, default to AES-256-CBC */
+		cipher = &g_aes256CbcCipher;
+	if (options.passout)
+	{
+		password = getPassword(options.passout, env);
+		if (!password)
+		{
+			ft_dprintf(STDERR_FILENO, "ft_ssl: genrsa: failed to get password\n");
+			return (1);
+		}
+	}
+	if (cipher && !options.passout) /* If a cipher is specified without a password, prompt for one */
+	{
+		password = promptPassword("Enter pass phrase: ");
+		if (!password)
+		{
+			ft_dprintf(STDERR_FILENO, "ft_ssl: genrsa: failed to get password\n");
 			return (1);
 		}
 	}
 
-	ft_dprintf(STDERR_FILENO, "Generating RSA private key, %d bit long modulus\n", bits);
+	ft_dprintf(STDERR_FILENO, "Generating RSA private key, %d bit modulus\n", bits);
 
-	rsaGenerateKey(&key, bits, e);
-	
-	ft_dprintf(STDERR_FILENO, "e is %i (0x%x)\n", e, e);
+	rsaGenerateKey(&key, bits, 65537);
 
-	pem = rsaKeyToPem(&key, 1, 1, NULL, NULL); /* Gotta follow 42 subject who only show PKCS#1 format for private keys in genrsa */
+	ft_dprintf(STDERR_FILENO, "e is 65537 (0x10001)\n");
+
+	if (cipher && password)
+		pem = rsaKeyToPem(&key, 1, options.traditional, password, cipher);
+	else
+		pem = rsaKeyToPem(&key, 1, options.traditional, NULL, NULL);
+
 	if (!pem)
 	{
-		ft_dprintf(STDERR_FILENO, "genrsa: failed to encode key\n");
+		ft_dprintf(STDERR_FILENO, "ft_ssl: genrsa: failed to encode key\n");
 		rsaFreeKey(&key);
+		free(password);
 		return (1);
 	}
 
-	if (opts->outputFile)
+	if (options.pubOutFile)
 	{
-		fd = open(opts->outputFile, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-		if (fd < 0)
+		char *pubPem = rsaKeyToPem(&key, 0, options.traditional, NULL, NULL);
+		if (!pubPem)
 		{
-			ft_dprintf(STDERR_FILENO, "genrsa: cannot create %s\n", opts->outputFile);
+			ft_dprintf(STDERR_FILENO, "ft_ssl: genrsa: failed to encode public key\n");
 			free(pem);
 			rsaFreeKey(&key);
+			free(password);
 			return (1);
 		}
+		writeRsaOutput(options.pubOutFile, pubPem);
+		free(pubPem);
 	}
 
-	write(fd, pem, ft_strlen(pem));
-	if (fd != STDOUT_FILENO)
-		close(fd);
-	rsaFreeKey(&key);
+	if (options.outFile)
+		writeRsaOutput(options.outFile, pem);
+	else
+		ft_printf("%s", pem);
+
 	free(pem);
+	free(password);
+	rsaFreeKey(&key);
+	free(options.cipherName);
 	return (0);
 }
