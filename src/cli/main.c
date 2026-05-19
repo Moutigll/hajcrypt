@@ -59,10 +59,11 @@ static int executeSsl(t_sslOptions *opts, int argc, char **argv, char **env)
 	} else if (opts->cmdType == CMD_CIPHER)
 		return (executeCipher(opts));
 	else if (opts->cmdType == CMD_GENRSA)
-		return (cmdGenrsa(opts));
+		return (cmdGenrsa(argc, argv, env));
 	else if (opts->cmdType == CMD_RSA)
 		return (cmdRsa(argc, argv, env));
-
+	else if (opts->cmdType == CMD_PKEYUTL)
+		return (cmdPkeyutl(argc, argv, env));
 	return (0);
 }
 

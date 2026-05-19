@@ -22,6 +22,25 @@ typedef struct s_rsaOptions
 	char			*cipherName;	/* Name of the cipher specified on command line (e.g., "aes-256-cbc") */
 }	t_rsaOptions;
 
+typedef struct s_pkeyutlOptions
+{
+	const char	*inFile;
+	const char	*outFile;
+	const char	*keyFile;
+	const char	*passin;
+	const char	*sigFile;
+	const char	*dgstName;
+
+	int			pubin;
+	int			encrypt;
+	int			decrypt;
+	int			sign;
+	int			verify;
+	int			hexdump;
+	int			hashInput;
+	int			help;
+}	t_pkeyutlOptions;
+
 /**
  * @brief Generates an RSA key pair based on the provided options.
  *

@@ -37,7 +37,9 @@ LIB_SRC = \
 	$(SRC_DIR)/kdf/argon2.c \
 	$(SRC_DIR)/rsa/key.c \
 	$(SRC_DIR)/rsa/keyCheck.c \
+	$(SRC_DIR)/rsa/cryptSign.c \
 	$(SRC_DIR)/rsa/x509.c \
+	$(SRC_DIR)/rsa/pkcs1Padding.c \
 	$(SRC_DIR)/rsa/primality.c \
 	$(SRC_DIR)/rsa/bigint.c \
 	$(SRC_DIR)/hash/common/padding.c \
@@ -102,7 +104,8 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/cipherIo.c \
 	$(SRC_DIR)/cli/prompt.c \
 	$(SRC_DIR)/cli/password.c \
-	$(SRC_DIR)/cli/rsa.c
+	$(SRC_DIR)/cli/rsa.c \
+	$(SRC_DIR)/cli/pkeyutl.c
 
 TEST_SRC = \
 	tests/main.test.c \
