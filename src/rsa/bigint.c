@@ -931,20 +931,49 @@ void bigIntRandom(t_bigInt *n, size_t bits)
 	n->used = wordsNeeded;
 }
 
-size_t bigIntToBytes(const t_bigInt *n, uint8_t *buf, size_t bufSize)
+size_t bigIntToBytes(const t_bigInt *num, uint8_t *buf, size_t bufSize)
 {
-	size_t bytesNeeded = (bigIntBitLength(n) + 7) / 8;
-	if (bytesNeeded > bufSize)
+	size_t	numBits;
+	size_t	numBytes;
+	size_t	pad;
+	size_t	i, j;
+	int		started;
+
+	if (!num || !buf || bufSize == 0)
 		return (0);
+
+	numBits = bigIntBitLength(num);
+	numBytes = (numBits + 7) / 8;
+	if (numBytes > bufSize)
+		return (0);
+
 	ft_bzero(buf, bufSize);
-	for (size_t i = 0; i < n->used; i++) {
-		for (size_t j = 0; j < 8; j++) {
-			if (i * 8 + j >= bytesNeeded)
-				break;
-			buf[bytesNeeded - 1 - (i * 8 + j)] = (n->words[i] >> (j * 8)) & 0xFF;
+	pad = bufSize - numBytes;
+	i = pad;
+	started = 0;
+
+	for (j = num->numWords; j > 0; j--)
+	{
+		uint64_t	word = num->words[j - 1];
+		int			byteShift;
+
+		for (byteShift = 56; byteShift >= 0; byteShift -= 8)
+		{
+			uint8_t byte = (uint8_t)(word >> byteShift);
+			if (!started)
+			{
+				if (byte == 0 && i < bufSize - 1)
+					continue;
+				started = 1;
+			}
+			if (i < bufSize)
+				buf[i++] = byte;
 		}
 	}
-	return (bytesNeeded);
+	if (!started && pad < bufSize)
+		buf[pad] = 0;
+
+	return (bufSize);
 }
 
 char *bigIntToHex(const t_bigInt *n)
