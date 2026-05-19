@@ -137,7 +137,7 @@ int	rsaPkcs1v15PadSign(const uint8_t	*digest,		size_t	digestLen,
 		return (0);
 	if (digestLen != expectedDigestLen)
 	{
-		HAJCRYPT_DPRINT("Digest length mismatch: expected %d, got %d\n",
+		HAJCRYPT_DPRINT("Digest length mismatch: expected %zu, got %zu\n",
 			expectedDigestLen, digestLen);
 		return (0);
 	}

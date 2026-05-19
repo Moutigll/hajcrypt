@@ -1010,20 +1010,21 @@ char *bigIntToDec(const t_bigInt *n)
 	t_bigInt *tmp = bigIntDup(n);
 	t_bigInt *quot = bigIntNew(tmp->numWords);
 	t_bigInt *rem = bigIntNew(1);
-	if (!tmp || !quot || !rem) {
+	t_bigInt *ten = bigIntFromUint64(10);
+	if (!tmp || !quot || !rem || !ten) {
 		free(dec);
-		bigIntFree(tmp); bigIntFree(quot); bigIntFree(rem);
+		bigIntFree(tmp); bigIntFree(quot); bigIntFree(rem); bigIntFree(ten);
 		return (NULL);
 	}
 	while (!bigIntIsZero(tmp)) {
-		bigIntDiv(quot, rem, tmp, bigIntFromUint64(10));
+		bigIntDiv(quot, rem, tmp, ten);
 		dec[--idx] = '0' + rem->words[0];
 		bigIntCopy(tmp, quot);
 	}
 	dec[maxDigits] = '\0';
 	char *result = ft_strdup(dec + idx);
 	free(dec);
-	bigIntFree(tmp); bigIntFree(quot); bigIntFree(rem);
+	bigIntFree(tmp); bigIntFree(quot); bigIntFree(rem); bigIntFree(ten);
 	return (result);
 }
 

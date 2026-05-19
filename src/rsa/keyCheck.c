@@ -266,17 +266,28 @@ static int checkPollardPm1Attack(const t_rsaKey *key)
 
 		bigIntMod(rem, pm1, small);
 		if (bigIntIsZero(rem)) {
-			bigIntDiv(pm1, pm1, small, NULL);
+			t_bigInt *quot = bigIntNew(pm1->numWords);
+			if (quot) {
+				bigIntDiv(quot, NULL, pm1, small);
+				bigIntCopy(pm1, quot);
+				bigIntFree(quot);
+			}
 			if (bigIntBitLength(pm1) < 200) vulnerable = 1;
 		}
 
 		bigIntMod(rem, qm1, small);
 		if (bigIntIsZero(rem)) {
-			bigIntDiv(qm1, qm1, small, NULL);
+			t_bigInt *quot = bigIntNew(qm1->numWords);
+			if (quot) {
+				bigIntDiv(quot, NULL, qm1, small);
+				bigIntCopy(qm1, quot);
+				bigIntFree(quot);
+			}
 			if (bigIntBitLength(qm1) < 200) vulnerable = 1;
 		}
 
 		bigIntFree(small);
+	
 		if (vulnerable) break;
 	}
 
@@ -365,8 +376,15 @@ static int checkKeyConsistency(const t_rsaKey *key)
 	if (!lambda || !gcd) { ok = 0; goto cleanup; }
 	bigIntMul(lambda, pm1, qm1);
 	bigIntGcd(gcd, pm1, qm1);
-	if (!bigIntIsZero(gcd))
-		bigIntDiv(lambda, lambda, gcd, NULL);
+	if (!bigIntIsZero(gcd)) {
+		/* lambda = lambda / gcd */
+		t_bigInt *quot = bigIntNew(lambda->numWords);
+		if (quot) {
+			bigIntDiv(quot, NULL, lambda, gcd);
+			bigIntCopy(lambda, quot);
+			bigIntFree(quot);
+		}
+}
 
 	/* e*d mod λ(n) doit être 1 */
 	ed = bigIntNew(key->e->numWords + key->d->numWords);

@@ -6,7 +6,7 @@
 
 #include "../../includes/rsa/rsa.h"
 
-void	rsaGenerateKey(t_rsaKey *key, size_t bits, uint64_t e_val)
+int	rsaGenerateKey(t_rsaKey *key, size_t bits, uint64_t e_val)
 {
 	t_bigInt	*pm1;
 	t_bigInt	*qm1;
@@ -16,6 +16,10 @@ void	rsaGenerateKey(t_rsaKey *key, size_t bits, uint64_t e_val)
 	ft_bzero(key, sizeof(t_rsaKey));
 	key->e = bigIntFromUint64(e_val);
 	one = bigIntFromUint64(1);
+	if (!key->e || !one) {
+		HAJCRYPT_DPRINT("Failed to allocate big integers\n");
+		return (0);
+	}
 
 	while (1) {
 		key->p = rsaGeneratePrime(bits / 2, 0.999999);
@@ -48,12 +52,13 @@ void	rsaGenerateKey(t_rsaKey *key, size_t bits, uint64_t e_val)
 
 			bigIntFree(pm1); bigIntFree(qm1); bigIntFree(phi); bigIntFree(one);
 			key->bits = bits;
-			return;
+			return (1);
 		}
 
 		rsaFreeKey(key); 
 		bigIntFree(pm1); bigIntFree(qm1); bigIntFree(phi);
 	}
+	return (0);
 }
 
 void	rsaFreeKey(t_rsaKey *key)
@@ -100,7 +105,10 @@ static void printComponent(const char *name, const t_bigInt *num)
 	for (i = 0; i < len; i += 2) {
 		if (i > 0 && (i / 2) % 15 == 0)
 			ft_printf("\n    ");
-		ft_printf("%c%c", hex[i], hex[i+1]);
+		if (hex[i + 1])
+			ft_printf("%c%c", hex[i], hex[i+1]);
+		else
+			ft_printf("%c", hex[i]);
 		if (i + 2 < len)
 			ft_printf(":");
 	}
@@ -110,6 +118,9 @@ static void printComponent(const char *name, const t_bigInt *num)
 
 void	rsaPrintKey(t_rsaKey *key, int showPrivate)
 {
+	char	*expDec;
+	char	*expHex;
+
 	if (!key || !key->n || !key->e)
 	{
 		ft_printf("Invalid key\n");
@@ -119,10 +130,12 @@ void	rsaPrintKey(t_rsaKey *key, int showPrivate)
 	if (showPrivate)
 		ft_printf(", %d primes", key->p && key->q ? 2 : 0);
 	ft_printf(")\n");
+	expDec = bigIntToDec(key->e);
+	expHex = bigIntToHex(key->e);
 	if (showPrivate)
 	{
 		printComponent("modulus", key->n);
-		ft_printf("publicExponent: %s (0x%s)\n", bigIntToDec(key->e), bigIntToHex(key->e));
+		ft_printf("publicExponent: %s (0x%s)\n", expDec, expHex);
 		printComponent("privateExponent", key->d);
 		printComponent("prime1", key->p);
 		printComponent("prime2", key->q);
@@ -131,6 +144,8 @@ void	rsaPrintKey(t_rsaKey *key, int showPrivate)
 		printComponent("coefficient", key->qinv);
 	} else {
 		printComponent("Modulus", key->n);
-		ft_printf("Exponent: %s (0x%s)\n", bigIntToDec(key->e), bigIntToHex(key->e));
+		ft_printf("Exponent: %s (0x%s)\n", expDec, expHex);
 	}
+	free(expDec);
+	free(expHex);
 }

@@ -51,8 +51,10 @@ t_bigInt	*rsaGeneratePrime(int bits, double certainty);
  * @param key Pointer to the RSA key structure to initialize.
  * @param bits The desired bit length of the RSA key.
  * @param e_val The public exponent value.
+ *
+ * @return 1 if the key is generated successfully, 0 on failure.
  */
-void		rsaGenerateKey(t_rsaKey *key, size_t bits, uint64_t e_val);
+int			rsaGenerateKey(t_rsaKey *key, size_t bits, uint64_t e_val);
 
 /**
  * @brief Free the memory allocated for an RSA key structure.

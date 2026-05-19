@@ -13,10 +13,10 @@
 
 
 /**
- * @brief Derives a key and IV using the OpenSSL-compatible EVP_BytesToKey algorithm with MD5.
+ * @brief Derives a key and IV using the OpenSSL-compatible EVP_BytesToKey algorithm with the provided hash function
  * 
  * This function implements the legacy key derivation method used by OpenSSL for algorithms
- * like DES. It performs a single MD5 hash of the concatenated password and salt to produce
+ * like DES. It performs a single hash of the concatenated password and salt to produce
  * 16 bytes of key material. The first 8 bytes are used as the encryption key, and the
  * following 8 bytes are used as the initialization vector (IV).
  * 

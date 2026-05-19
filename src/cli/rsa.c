@@ -587,7 +587,11 @@ int	cmdGenrsa(int argc, char **argv, char **env)
 
 	ft_dprintf(STDERR_FILENO, "Generating RSA private key, %d bit modulus\n", bits);
 
-	rsaGenerateKey(&key, bits, 65537);
+	if (!rsaGenerateKey(&key, bits, 65537))
+	{
+		ft_dprintf(STDERR_FILENO, "ft_ssl: genrsa: failed to generate key\n");
+		return (1);
+	}
 
 	ft_dprintf(STDERR_FILENO, "e is 65537 (0x10001)\n");
 

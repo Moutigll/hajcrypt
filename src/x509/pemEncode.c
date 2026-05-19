@@ -63,7 +63,7 @@ char *pemEncode(const uint8_t *der, size_t derLen, const char *type)
 		return (NULL);
 
 	b64Len = ft_strlen(b64);
-	pemLen = (17 + ft_strlen(type)) + b64Len + (14 + ft_strlen(type)) + 1;
+	pemLen = (17 + ft_strlen(type)) + b64Len + (15 + ft_strlen(type)) + 1;
 	pem = malloc(pemLen);
 	if (!pem) {
 		free(b64);

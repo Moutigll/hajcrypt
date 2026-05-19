@@ -388,28 +388,38 @@ int cmdPkeyutl(int argc, char **argv, char **env)
 
 	/* 4. Perform the requested operation */
 	if (opt.encrypt)
-		rsaEncryptPkcs1v15(in, inLen, &key, out, &outLen);
+	{
+		if (!rsaEncryptPkcs1v15(in, inLen, &key, out, &outLen))
+			{FT_PKEYUTL_ERR("RSA encryption failed\n"); ret = 1; goto cleanup;}
+	}
 	else if (opt.decrypt)
-		rsaDecryptPkcs1v15(in, inLen, &key, out, &outLen);
+	{
+		if (!rsaDecryptPkcs1v15(in, inLen, &key, out, &outLen))
+			{FT_PKEYUTL_ERR("RSA decryption failed\n"); ret = 1; goto cleanup;}
+	}
 	else if (opt.sign)
 	{
 		algo = getDigestOid(opt.dgstName);
 		if (!algo)
 			algo = getDigestOid("sha256");
-		rsaSignPkcs1v15(in, inLen, algo, &key, out, &outLen);
+		if (!rsaSignPkcs1v15(in, inLen, algo, &key, out, &outLen))
+			{FT_PKEYUTL_ERR("RSA signing failed\n"); ret = 1; goto cleanup;}
 	}
 	else if (opt.verify)
 	{
 		if (readBinaryFile(opt.sigFile, &sig, &sigLen))
-			goto cleanup;
+			{FT_PKEYUTL_ERR("failed to read signature file\n"); ret = 1; goto cleanup;}
 		algo = getDigestOid(opt.dgstName);
 		if (!algo)
 			algo = getDigestOid("sha256");
+		ret = 0;
 		if (rsaVerifyPkcs1v15(in, inLen, algo, &key, sig, &sigLen))
 			ft_printf("Verified OK\n");
 		else
+		{
+			ret = 1;
 			ft_printf("Verification Failure\n");
-		ret = 0;
+		}
 		goto cleanup;
 	}
 

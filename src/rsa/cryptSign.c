@@ -139,6 +139,7 @@ int rsaSignPkcs1v15(const uint8_t	*digest,	size_t	digestLen,
 		return (0);
 	}
 	int ret = rsaPrivateOp(padded, k, key, sig, sigLen);
+	free(padded);
 	return (ret);
 }
 
