@@ -2,7 +2,7 @@
 #include "../../hajlib/include/hprintf.h"
 #include "../../hajlib/include/hio.h"
 
-#include "../../includes/rsa/rsa.h"
+#include "../../includes/asymmetric/rsa.h"
 
 static int isPrimeSmall(const t_bigInt *n)
 {

@@ -1,11 +1,11 @@
-#include "../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
-#include "../../hajlib/include/hmemory.h"
-#include "../../includes/utils/random.h"
-#include "../../includes/hash/sha256.h"
-#include "../../includes/hash/md5.h"
-#include "../../includes/x509/oid.h"
+#include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
+#include "../../../hajlib/include/hmemory.h"
+#include "../../../includes/utils/random.h"
+#include "../../../includes/hash/sha256.h"
+#include "../../../includes/hash/md5.h"
+#include "../../../includes/x509/oid.h"
 
-#include "../../includes/rsa/rsa.h"
+#include "../../../includes/asymmetric/rsa.h"
 
 /**
  * @brief Compare two algorithm IDs

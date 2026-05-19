@@ -1,10 +1,10 @@
 #include <stdlib.h>
 
-#include "../../hajlib/include/hmemory.h"
-#include "../../hajlib/include/hprintf.h"
-#include "../../hajlib/include/hstring.h"
+#include "../../../hajlib/include/hmemory.h"
+#include "../../../hajlib/include/hprintf.h"
+#include "../../../hajlib/include/hstring.h"
 
-#include "../../includes/rsa/rsa.h"
+#include "../../../includes/asymmetric/rsa.h"
 
 int	rsaGenerateKey(t_rsaKey *key, size_t bits, uint64_t e_val)
 {

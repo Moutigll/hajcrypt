@@ -1,6 +1,6 @@
-#include "../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
+#include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
 
-#include "../../includes/rsa/rsa.h"
+#include "../../../includes/asymmetric/rsa.h"
 
 static int checkCRTComponents(const t_rsaKey *key)
 {

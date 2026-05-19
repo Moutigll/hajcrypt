@@ -1,4 +1,4 @@
-#include "../../includes/rsa/bigint.h"
+#include "../../includes/asymmetric/bigint.h"
 #include "../../hajlib/include/hmemory.h"
 #include "../../hajlib/include/hstring.h"
 #include "../../includes/utils/random.h"

@@ -1,7 +1,7 @@
 #include <fcntl.h>
 
 #include "../../hajlib/include/hajlib.h"	/* IWYU pragma: keep */
-#include "../../includes/rsa/rsa.h"
+#include "../../includes/asymmetric/rsa.h"
 #include "../../includes/cli/password.h"
 #include "../../includes/cipher/aes.h"
 #include "../../includes/utils/utils.h"

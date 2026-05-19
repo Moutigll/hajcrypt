@@ -6,7 +6,7 @@
 #include "../../includes/cli/password.h"
 #include "../../includes/utils/utils.h"
 #include "../../includes/cli/rsa.h"
-#include "../../includes/rsa/rsa.h"
+#include "../../includes/asymmetric/rsa.h"
 
 #define FT_PKEYUTL_ERR(...) ft_dprintf(STDERR_FILENO, "ft_ssl: pkeyutl: " __VA_ARGS__)
 

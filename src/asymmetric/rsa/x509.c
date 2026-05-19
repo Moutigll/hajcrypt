@@ -1,12 +1,12 @@
 #include <stdlib.h>
 
-#include "../../hajlib/include/hmemory.h"
-#include "../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
-#include "../../hajlib/include/hstring.h"
-#include "../../includes/x509/asn1.h"
-#include "../../includes/x509/pem.h"
+#include "../../../hajlib/include/hmemory.h"
+#include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
+#include "../../../hajlib/include/hstring.h"
+#include "../../../includes/x509/asn1.h"
+#include "../../../includes/x509/pem.h"
 
-#include "../../includes/rsa/rsa.h"
+#include "../../../includes/asymmetric/rsa.h"
 
 static const uint8_t rsaOid[] = {0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01};
 

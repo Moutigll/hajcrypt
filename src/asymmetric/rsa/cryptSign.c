@@ -1,8 +1,8 @@
 #include <stdlib.h>
 
-#include "../../hajlib/include/hmemory.h"
+#include "../../../hajlib/include/hmemory.h"
 
-#include "../../includes/rsa/rsa.h"
+#include "../../../includes/asymmetric/rsa.h"
 
 /**
  * @brief Performs RSA public key operation (encryption).
