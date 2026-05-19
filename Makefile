@@ -20,14 +20,36 @@ INCLUDES	= -I./includes -I$(HLIB_PATH)/include
 
 include sources.mk
 
+# Installation paths
+PREFIX						?= /usr/local
+BINDIR						?= $(PREFIX)/bin
+COMPLETION_DIR_SYSTEM		?= /usr/share/bash-completion/completions
+ZSH_COMPLETION_DIR_SYSTEM	?= /usr/share/zsh/site-functions
+
+# Completion files
+COMPLETION_SRC_BASH	:= src/ft_ssl.bash
+COMPLETION_SRC_ZSH	:= src/ft_ssl.zsh
+
+# User directories
+HOME_BIN						:= $(HOME)/.local/bin
+BASH_COMPLETION_USER_DIR	:= $(HOME)/.local/share/bash-completion/completions
+ZSH_COMPLETION_USER_DIR		:= $(HOME)/.local/share/zsh/site-functions
+
+# Shell config files
+BASHRC			:= $(HOME)/.bashrc
+ZSHRC			:= $(HOME)/.zshrc
+
+# Check if bash-completion is installed
+HAS_BASH_COMPLETION	:= $(shell command -v _init_completion 2>/dev/null || echo "no")
+
 LIB_OBJ = $(LIB_SRC_OBJ)
 
 # --- ANSI colors ---
-GREEN   = \033[0;32m
-YELLOW  = \033[1;33m
+GREEN	= \033[0;32m
+YELLOW	= \033[1;33m
 BLUE	= \033[0;34m
 RED		= \033[0;31m
-RESET   = \033[0m
+RESET	= \033[0m
 
 all: $(NAME)
 
@@ -35,7 +57,7 @@ lib: $(LIB_NAME).a
 
 const: $(CONST_EXEC) $(CONST_HEADERS)
 
-# --- Compile with optimized assembly file for architecture if avaible ---
+# --- Compile with optimized assembly for architecture ---
 ifeq ($(ARCH),aarch64)
 LIB_OBJ += $(LIB_ASM_ARM_OBJ)
 ASM_FLAGS := -march=armv8.2-a+crypto
@@ -134,4 +156,122 @@ leak-test: $(LIB_NAME).a $(TEST_SRC)
 	@echo -e "$(YELLOW)ASAN_OPTIONS=detect_leaks=1 $(BUILD_DIR)/tests/test_runner$(RESET)"
 	ASAN_OPTIONS=detect_leaks=1 $(BUILD_DIR)/tests/test_runner
 
+
+# --------------- Installation targets ---------------
+
+install: $(NAME)
+	@SHELL_NAME=$$(basename "$$SHELL"); \
+	printf "$(BLUE)Detected shell: $$SHELL_NAME$(RESET)\n"; \
+	if [ -w $(BINDIR) ] 2>/dev/null; then \
+		printf "$(GREEN)System install (writable directory)...$(RESET)\n"; \
+		$(MAKE) install-system; \
+	elif command -v sudo >/dev/null 2>&1; then \
+		printf "$(GREEN)System install (using sudo)...$(RESET)\n"; \
+		sudo $(MAKE) install-system; \
+	else \
+		printf "$(YELLOW)User install...$(RESET)\n"; \
+		$(MAKE) install-user; \
+	fi; \
+	$(MAKE) install-config SHELL_NAME=$$SHELL_NAME
+
+install-system: $(NAME)
+	@printf "$(BLUE)Installing to system directories...$(RESET)\n"
+	install -d $(BINDIR)
+	install -m 755 $(NAME) $(BINDIR)/
+	install -d $(COMPLETION_DIR_SYSTEM)
+	install -m 644 $(COMPLETION_SRC_BASH) $(COMPLETION_DIR_SYSTEM)/$(NAME)
+	install -d $(ZSH_COMPLETION_DIR_SYSTEM)
+	install -m 644 $(COMPLETION_SRC_ZSH) $(ZSH_COMPLETION_DIR_SYSTEM)/_$(NAME)
+	@printf "$(GREEN)System installation complete.$(RESET)\n"
+
+install-user: $(NAME)
+	@SHELL_NAME=$$(basename "$$SHELL"); \
+	printf "$(BLUE)Installing to user directories...$(RESET)\n"; \
+	mkdir -p $(HOME_BIN); \
+	install -m 755 $(NAME) $(HOME_BIN)/; \
+	printf "$(YELLOW)Installing completion for $$SHELL_NAME...$(RESET)\n"; \
+	case "$$SHELL_NAME" in \
+		bash) \
+			mkdir -p $(BASH_COMPLETION_USER_DIR); \
+			install -m 644 $(COMPLETION_SRC_BASH) $(BASH_COMPLETION_USER_DIR)/$(NAME); \
+			;; \
+		zsh) \
+			mkdir -p $(ZSH_COMPLETION_USER_DIR); \
+			install -m 644 $(COMPLETION_SRC_ZSH) $(ZSH_COMPLETION_USER_DIR)/_$(NAME); \
+			;; \
+		*) \
+			printf "$(YELLOW)Unsupported shell for completion: $$SHELL_NAME$(RESET)\n"; \
+			;; \
+	esac
+
+install-config:
+	@printf "$(BLUE)Configuring shell...$(RESET)\n"
+	@case "$(SHELL_NAME)" in \
+		bash) \
+			if ! grep -q "ft_ssl completion" $(BASHRC) 2>/dev/null; then \
+				printf "\n# ft_ssl completion\n" >> $(BASHRC); \
+				printf "export PATH=\"\$$HOME/.local/bin:\$$PATH\"\n" >> $(BASHRC); \
+				if [ "$(HAS_BASH_COMPLETION)" = "no" ]; then \
+					printf "if [ -f $(BASH_COMPLETION_USER_DIR)/$(NAME) ]; then\n" >> $(BASHRC); \
+					printf "    source $(BASH_COMPLETION_USER_DIR)/$(NAME)\n" >> $(BASHRC); \
+					printf "fi\n" >> $(BASHRC); \
+				fi; \
+				printf "$(GREEN)Added configuration to $(BASHRC)$(RESET)\n"; \
+			else \
+				printf "$(YELLOW)Configuration already present in $(BASHRC)$(RESET)\n"; \
+			fi; \
+			;; \
+		zsh) \
+			if ! grep -q "ft_ssl completion" $(ZSHRC) 2>/dev/null; then \
+				printf "\n# ft_ssl completion\n" >> $(ZSHRC); \
+				printf "export PATH=\"\$$HOME/.local/bin:\$$PATH\"\n" >> $(ZSHRC); \
+				printf "fpath=($(ZSH_COMPLETION_USER_DIR) \$$fpath)\n" >> $(ZSHRC); \
+				printf "autoload -Uz compinit\n" >> $(ZSHRC); \
+				printf "compinit\n" >> $(ZSHRC); \
+				printf "$(GREEN)Added configuration to $(ZSHRC)$(RESET)\n"; \
+			else \
+				printf "$(YELLOW)Configuration already present in $(ZSHRC)$(RESET)\n"; \
+			fi; \
+			;; \
+		*) \
+			printf "$(YELLOW)Please manually add ~/.local/bin to your PATH$(RESET)\n"; \
+			;; \
+	esac
+	@printf "$(GREEN)Installation complete!$(RESET)\n"
+	@printf "$(YELLOW)Run the following command to use ft_ssl now:$(RESET)\n"
+	@case "$(SHELL_NAME)" in \
+		bash) \
+			printf "  source $(BASHRC)\n"; \
+			;; \
+		zsh) \
+			printf "  source $(ZSHRC)\n"; \
+			;; \
+		*) \
+			printf "  export PATH=\"\$$HOME/.local/bin:\$$PATH\"\n"; \
+			;; \
+	esac
+
+uninstall:
+	@printf "$(RED)Uninstalling...$(RESET)\n"
+	@if [ -w $(BINDIR) ] 2>/dev/null; then \
+		rm -f $(BINDIR)/$(NAME); \
+		rm -f $(COMPLETION_DIR_SYSTEM)/$(NAME); \
+		rm -f $(ZSH_COMPLETION_DIR_SYSTEM)/_$(NAME); \
+	else \
+		rm -f $(HOME_BIN)/$(NAME); \
+		rm -f $(BASH_COMPLETION_USER_DIR)/$(NAME); \
+		rm -f $(ZSH_COMPLETION_USER_DIR)/_$(NAME); \
+	fi
+	@printf "$(YELLOW)Removing configuration from shell rc files...$(RESET)\n"
+	@case "$(SHELL_NAME)" in \
+		bash) \
+			sed -i '/# ft_ssl completion/,/fi/d' $(BASHRC) 2>/dev/null || true; \
+			;; \
+		zsh) \
+			sed -i '/# ft_ssl completion/,/compinit/d' $(ZSHRC) 2>/dev/null || true; \
+			;; \
+	esac
+	@printf "$(GREEN)Uninstall complete. Please restart your shell.$(RESET)\n"
+
 .PHONY: all clean fclean re const lib leak leak-test
+.PHONY: install install-system install-user install-config uninstall
