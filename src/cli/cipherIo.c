@@ -7,10 +7,10 @@
 #include "../../hajlib/include/hprintf.h"
 #include "../../hajlib/include/hstring.h"
 #include "../../hajlib/include/hmemory.h"
-
-#include "../../includes/cli/prompt.h"
+#include "../../includes/cli/password.h"
 #include "../../includes/utils/random.h"
 #include "../../includes/kdf/bytesToKey.h"
+#include "../../includes/hash/sha256.h"
 
 #include "../../includes/cli/algoHandling.h"
 
@@ -147,7 +147,8 @@ int prepareKeyAndIv(t_sslOptions	*opts,
 		}
 
 		/* Derive with bytesToKey by default for compatibility with OpenSSL, but allow other KDFs if specified */
-		if (pbkdfBytesToKeyExtended(opts->password,
+		if (pbkdfBytesToKeyExtended(&g_sha256Hash,
+									opts->password,
 									ft_strlen(opts->password),
 									salt, keyLen, key, iv) < 0)
 		{

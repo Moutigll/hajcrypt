@@ -149,9 +149,11 @@ void	aesEcbFinal(void *vctx, uint8_t *out, size_t *outLen)
 
 /* ---------- Cipher descriptors ---------- */
 
-#define AES_ECB_CIPHER(name_str, key_size) { \
-	.name			= name_str,				\
+#define AES_ECB_CIPHER(nameStr, key_size, oidDef) { \
+	.name			= nameStr,				\
 	.mode			= CIPHER_MODE_ECB,		\
+	.oid			= oidDef,				\
+	.oiwOid			= OID_NONE,				\
 	.isEncoder		= 1,					\
 	.blockSize		= AES_BLOCK_SIZE,		\
 	.keySize		= key_size,				\
@@ -166,6 +168,6 @@ void	aesEcbFinal(void *vctx, uint8_t *out, size_t *outLen)
 	.supportsWrap	= 0						\
 }
 
-const t_cipher	g_aes128EcbCipher = AES_ECB_CIPHER("aes-128-ecb", AES_KEY_SIZE_128);
-const t_cipher	g_aes192EcbCipher = AES_ECB_CIPHER("aes-192-ecb", AES_KEY_SIZE_192);
-const t_cipher	g_aes256EcbCipher = AES_ECB_CIPHER("aes-256-ecb", AES_KEY_SIZE_256);
+const t_cipher	g_aes128EcbCipher = AES_ECB_CIPHER("aes-128-ecb", AES_KEY_SIZE_128, OID_DEF("AES-128-ECB", AES128_ECB_OID));
+const t_cipher	g_aes192EcbCipher = AES_ECB_CIPHER("aes-192-ecb", AES_KEY_SIZE_192, OID_DEF("AES-192-ECB", AES192_ECB_OID));
+const t_cipher	g_aes256EcbCipher = AES_ECB_CIPHER("aes-256-ecb", AES_KEY_SIZE_256, OID_DEF("AES-256-ECB", AES256_ECB_OID));

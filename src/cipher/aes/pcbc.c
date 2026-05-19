@@ -72,9 +72,11 @@ void aesPcbcFree(void *vctx)
 	secureZeroMemory(ctx->pcbcCtx.buffer, sizeof(ctx->pcbcCtx.buffer));
 }
 
-#define AES_PCBC_CIPHER(nameStr, size) {	\
+#define AES_PCBC_CIPHER(nameStr, size, oidDef) {	\
 	.name			= nameStr,				\
 	.mode			= CIPHER_MODE_PCBC,		\
+	.oid			= oidDef,				\
+	.oiwOid			= OID_NONE,				\
 	.isEncoder		= 1,					\
 	.blockSize		= AES_BLOCK_SIZE,		\
 	.keySize		= size,					\
@@ -89,6 +91,6 @@ void aesPcbcFree(void *vctx)
 	.supportsWrap	= 0						\
 }
 
-const t_cipher g_aes128PcbcCipher = AES_PCBC_CIPHER("aes-128-pcbc", AES_KEY_SIZE_128);
-const t_cipher g_aes192PcbcCipher = AES_PCBC_CIPHER("aes-192-pcbc", AES_KEY_SIZE_192);
-const t_cipher g_aes256PcbcCipher = AES_PCBC_CIPHER("aes-256-pcbc", AES_KEY_SIZE_256);
+const t_cipher g_aes128PcbcCipher = AES_PCBC_CIPHER("aes-128-pcbc", AES_KEY_SIZE_128, OID_DEF("AES-128-PCBC", AES128_PCBC_OID));
+const t_cipher g_aes192PcbcCipher = AES_PCBC_CIPHER("aes-192-pcbc", AES_KEY_SIZE_192, OID_DEF("AES-192-PCBC", AES192_PCBC_OID));
+const t_cipher g_aes256PcbcCipher = AES_PCBC_CIPHER("aes-256-pcbc", AES_KEY_SIZE_256, OID_DEF("AES-256-PCBC", AES256_PCBC_OID));

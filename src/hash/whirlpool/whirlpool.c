@@ -93,6 +93,7 @@ void whirlpoolFinal(uint8_t *digest, void *ctx)
 
 const t_hash g_whirlpoolHash = {
 	.name = "whirlpool",
+	.oid = OID_DEF("whirlpool", WHIRLPOOL_OID),
 	.init = whirlpoolInit,
 	.update = whirlpoolUpdate,
 	.final = whirlpoolFinal,

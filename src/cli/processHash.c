@@ -3,11 +3,17 @@
 
 #include "../../includes/hash/hmac.h"
 #include "../../includes/cli/parser.h"
+#include <unistd.h>
 
 #define BUFFER_SIZE (16 * 1024)
 
-static void	printDigest(const t_hash *hash, uint8_t *digest)
+static void	printDigest(const t_hash *hash, uint8_t *digest, int binaryOutput)
 {
+	if (binaryOutput) {
+		write(STDOUT_FILENO, digest, hash->digestSize);
+		return;
+	}
+
 	for (size_t i = 0; i < hash->digestSize; i++)
 		ft_printf("%02x", digest[i]);
 	ft_printf("\n");
@@ -44,11 +50,11 @@ int			processFd(int fd, const t_hash *hash, t_sslOptions *opts, const char *file
 
 	if (!opts->flagQ) {
 		if (opts->flagP && fd == STDIN_FILENO)
-			ft_printf("(\"");
+			ft_dprintf(STDERR_FILENO, "(\"");
 		else if (fd != STDIN_FILENO) {
 			if (!opts->flagR) {
 				printAlgoName(opts->algo);
-				ft_printf(" (%s) = ", filename);
+				ft_dprintf(STDERR_FILENO, " (%s) = ", filename);
 			}
 		}
 	}
@@ -94,21 +100,21 @@ int			processFd(int fd, const t_hash *hash, t_sslOptions *opts, const char *file
 	/* Affichage du résultat */
 	if (!opts->flagQ) {
 		if (opts->flagP && fd == STDIN_FILENO) {
-			ft_printf("\")= ");
-			printDigest(hash, digest);
+			ft_dprintf(STDERR_FILENO, "\")= ");
+			printDigest(hash, digest, opts->flagB);
 		} else if (fd == STDIN_FILENO && !opts->flagP) {
-			ft_printf("(stdin)= ");
-			printDigest(hash, digest);
+			ft_dprintf(STDERR_FILENO, "(stdin)= ");
+			printDigest(hash, digest, opts->flagB);
 		} else if (fd != STDIN_FILENO && opts->flagR) {
 			for (size_t i = 0; i < hash->digestSize; i++)
-				ft_printf("%02x", digest[i]);
-			ft_printf(" %s\n", filename);
+				ft_dprintf(STDERR_FILENO, "%02x", digest[i]);
+			ft_dprintf(STDERR_FILENO, " %s\n", filename);
 		} else if (fd != STDIN_FILENO)
-			printDigest(hash, digest);
+			printDigest(hash, digest, opts->flagB);
 	} else {
 		if (opts->flagP && fd == STDIN_FILENO)
-			ft_printf("\n");
-		printDigest(hash, digest);
+			ft_dprintf(STDERR_FILENO, "\n");
+		printDigest(hash, digest, opts->flagB);
 	}
 
 	free(ctx);
@@ -137,16 +143,15 @@ int			processString(const char *str, const t_hash *hash, t_sslOptions *opts)
 
 	if (!opts->flagQ) {
 		if (opts->flagR) {
-			for (size_t i = 0; i < hash->digestSize; i++)
-				ft_printf("%02x", digest[i]);
-			ft_printf(" \"%s\"\n", str);   /* guillemets pour les chaînes en mode -r */
+			printDigest(hash, digest, opts->flagB);
+			ft_dprintf(STDERR_FILENO, " \"%s\"\n", str);
 		} else {
 			printAlgoName(opts->algo);
-			ft_printf(" (\"%s\") = ", str);
-			printDigest(hash, digest);
+			ft_dprintf(STDERR_FILENO, " (\"%s\") = ", str);
+			printDigest(hash, digest, opts->flagB);
 		}
 	} else
-		printDigest(hash, digest);
+		printDigest(hash, digest, opts->flagB);
 
 	free(ctx);
 	free(digest);

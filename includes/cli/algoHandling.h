@@ -42,7 +42,6 @@ typedef struct s_blockData
 	size_t				lastLen;
 }	t_blockData;
 
-
 /**
  * @brief Processes a file descriptor using the specified hash algorithm and SSL options.
  *

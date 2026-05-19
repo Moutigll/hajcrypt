@@ -7,9 +7,10 @@
 
 #include "../../includes/cli/algoHandling.h"
 #include "../../includes/cli/parser.h"
+#include "../../includes/cli/rsa.h"
 
 
-static int executeSsl(t_sslOptions *opts)
+static int executeSsl(t_sslOptions *opts, int argc, char **argv, char **env)
 {
 	const t_hash	*hash;
 	size_t			i;
@@ -55,14 +56,18 @@ static int executeSsl(t_sslOptions *opts)
 		/* default stdin */
 		if (opts->readFromStdin && !opts->flagP)
 			processFd(STDIN_FILENO, hash, opts, NULL);
-	} else if (opts->cmdType == CMD_CIPHER) {
+	} else if (opts->cmdType == CMD_CIPHER)
 		return (executeCipher(opts));
-	}
-
+	else if (opts->cmdType == CMD_GENRSA)
+		return (cmdGenrsa(argc, argv, env));
+	else if (opts->cmdType == CMD_RSA)
+		return (cmdRsa(argc, argv, env));
+	else if (opts->cmdType == CMD_PKEYUTL)
+		return (cmdPkeyutl(argc, argv, env));
 	return (0);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char **argv, char **env)
 {
 	t_sslOptions	opts = {0};
 	int				status;
@@ -70,7 +75,7 @@ int main(int argc, char **argv)
 	if (parseSslArgs(argc, argv, &opts))
 		return (1);
 
-	status = executeSsl(&opts);
+	status = executeSsl(&opts, argc, argv, env);
 
 	freeSslOptions(&opts);
 	return (status);

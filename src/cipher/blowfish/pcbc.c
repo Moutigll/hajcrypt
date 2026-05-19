@@ -64,6 +64,8 @@ void	blowfishPcbcFree(void *vctx)
 const t_cipher	g_blowfishPcbcCipher = {
 	.name			= "blowfish-pcbc",
 	.mode			= CIPHER_MODE_PCBC,
+	.oid			= OID_DEF("BLOWFISH-PCBC", BLOWFISH_PCBC_OID),
+	.oiwOid			= OID_NONE,
 	.isEncoder		= 1,
 	.blockSize		= BLOWFISH_BLOCK_SIZE,
 	.keySize		= BLOWFISH_DEFAULT_KEY_SIZE,

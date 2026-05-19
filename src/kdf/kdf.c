@@ -75,9 +75,10 @@ int deriveKeyFromParams(t_sslOptions *opts, uint8_t *key, size_t keyLen, uint8_t
 
 	switch (opts->kdfChoice) {
 		case KDF_BYTESTOKEY:
-			return (pbkdfBytesToKeyExtended(opts->password,
-										  ft_strlen(opts->password),
-										  salt, keyLen, key, iv));
+			return (pbkdfBytesToKeyExtended(&g_sha256Hash,
+											opts->password,
+											ft_strlen(opts->password),
+											salt, keyLen, key, iv));
 		
 		case KDF_PBKDF2: {
 			t_pbkdf2Ctx ctx;

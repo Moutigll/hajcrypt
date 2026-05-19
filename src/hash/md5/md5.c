@@ -92,10 +92,17 @@ void md5Final(uint8_t *digest, void *ctx)
 
 const t_hash g_md5Hash = {
 	.name = "md5",
+	.oid = OID_DEF("md5", MD5_OID),
 	.init = md5Init,
 	.update = md5Update,
 	.final = md5Final,
 	.hmacInit = md5HmacInit,
 	.ctxSize = sizeof(t_md5Ctx),
 	.digestSize = 16
+};
+
+const uint8_t g_md5DigestInfoHeader[] = {
+	0x30, 0x20, 0x30, 0x0C, 0x06, 0x08,
+	0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x02, 0x05,
+	0x05, 0x00, 0x04, 0x10
 };

@@ -73,6 +73,8 @@ void	blowfishEcbFree(void *vctx)
 const t_cipher	g_blowfishEcbCipher = {
 	.name			= "blowfish-ecb",
 	.mode			= CIPHER_MODE_ECB,
+	.oid			= OID_DEF("BLOWFISH-ECB", BLOWFISH_ECB_OID),
+	.oiwOid			= OID_NONE,
 	.isEncoder		= 1,
 	.blockSize		= BLOWFISH_BLOCK_SIZE,
 	.keySize		= BLOWFISH_DEFAULT_KEY_SIZE,

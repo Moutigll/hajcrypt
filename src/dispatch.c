@@ -1,15 +1,18 @@
-#include "../../includes/cli/client.h"
+#include "../hajlib/include/hmemory.h"
+#include "../hajlib/include/hstring.h"
 
-#include "../../includes/hash/md5.h"
-#include "../../includes/hash/sha256.h"
-#include "../../includes/hash/whirlpool.h"
-#include "../../includes/hash/blake2b.h"
+#include "../includes/hash/md5.h"
+#include "../includes/hash/sha256.h"
+#include "../includes/hash/whirlpool.h"
+#include "../includes/hash/blake2b.h"
 
-#include "../../includes/cipher/base64.h"
-#include "../../includes/cipher/des.h"
-#include "../../includes/cipher/des3.h"
-#include "../../includes/cipher/aes.h"
-#include "../../includes/cipher/blowfish.h"
+#include "../includes/cipher/base64.h"
+#include "../includes/cipher/des.h"
+#include "../includes/cipher/des3.h"
+#include "../includes/cipher/aes.h"
+#include "../includes/cipher/blowfish.h"
+
+#include "../includes/utils/dispatch.h"
 
 const t_hashDispatch g_hashTable[] = {
 	{ ALGO_MD5,		&g_md5Hash },
@@ -116,6 +119,58 @@ const t_cipher *getCipherByAlgo(t_algo algo)
 		if (g_cipherTable[i].algo == algo)
 			return (g_cipherTable[i].cipher);
 		i++;
+	}
+	return (NULL);
+}
+
+const t_hash *getHashByName(const char *name)
+{
+	for (size_t i = 0; g_hashTable[i].hash; i++) {
+		if (ft_strcmp(g_hashTable[i].hash->name, name) == 0) {
+			return (g_hashTable[i].hash);
+		}
+	}
+	return (NULL);
+}
+
+const t_cipher *getCipherByName(const char *name)
+{
+	for (size_t i = 0; g_cipherTable[i].cipher; i++) {
+		if (ft_strcmp(g_cipherTable[i].cipher->name, name) == 0) {
+			return (g_cipherTable[i].cipher);
+		}
+	}
+	return (NULL);
+}
+
+const char *getAlgoName(t_algo algo)
+{
+	for (size_t i = 0; g_hashTable[i].hash; i++)
+	{
+		if (g_hashTable[i].algo == algo)
+			return (g_hashTable[i].hash->name);
+	}
+
+	for (size_t i = 0; g_cipherTable[i].cipher; i++)
+	{
+		if (g_cipherTable[i].algo == algo)
+			return (g_cipherTable[i].cipher->name);
+	}
+
+	return (NULL);
+}
+
+const t_cipher *getCipherByOid(const uint8_t *oid, size_t oidLen)
+{
+	for (size_t i = 0; g_cipherTable[i].cipher; i++) {
+		if (g_cipherTable[i].cipher->oid.len == oidLen &&
+			ft_memcmp(g_cipherTable[i].cipher->oid.data, oid, oidLen) == 0) {
+			return (g_cipherTable[i].cipher);
+		}
+		if (g_cipherTable[i].cipher->oiwOid.len == oidLen &&
+			ft_memcmp(g_cipherTable[i].cipher->oiwOid.data, oid, oidLen) == 0) {
+			return (g_cipherTable[i].cipher);
+		}
 	}
 	return (NULL);
 }

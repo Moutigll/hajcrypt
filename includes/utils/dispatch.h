@@ -1,5 +1,5 @@
-#ifndef HAJCRYPT_CLI_CLIENT_H
-#define HAJCRYPT_CLI_CLIENT_H
+#ifndef HAJCRYPT_DISPATCH_H
+#define HAJCRYPT_DISPATCH_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -11,6 +11,7 @@
 typedef enum e_algo
 {
 	ALGO_NONE,
+	ALGO_GENRSA,
 	ALGO_MD5,
 	ALGO_SHA256,
 	ALGO_WHIRLPOOL,
@@ -107,4 +108,43 @@ const t_hash	*getHashByAlgo(t_algo algo);
  */
 const t_cipher	*getCipherByAlgo(t_algo algo);
 
-#endif /* HAJCRYPT_CLI_CLIENT_H */
+/**
+ * @brief Retrieves a hash structure based on the specified name.
+ * 
+ * @param name The name of the hash to look up (e.g., "sha256").
+ * 
+ * @return A pointer to a constant t_hash structure matching the given name,
+ *         or NULL if the name is not found.
+ */
+const t_hash *getHashByName(const char *name);
+
+/**
+ * @brief Retrieves a cipher structure based on the specified name.
+ * 
+ * @param name The name of the cipher to look up (e.g., "aes-256-cbc").
+ * 
+ * @return A pointer to a constant t_cipher structure matching the given name,
+ *         or NULL if the name is not found.
+ */
+const t_cipher *getCipherByName(const char *name);
+
+/**
+ * @brief Retrieves the name of the algorithm as a string.
+ * 
+ * @param algo The algorithm enumeration value.
+ * @return const char* A pointer to a null-terminated string containing the name of the algorithm.
+ */
+const char *getAlgoName(t_algo algo);
+
+/**
+ * @brief Retrieves a cipher structure based on the specified OID.
+ * 
+ * @param oid The OID to look up, represented as a byte array.
+ * @param oidLen The length of the OID in bytes.
+ * 
+ * @return A pointer to a constant t_cipher structure matching the given OID,
+ *         or NULL if the OID is not found.
+ */
+const t_cipher *getCipherByOid(const uint8_t *oid, size_t oidLen);
+
+#endif /* HAJCRYPT_DISPATCH_H */

@@ -6,7 +6,11 @@
 
 #include "hash.h"
 
-extern const t_hash g_sha256Hash;
+#define SHA256_DIGEST_INFO_HEADER_LEN 19
+#define SHA256_DIGEST_LEN 32
+
+extern const t_hash		g_sha256Hash;
+extern const uint8_t	g_sha256DigestInfoHeader[];
 
 /* SHA-256 context structure to hold state during hashing.
  * Contains:

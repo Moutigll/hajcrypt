@@ -2,24 +2,8 @@
 #include <unistd.h>
 
 #include "../../hajlib/include/hajlib.h"	/* IWYU pragma: keep */
+
 #include "../../includes/cli/parser.h"
-
-const char *getAlgoName(t_algo algo)
-{
-	for (size_t i = 0; g_hashTable[i].hash; i++)
-	{
-		if (g_hashTable[i].algo == algo)
-			return (g_hashTable[i].hash->name);
-	}
-
-	for (size_t i = 0; g_cipherTable[i].cipher; i++)
-	{
-		if (g_cipherTable[i].algo == algo)
-			return (g_cipherTable[i].cipher->name);
-	}
-
-	return (NULL);
-}
 
 void printAlgoName(t_algo algo)
 {
@@ -29,7 +13,7 @@ void printAlgoName(t_algo algo)
 		return;
 	
 	while (*name) {
-		ft_putchar_fd(ft_toupper(*name), STDOUT_FILENO);
+		ft_putchar_fd(ft_toupper(*name), STDERR_FILENO);
 		name++;
 	}
 }
@@ -110,7 +94,7 @@ static void	printUsage(void)
 	char	prevRoot[32];
 	char	currRoot[32];
 
-	ft_printf("Standard commands:\n");
+	ft_printf("Standard commands:\n\tgenrsa\n\trsa\n\trsautl/pkeyutl\n");
 	
 	ft_printf("\nMessage Digest commands:\n");
 	i = 0;
@@ -173,6 +157,8 @@ static void	printUsage(void)
 	"\t-o <file>\tOutput file\n"
 	"\t-a\t\tBase64 encode/decode input/output\n"
 	"\t-v <iv>\t\tIV in hex (for ciphers that use IV)\n"
+	"\t-b\t\tFor hashes, output binary instead of hex\n"
+	"\t-h\t\tShow this help message\n"
 	);
 }
 
@@ -196,6 +182,7 @@ static int initSslOptions(t_sslOptions *opts, int argc)
 	opts->flagP = 0;
 	opts->flagQ = 0;
 	opts->flagR = 0;
+	opts->flagB = 0;
 	opts->readFromStdin = 0;
 	opts->stringInputs = NULL;
 	opts->stringCount = 0;
@@ -246,9 +233,56 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 		}
 	}
 
+	if (ft_strcmp(arg, "genrsa") == 0) {
+		opts->algo = ALGO_GENRSA;
+		opts->cmdType = CMD_GENRSA;
+		return (0);
+	}
+
+	if (ft_strcmp(arg, "rsa") == 0) {
+		opts->algo = ALGO_NONE;
+		opts->cmdType = CMD_RSA;
+		return (0);
+	}
+
+	if (ft_strcmp(arg, "pkeyutl") == 0 || ft_strcmp(arg, "rsautl") == 0) {
+		opts->algo = ALGO_NONE;
+		opts->cmdType = CMD_PKEYUTL;
+		return (0);
+	}
+
 	ft_dprintf(STDERR_FILENO, "ft_ssl: Error: '%s' is an invalid command.\n\n", arg);
 	printUsage();
 	return (1);
+}
+
+static int listCmd(int argc, char **argv)
+{
+	if (argc < 3)
+	{
+		ft_dprintf(STDERR_FILENO, "ft_ssl: list: missing argument\n");
+		return (1);
+	}
+	if (ft_strcmp(argv[2], "commands") == 0)
+	{
+		ft_printf("genrsa\nrsa\nrsautl\npkeyutl\n");
+	}
+	else if (ft_strcmp(argv[2], "hashes") == 0)
+	{
+		for (int i = 0; g_hashTable[i].hash; i++)
+			ft_printf("%s\n", g_hashTable[i].hash->name);
+	}
+	else if (ft_strcmp(argv[2], "ciphers") == 0)
+	{
+		for (int i = 0; g_cipherTable[i].cipher; i++)
+			ft_printf("%s\n", g_cipherTable[i].cipher->name);
+	}
+	else
+	{
+		ft_dprintf(STDERR_FILENO, "ft_ssl: list: unknown argument '%s'\n", argv[2]);
+		return (1);
+	}
+	return (0);
 }
 
 /**
@@ -273,6 +307,9 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		return (1);
 	}
 
+	if (ft_strcmp(argv[1], "list") == 0)
+		return listCmd(argc, argv);
+
 	if (initSslOptions(opts, argc) != 0)
 	{
 		ft_dprintf(STDERR_FILENO, "ft_ssl: memory allocation failed\n");
@@ -291,10 +328,13 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		return (0);
 	}
 
+	if (opts->cmdType == CMD_RSA|| opts->cmdType == CMD_PKEYUTL || opts->cmdType == CMD_GENRSA)
+		return (0); /* RSA and PKEYUTL have their own argument parsing */
+
 	if (opts->cmdType == CMD_HASH)
-		shortOpts = "pqrs:";
+		shortOpts = "pqrs:bh";
 	else
-		shortOpts = "p:qreds:k:i:o:v:a";
+		shortOpts = "p:qreds:k:i:o:v:ah";
 
 	ft_getoptInit(&st, argc - 2, argv + 2);
 	st.index = 0; /* reset index to start of options (argv[2]) */
@@ -317,7 +357,18 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		}
 
 		if (status == FT_GETOPT_POSITIONAL)
-			break; /* stop option parsing on first non-option */
+		{
+			if (opts->fileCount < opts->maxInputs)
+				opts->fileInputs[opts->fileCount++] = st.argv[st.index];
+			else
+			{
+				ft_dprintf(STDERR_FILENO, "ft_ssl: too many inputs\n");
+				freeSslOptions(opts);
+				return (1);
+			}
+			st.index++;
+			continue;
+		}
 
 		if (status == FT_GETOPT_OK)
 		{
@@ -391,6 +442,13 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 				case 'a':
 					opts->useBase64 = 1;
 					break;
+				case 'b':
+					opts->flagB = 1;
+					break;
+				case 'h':
+					printUsage();
+					freeSslOptions(opts);
+					return (0);
 
 				case 's':
 					if (st.optArg)

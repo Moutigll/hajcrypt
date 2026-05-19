@@ -71,9 +71,11 @@ void	aesCtrFinal(void *vctx, uint8_t *out, size_t *outLen)
 	*outLen = 0;
 }
 
-#define AES_CTR_CIPHER(nameStr, size) {		\
+#define AES_CTR_CIPHER(nameStr, size, oidDef) {		\
 	.name			= nameStr,				\
 	.mode			= CIPHER_MODE_CTR,		\
+	.oid			= oidDef,				\
+	.oiwOid			= OID_NONE,				\
 	.isEncoder		= 1,					\
 	.blockSize		= AES_BLOCK_SIZE,		\
 	.keySize		= size,					\
@@ -88,6 +90,6 @@ void	aesCtrFinal(void *vctx, uint8_t *out, size_t *outLen)
 	.supportsWrap	= 0						\
 }
 
-const t_cipher g_aes128CtrCipher	= AES_CTR_CIPHER("aes-128-ctr", AES_KEY_SIZE_128);
-const t_cipher g_aes192CtrCipher	= AES_CTR_CIPHER("aes-192-ctr", AES_KEY_SIZE_192);
-const t_cipher g_aes256CtrCipher	= AES_CTR_CIPHER("aes-256-ctr", AES_KEY_SIZE_256);
+const t_cipher g_aes128CtrCipher	= AES_CTR_CIPHER("aes-128-ctr", AES_KEY_SIZE_128, OID_DEF("AES-128-CTR", AES128_CTR_OID));
+const t_cipher g_aes192CtrCipher	= AES_CTR_CIPHER("aes-192-ctr", AES_KEY_SIZE_192, OID_DEF("AES-192-CTR", AES192_CTR_OID));
+const t_cipher g_aes256CtrCipher	= AES_CTR_CIPHER("aes-256-ctr", AES_KEY_SIZE_256, OID_DEF("AES-256-CTR", AES256_CTR_OID));

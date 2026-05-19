@@ -64,3 +64,40 @@ int	hajSecRandBytes(uint8_t *buf, size_t len)
 
 	return (0);
 }
+
+uint64_t hajRandomUint64(void)
+{
+	uint64_t value = 0;
+	
+	if (hajSecRandBytes((uint8_t *)&value, sizeof(value)) != 0)
+		return (0);   /* On error, return 0 (caller may retry) */
+	
+	return (value);
+}
+
+uint64_t hajRandomRange(uint64_t min, uint64_t max)
+{
+	uint64_t	range;
+	uint64_t	limit;
+	uint64_t	value;
+	
+	if (min >= max)
+		return (min);
+
+	if (max == UINT64_MAX && min == 0) /* Avoid modulo by zero */
+		return (hajRandomUint64());
+
+	range = max - min + 1;
+	limit = UINT64_MAX - (UINT64_MAX % range);
+	
+	do {
+		value = hajRandomUint64();
+		if (value == 0 && hajRandomUint64() == 0 && hajRandomUint64() == 0)
+		{
+			/* Multiple consecutive errors - fallback to modulo (biased but better than hang) */
+			return (min + (hajRandomUint64() % range));
+		}
+	} while (value >= limit);
+	
+	return (min + (value % range));
+}

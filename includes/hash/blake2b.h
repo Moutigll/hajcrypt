@@ -10,7 +10,17 @@
 #define BLAKE2B_DIGEST_SIZE 64
 #define BLAKE2B_KEY_SIZE 64
 
+#define BLAKE2B_OUTLEN_160    20
+#define BLAKE2B_OUTLEN_256    32
+#define BLAKE2B_OUTLEN_384    48
+#define BLAKE2B_OUTLEN_512    64
+
 extern const t_hash g_blake2bHash;
+
+extern const t_hash g_blake2b160Hash;
+extern const t_hash g_blake2b256Hash;
+extern const t_hash g_blake2b384Hash;
+extern const t_hash g_blake2b512Hash;
 
 /**
  * @brief Blake2b context structure
@@ -40,6 +50,17 @@ typedef struct s_blake2bCtx {
  */
 void	blake2bInit(void *ctx);
 
+void	blake2bInit160(void *ctx);
+void	blake2bInit256(void *ctx);
+void	blake2bInit384(void *ctx);
+void	blake2bInit512(void *ctx);
+
+/**
+ * @brief Set the output length for Blake2b context
+ * 
+ * @param ctx Pointer to context structure
+ * @param outlen Desired output length in bytes (1-64)
+ */
 void	blake2bSetOutlen(void *ctx, size_t outlen);
 
 /**

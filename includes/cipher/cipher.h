@@ -1,8 +1,8 @@
 #ifndef HAJCRYPT_CIPHER_H
 #define HAJCRYPT_CIPHER_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include "../hajcrypt.h"
+#include "../x509/oid.h"
 
 /**
  * @enum t_cipherMode
@@ -138,6 +138,8 @@ typedef struct s_cipher
 	/* Identification */
 	char			*name;
 	t_cipherMode	mode;
+	t_algoId		oid;		/* Optional OID for PKCS#8 compatibility */
+	t_algoId		oiwOid;		/* Optional OIW OID for legacy compatibility */
 	int				isEncoder;	/* 1 if this cipher can be used for encryption, 0 otherwise */
 	
 	/* Sizes */

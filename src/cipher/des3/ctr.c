@@ -74,6 +74,8 @@ void des3CtrFree(void *vctx)
 const t_cipher g_des3CtrCipher = {
 	.name			= "des3-ctr",
 	.mode			= CIPHER_MODE_CTR,
+	.oid			= OID_NONE,
+	.oiwOid			= OID_NONE,
 	.isEncoder		= 1,
 	.blockSize		= 8,
 	.keySize		= 24,

@@ -69,6 +69,8 @@ void	desOfbFinal(void *vctx, uint8_t *out, size_t *outLen)
 const t_cipher g_desOfbCipher = {
 	.name			= "des-ofb",
 	.mode			= CIPHER_MODE_OFB,
+	.oid			= OID_DEF("DES-OFB", DES_OFB_NIST_OID),
+	.oiwOid			= OIW_DEF("DES-OFB", DES_OFB_OIW_OID),
 	.isEncoder		= 1,
 	.blockSize		= 8,
 	.keySize		= 8,

@@ -61,6 +61,12 @@ static testEntry_t all_tests[] = {
 	{"Bcrypt gen salt", testBcryptGenSalt},
 	{"Bcrypt edge cases", testBcryptEdgeCases},
 	{"Bcrypt hash with salt string", testBcryptHashWithSaltStr},
+	{"BigInt odd/even", testBigIntIsOddEven},
+	{"BigInt addition", testBigIntAdd},
+	{"BigInt subtraction", testBigIntSub},
+	{"BigInt multiplication", testBigIntMul},
+	{"BigInt division and modulus", testBigIntDivMod},
+	{"BigInt modular arithmetic", testModularArithmetic},
 	{NULL, NULL}
 };
 
