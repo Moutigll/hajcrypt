@@ -144,7 +144,10 @@ static int checkFermatDistance(const t_rsaKey *key)
 	if (!diff)
 		return (1);
 
-	bigIntSub(diff, key->p, key->q);
+	if (bigIntCmp(key->p, key->q) >= 0)
+		bigIntSub(diff, key->p, key->q);
+	else
+		bigIntSub(diff, key->q, key->p);
 	bigIntAbs(diff);
 
 	if (bigIntBitLength(diff) < (size_t)minBits) {

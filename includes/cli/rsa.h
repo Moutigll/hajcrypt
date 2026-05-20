@@ -19,7 +19,6 @@ typedef struct s_rsaOptions
 	const char		*passin;
 	const char		*passout;
 	const t_cipher	*cipher;		/* Cipher for encrypting private key (if any) */
-	char			*cipherName;	/* Name of the cipher specified on command line (e.g., "aes-256-cbc") */
 }	t_rsaOptions;
 
 typedef struct s_pkeyutlOptions

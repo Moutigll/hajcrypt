@@ -184,13 +184,6 @@ static int	parseRsaArgs(int argc, char **argv, t_rsaOptions *opt)
 				if (cipher)
 				{
 					opt->cipher = cipher;
-					if (opt->cipherName) free(opt->cipherName);
-					opt->cipherName = ft_strdup(st.badOpt);
-					if (!opt->cipherName)
-					{
-						ft_dprintf(STDERR_FILENO, "ft_ssl: rsa: memory allocation failed\n");
-						return (0);
-					}
 					st.index++; /* Move past the cipher argument */
 					continue;
 				}
@@ -283,7 +276,7 @@ int cmdRsa(int argc, char **argv, char **env)
 	/* 4. Initialize and load the key */
 	ft_bzero(&key, sizeof(t_rsaKey));
 	int keyRet = rsaKeyFromPem(pem, &key, !opt.pubin, passinPas);
-	if (keyRet == -2) {
+	if (keyRet == 2) {
 		ft_dprintf(STDERR_FILENO, "ft_ssl: rsa: password required for encrypted key\n");
 		char *prompt_pass = promptPassword("Enter password for encrypted key: ");
 		if (!prompt_pass) {
@@ -482,14 +475,6 @@ static int	parseGenrsaArgs(int				argc,
 				if (found)
 				{
 					*cipher = found;
-					if (opt->cipherName) free(opt->cipherName);
-					opt->cipherName = ft_strdup(st.badOpt);
-					if (!opt->cipherName)
-					{
-						ft_dprintf(STDERR_FILENO,
-							"ft_ssl: genrsa: memory allocation failed\n");
-						return (0);
-					}
 					st.index++;
 					continue;
 				}
@@ -631,6 +616,5 @@ int	cmdGenrsa(int argc, char **argv, char **env)
 	free(pem);
 	free(password);
 	rsaFreeKey(&key);
-	free(options.cipherName);
 	return (0);
 }

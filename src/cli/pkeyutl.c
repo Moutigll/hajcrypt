@@ -197,7 +197,7 @@ static int loadRsaKey(const char	*keyFile,
 
 	ret = rsaKeyFromPem(pem, key, wantPriv, password);
 
-	if (ret == -2)
+	if (ret == 2)
 	{
 		FT_PKEYUTL_ERR("password required for encrypted key\n");
 		if (password)
