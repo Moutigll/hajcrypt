@@ -36,11 +36,12 @@ LIB_SRC = \
 	$(SRC_DIR)/kdf/bcrypt.c \
 	$(SRC_DIR)/kdf/argon2.c \
 	$(SRC_DIR)/asymmetric/bigint.c \
+	$(SRC_DIR)/asymmetric/pkeyPem.c \
 	$(SRC_DIR)/asymmetric/primality.c \
 	$(SRC_DIR)/asymmetric/rsa/pkcs1Padding.c \
 	$(SRC_DIR)/asymmetric/rsa/cryptSign.c \
 	$(SRC_DIR)/asymmetric/rsa/keyCheck.c \
-	$(SRC_DIR)/asymmetric/rsa/x509.c \
+	$(SRC_DIR)/asymmetric/rsa/rsaPem.c \
 	$(SRC_DIR)/asymmetric/rsa/key.c \
 	$(SRC_DIR)/hash/common/padding.c \
 	$(SRC_DIR)/hash/common/endian.c \

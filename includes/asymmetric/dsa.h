@@ -1,9 +1,10 @@
 #ifndef HAJCRYPT_DSA_H
 # define HAJCRYPT_DSA_H
 
-#include "../hajcrypt.h"
-#include "bigint.h"
 #include "../cipher/cipher.h"
+#include "../hajcrypt.h"
+#include "pkeyPem.h"
+#include "bigint.h"
 
 #define DSA_OID_LEN 7	/* 1.2.840.10040.4.1 (id-dsa) */
 
@@ -21,6 +22,8 @@ typedef struct s_dsaKey {
 	t_bigInt	*priv;	/* private key x (0 < x < q) */
 	int			bits;	/* size of p in bits */
 }	t_dsaKey;
+
+extern const t_pkeyPemDef g_dsaPemDef;
 
 /**
  * @brief Generate a complete DSA key (parameters and key pair).

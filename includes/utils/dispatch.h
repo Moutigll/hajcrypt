@@ -7,6 +7,7 @@
 #include "../hash/hmac.h"
 #include "../hash/hash.h"
 #include "../cipher/cipher.h"
+#include "../asymmetric/pkeyPem.h"
 
 typedef enum e_algo
 {
@@ -85,8 +86,15 @@ typedef struct s_cipherDispatch
 	const t_cipher	*cipher;
 }	t_cipherDispatch;
 
-extern const	t_hashDispatch g_hashTable[];
-extern const	t_cipherDispatch g_cipherTable[];
+typedef struct s_pkeyPemDispatch
+{
+	t_pkeyType			type;
+	const t_pkeyPemDef	*def;
+}	t_pkeyPemDispatch;
+
+extern const	t_hashDispatch		g_hashTable[];
+extern const	t_cipherDispatch	g_cipherTable[];
+extern const	t_pkeyPemDispatch	g_pkeyPemTable[];
 
 /**
  * @brief Retrieves a hash structure based on the specified algorithm.
@@ -146,5 +154,37 @@ const char *getAlgoName(t_algo algo);
  *         or NULL if the OID is not found.
  */
 const t_cipher *getCipherByOid(const uint8_t *oid, size_t oidLen);
+
+/**
+ * @brief Retrieves a PEM key definition based on the specified key type.
+ * 
+ * @param type The key type to look up.
+ * 
+ * @return A pointer to a constant t_pkeyPemDef structure matching the given type,
+ *         or NULL if the type is not found.
+ */
+const t_pkeyPemDef *getPkeyPemDefByPkeyType(t_pkeyType type);
+
+/**
+ * @brief Retrieves a PEM key definition based on the specified traditional PEM label.
+ * 
+ * @param label The traditional PEM label to look up (e.g., "RSA PRIVATE KEY").
+ * @param isPrivate Flag indicating if the key is private (1) or public (0).
+ * 
+ * @return A pointer to a constant t_pkeyPemDef structure matching the given label,
+ *         or NULL if the label is not found.
+ */
+const t_pkeyPemDef *getPkeyPemDefFromPkcs1Label(const char *label, int isPrivate);
+
+/**
+ * @brief Retrieves a PEM key definition based on the specified OID.
+ * 
+ * @param oid The OID to look up, represented as a byte array.
+ * @param oidLen The length of the OID in bytes.
+ * 
+ * @return A pointer to a constant t_pkeyPemDef structure matching the given OID,
+ *         or NULL if the OID is not found.
+ */
+const t_pkeyPemDef *getPkeyPemDefFromOid(const uint8_t *oid, size_t oidLen);
 
 #endif /* HAJCRYPT_DISPATCH_H */

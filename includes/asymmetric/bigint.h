@@ -429,4 +429,18 @@ int		bigIntAbs(t_bigInt *n);
  */
 int		bigIntSqrtNewton(t_bigInt *result, const t_bigInt *n);
 
+/**
+ * Convert a big integer to a DER-encoded ASN.1 INTEGER.
+ *
+ * This function computes the minimum byte length required to represent
+ * the given big integer, serializes it to a big-endian byte array, and
+ * then wraps it using ASN.1 DER INTEGER encoding.
+ *
+ * @param n       Pointer to the big integer to encode.
+ * @param outLen  Output pointer that receives the length of the DER buffer.
+ * @return        Newly allocated DER-encoded buffer on success, or NULL
+ *                on allocation failure.
+ */
+uint8_t	*bigIntToDerInteger(const t_bigInt *n, size_t *outLen);
+
 #endif

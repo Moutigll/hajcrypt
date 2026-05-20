@@ -1,8 +1,10 @@
-#include "../../includes/asymmetric/bigint.h"
 #include "../../hajlib/include/hmemory.h"
 #include "../../hajlib/include/hstring.h"
 #include "../../includes/utils/random.h"
 #include "../../includes/utils/utils.h"
+#include "../../includes/x509/asn1.h"
+
+#include "../../includes/asymmetric/bigint.h"
 
 /**
  * @brief Shifts a big integer left by a specified number of bits.
@@ -1133,4 +1135,17 @@ int	bigIntSqrtNewton(t_bigInt *result, const t_bigInt *n)
 	bigIntFree(temp);
 	
 	return (1);
+}
+
+uint8_t	*bigIntToDerInteger(const t_bigInt *n, size_t *outLen)
+{
+	size_t	len = (bigIntBitLength(n) + 7) / 8;
+
+	if (len == 0) len = 1;
+	uint8_t *data = malloc(len);
+	if (!data) return (NULL);
+	bigIntToBytes(n, data, len);
+	uint8_t *der = asn1EncodeInteger(data, len, outLen);
+	free(data);
+	return (der);
 }

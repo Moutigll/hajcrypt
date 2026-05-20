@@ -1,11 +1,10 @@
 #ifndef HAJCRYPT_RSA_H
 # define HAJCRYPT_RSA_H
 
-#include "../hajcrypt.h"
-#include "bigint.h"
 #include "../cipher/cipher.h"
-
-#define RSA_OID_LEN 9
+#include "../hajcrypt.h"
+#include "pkeyPem.h"
+#include "bigint.h"
 
 typedef struct s_rsaKey {
 	t_bigInt	*n;		/* modulus */
@@ -18,6 +17,8 @@ typedef struct s_rsaKey {
 	t_bigInt	*qinv;	/* q^-1 mod p */
 	int			bits;	/* key size in bits */
 }	t_rsaKey;
+
+extern const t_pkeyPemDef g_rsaPemDef;
 
 /**
  * @brief Encode an RSA key (public or private) into PEM format.
@@ -89,7 +90,7 @@ char		*rsaKeyToPem(t_rsaKey		*key,
  * @param isPrivate Set to 1 if the PEM contains a private key, 0 for public key.
  * @param password Optional password for decrypting the private key. Ignored for public keys.
  *
- * @return 1 if parsing is successful, 0 on failure (e.g., invalid format, decryption failure).
+ * @return 0 on failure, 1 on success, 2 if a password is needed
  */
 int			rsaKeyFromPem(const char *pem, t_rsaKey *key, int isPrivate, const char *password);
 

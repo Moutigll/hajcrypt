@@ -12,6 +12,10 @@
 #include "../includes/cipher/aes.h"
 #include "../includes/cipher/blowfish.h"
 
+#include "../includes/asymmetric/rsa.h"
+#include "../includes/asymmetric/dsa.h"
+
+
 #include "../includes/utils/dispatch.h"
 
 const t_hashDispatch g_hashTable[] = {
@@ -20,6 +24,12 @@ const t_hashDispatch g_hashTable[] = {
 	{ ALGO_WHIRLPOOL,	&g_whirlpoolHash },
 	{ ALGO_BLAKE2B,	&g_blake2bHash },
 	{ ALGO_NONE,		NULL }
+};
+
+const t_pkeyPemDispatch g_pkeyPemTable[] = {
+	{ PKEY_TYPE_RSA,		&g_rsaPemDef },
+	//{ PKEY_TYPE_DSA,		&g_dsaPemDef },
+	{ PKEY_TYPE_UNKNOWN,	NULL }
 };
 
 const t_cipherDispatch g_cipherTable[] = {
@@ -170,6 +180,45 @@ const t_cipher *getCipherByOid(const uint8_t *oid, size_t oidLen)
 		if (g_cipherTable[i].cipher->oiwOid.len == oidLen &&
 			ft_memcmp(g_cipherTable[i].cipher->oiwOid.data, oid, oidLen) == 0) {
 			return (g_cipherTable[i].cipher);
+		}
+	}
+	return (NULL);
+}
+
+const t_pkeyPemDef *getPkeyPemDefByPkeyType(t_pkeyType type)
+{
+	for (size_t i = 0; g_pkeyPemTable[i].def; i++) {
+		if (g_pkeyPemTable[i].type == type) {
+			return (g_pkeyPemTable[i].def);
+		}
+	}
+	return (NULL);
+}
+
+const t_pkeyPemDef *getPkeyPemDefFromPkcs1Label(const char *label, int isPrivate)
+{
+	if (isPrivate) {
+		for (size_t i = 0; g_pkeyPemTable[i].def; i++) {
+			if (ft_strcmp(g_pkeyPemTable[i].def->tradPrivLabel, label) == 0) {
+				return (g_pkeyPemTable[i].def);
+			}
+		}
+	} else {
+		for (size_t i = 0; g_pkeyPemTable[i].def; i++) {
+			if (ft_strcmp(g_pkeyPemTable[i].def->tradPubLabel, label) == 0) {
+				return (g_pkeyPemTable[i].def);
+			}
+		}
+	}
+	return (NULL);
+}
+
+const t_pkeyPemDef *getPkeyPemDefFromOid(const uint8_t *oid, size_t oidLen)
+{
+	for (size_t i = 0; g_pkeyPemTable[i].def; i++) {
+		if (g_pkeyPemTable[i].def->oid.len == oidLen &&
+			ft_memcmp(g_pkeyPemTable[i].def->oid.data, oid, oidLen) == 0) {
+			return (g_pkeyPemTable[i].def);
 		}
 	}
 	return (NULL);
