@@ -94,7 +94,7 @@ static void	printUsage(void)
 	char	prevRoot[32];
 	char	currRoot[32];
 
-	ft_printf("Standard commands:\n\tgenrsa\n\trsa\n\trsautl/pkeyutl\n");
+	ft_printf("Standard commands:\n\tgendsa\n\tgenrsa\n\trsa\n\trsautl/pkeyutl\n");
 	
 	ft_printf("\nMessage Digest commands:\n");
 	i = 0;
@@ -233,9 +233,8 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 		}
 	}
 
-	if (ft_strcmp(arg, "genrsa") == 0) {
-		opts->algo = ALGO_GENRSA;
-		opts->cmdType = CMD_GENRSA;
+	if (ft_strcmp(arg, "genrsa") == 0 || ft_strcmp(arg, "gendsa") == 0) {
+		opts->cmdType = CMD_GENPKEY;
 		return (0);
 	}
 
@@ -328,7 +327,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		return (0);
 	}
 
-	if (opts->cmdType == CMD_RSA|| opts->cmdType == CMD_PKEYUTL || opts->cmdType == CMD_GENRSA)
+	if (opts->cmdType == CMD_RSA|| opts->cmdType == CMD_PKEYUTL || opts->cmdType == CMD_GENPKEY)
 		return (0); /* RSA and PKEYUTL have their own argument parsing */
 
 	if (opts->cmdType == CMD_HASH)

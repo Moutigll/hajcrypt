@@ -7,12 +7,11 @@
 #include "../hash/hmac.h"
 #include "../hash/hash.h"
 #include "../cipher/cipher.h"
-#include "../asymmetric/pkeyPem.h"
+#include "../asymmetric/pkey.h"
 
 typedef enum e_algo
 {
 	ALGO_NONE,
-	ALGO_GENRSA,
 	ALGO_MD5,
 	ALGO_SHA256,
 	ALGO_WHIRLPOOL,
@@ -86,15 +85,15 @@ typedef struct s_cipherDispatch
 	const t_cipher	*cipher;
 }	t_cipherDispatch;
 
-typedef struct s_pkeyPemDispatch
+typedef struct s_pkeyDispatch
 {
-	t_pkeyType			type;
-	const t_pkeyPemDef	*def;
-}	t_pkeyPemDispatch;
+	t_pkeyType		type;
+	const t_pkeyDef	*def;
+}	t_pkeyDispatch;
 
 extern const	t_hashDispatch		g_hashTable[];
 extern const	t_cipherDispatch	g_cipherTable[];
-extern const	t_pkeyPemDispatch	g_pkeyPemTable[];
+extern const	t_pkeyDispatch		g_pkeyPemTable[];
 
 /**
  * @brief Retrieves a hash structure based on the specified algorithm.
@@ -127,6 +126,17 @@ const t_cipher	*getCipherByAlgo(t_algo algo);
 const t_hash *getHashByName(const char *name);
 
 /**
+ * @brief Retrieves a hash structure based on the specified OID.
+ * 
+ * @param oid The OID to look up, represented as a byte array.
+ * @param oidLen The length of the OID in bytes.
+ * 
+ * @return A pointer to a constant t_hash structure matching the given OID,
+ *         or NULL if the OID is not found.
+ */
+const t_hash *getHashByOid(const uint8_t *oid, size_t oidLen);
+
+/**
  * @brief Retrieves a cipher structure based on the specified name.
  * 
  * @param name The name of the cipher to look up (e.g., "aes-256-cbc").
@@ -156,35 +166,30 @@ const char *getAlgoName(t_algo algo);
 const t_cipher *getCipherByOid(const uint8_t *oid, size_t oidLen);
 
 /**
- * @brief Retrieves a PEM key definition based on the specified key type.
- * 
- * @param type The key type to look up.
- * 
- * @return A pointer to a constant t_pkeyPemDef structure matching the given type,
- *         or NULL if the type is not found.
+ * @brief Find an algorithm definition by its OID.
+ *
+ * @param oid    DER-encoded OID bytes.
+ * @param oidLen Length of @p oid.
+ * @return Pointer to the matching definition, or NULL if not found.
  */
-const t_pkeyPemDef *getPkeyPemDefByPkeyType(t_pkeyType type);
+const t_pkeyDef	*getPkeyDefByOid(const uint8_t *oid, size_t oidLen);
 
 /**
- * @brief Retrieves a PEM key definition based on the specified traditional PEM label.
- * 
- * @param label The traditional PEM label to look up (e.g., "RSA PRIVATE KEY").
- * @param isPrivate Flag indicating if the key is private (1) or public (0).
- * 
- * @return A pointer to a constant t_pkeyPemDef structure matching the given label,
- *         or NULL if the label is not found.
+ * @brief Find an algorithm definition by its human-readable name.
+ *
+ * @param name  Algorithm name ("RSA", "DSA", …).
+ * @return Pointer to the matching definition, or NULL if not found.
  */
-const t_pkeyPemDef *getPkeyPemDefFromPkcs1Label(const char *label, int isPrivate);
+const t_pkeyDef	*getPkeyDefByName(const char *name);
 
 /**
- * @brief Retrieves a PEM key definition based on the specified OID.
+ * @brief Retrieves the public key definition structure based on the given key type.
  * 
- * @param oid The OID to look up, represented as a byte array.
- * @param oidLen The length of the OID in bytes.
+ * @param type The type of the public key to look up.
  * 
- * @return A pointer to a constant t_pkeyPemDef structure matching the given OID,
- *         or NULL if the OID is not found.
+ * @return A pointer to the constant public key definition structure (t_pkeyDef)
+ *         corresponding to the specified type, or NULL if the type is not found.
  */
-const t_pkeyPemDef *getPkeyPemDefFromOid(const uint8_t *oid, size_t oidLen);
+const t_pkeyDef	*getPkeyDefByType(t_pkeyType type);
 
 #endif /* HAJCRYPT_DISPATCH_H */

@@ -5,7 +5,7 @@
 #include "../../hajlib/include/hajlib.h"	/* IWYU pragma: keep */
 #include "../../includes/cli/password.h"
 #include "../../includes/utils/utils.h"
-#include "../../includes/cli/rsa.h"
+#include "../../includes/cli/pkey.h"
 #include "../../includes/asymmetric/rsa.h"
 
 #define FT_PKEYUTL_ERR(...) ft_dprintf(STDERR_FILENO, "ft_ssl: pkeyutl: " __VA_ARGS__)
@@ -389,12 +389,12 @@ int cmdPkeyutl(int argc, char **argv, char **env)
 	/* 4. Perform the requested operation */
 	if (opt.encrypt)
 	{
-		if (!rsaEncryptPkcs1v15(in, inLen, &key, out, &outLen))
+		if (!rsaEncrypt(in, inLen, &key, out, &outLen, PKEY_PADDING_PKCS1V15))
 			{FT_PKEYUTL_ERR("RSA encryption failed\n"); ret = 1; goto cleanup;}
 	}
 	else if (opt.decrypt)
 	{
-		if (!rsaDecryptPkcs1v15(in, inLen, &key, out, &outLen))
+		if (!rsaDecrypt(in, inLen, &key, out, &outLen, PKEY_PADDING_PKCS1V15))
 			{FT_PKEYUTL_ERR("RSA decryption failed\n"); ret = 1; goto cleanup;}
 	}
 	else if (opt.sign)
@@ -402,7 +402,7 @@ int cmdPkeyutl(int argc, char **argv, char **env)
 		algo = getDigestOid(opt.dgstName);
 		if (!algo)
 			algo = getDigestOid("sha256");
-		if (!rsaSignPkcs1v15(in, inLen, algo, &key, out, &outLen))
+		if (!rsaSign(in, inLen, algo, &key, out, &outLen, PKEY_PADDING_PKCS1V15))
 			{FT_PKEYUTL_ERR("RSA signing failed\n"); ret = 1; goto cleanup;}
 	}
 	else if (opt.verify)
@@ -413,7 +413,7 @@ int cmdPkeyutl(int argc, char **argv, char **env)
 		if (!algo)
 			algo = getDigestOid("sha256");
 		ret = 0;
-		if (rsaVerifyPkcs1v15(in, inLen, algo, &key, sig, &sigLen))
+		if (rsaVerify(in, inLen, algo, &key, sig, sigLen, PKEY_PADDING_PKCS1V15))
 			ft_printf("Verified OK\n");
 		else
 		{

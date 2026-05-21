@@ -13,6 +13,7 @@ _ft_ssl_build_command_list()
 
 	standard_cmds=(
 		'list:List available groups'
+		'gendsa:Generate DSA private key'
 		'genrsa:Generate RSA private key'
 		'rsa:RSA key management'
 		'rsautl:RSA utility'
@@ -115,6 +116,26 @@ _ft_ssl_genrsa_opts()
 	fi
 }
 
+_ft_ssl_gendsa_opts()
+{
+	_arguments \
+		'-o+[Output file]:file:_files' \
+		'--out=[Output file]:file:_files' \
+		'-p+[Password]:password:' \
+		'--passout=[Password]:password:' \
+		'-P+[Output public key file]:file:_files' \
+		'--pubout=[Output public key file]:file:_files' \
+		'-t[Use traditional PEM format (PKCS#1)]' \
+		'--traditional[Use traditional PEM format (PKCS#1)]' \
+		'-h[Show help]' \
+		'--help[Show help]' \
+		'*:key size:(1024 2048 3072)'
+
+	if [[ $PREFIX == --* ]]; then
+		_ft_ssl_complete_prefixed_ciphers
+	fi
+}
+
 _ft_ssl_rsa_opts()
 {
 	_arguments \
@@ -211,6 +232,9 @@ case "$cmd" in
 		;;
 	genrsa)
 		_ft_ssl_genrsa_opts
+		;;
+	gendsa)
+		_ft_ssl_gendsa_opts
 		;;
 	*)
 		_ft_ssl_cipher_opts

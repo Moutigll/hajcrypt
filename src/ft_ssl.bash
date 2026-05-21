@@ -132,6 +132,9 @@ _ft_ssl_completion()
 		genrsa)
 			COMPREPLY=($(compgen -W "-h --help" -- "$cur"))
 			;;
+		gendsa)
+			COMPREPLY=($(compgen -W "-h --help" -- "$cur"))
+			;;
 		*)
 			COMPREPLY=($(compgen -f -- "$cur"))
 			;;

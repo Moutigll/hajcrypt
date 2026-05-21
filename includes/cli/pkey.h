@@ -21,6 +21,14 @@ typedef struct s_rsaOptions
 	const t_cipher	*cipher;		/* Cipher for encrypting private key (if any) */
 }	t_rsaOptions;
 
+typedef struct s_genpkeyOpts
+{
+	char		*outFile;
+	char		*pubOutFile;
+	char		*passout;
+	int			traditional;
+}	t_genpkeyOpts;
+
 typedef struct s_pkeyutlOptions
 {
 	const char	*inFile;
@@ -41,16 +49,16 @@ typedef struct s_pkeyutlOptions
 }	t_pkeyutlOptions;
 
 /**
- * @brief Generates an RSA key pair based on the provided options.
+ * @brief Generates an asymmetric key pair based on the specified algorithm and options.
  *
  * @param argc The number of command-line arguments.
  * @param argv An array of pointers to command-line argument strings.
  * @param env An array of pointers to environment variable strings.
  *
- * @return Returns 0 on successful RSA key pair generation, or a non-zero
+ * @return Returns 0 on successful asymmetric key pair generation, or a non-zero
  *         error code on failure.
  */
-int cmdGenrsa(int argc, char **argv, char **env);
+int	cmdGenPkey(int argc, char **argv, char **env);
 
 /**
  * @brief Executes the RSA command based on the provided command-line arguments.

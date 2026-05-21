@@ -36,13 +36,16 @@ LIB_SRC = \
 	$(SRC_DIR)/kdf/bcrypt.c \
 	$(SRC_DIR)/kdf/argon2.c \
 	$(SRC_DIR)/asymmetric/bigint.c \
-	$(SRC_DIR)/asymmetric/pkeyPem.c \
 	$(SRC_DIR)/asymmetric/primality.c \
-	$(SRC_DIR)/asymmetric/rsa/pkcs1Padding.c \
+	$(SRC_DIR)/asymmetric/pem.c \
+	$(SRC_DIR)/asymmetric/pkey.c \
+	$(SRC_DIR)/asymmetric/rsa/rsaPadding.c \
 	$(SRC_DIR)/asymmetric/rsa/cryptSign.c \
 	$(SRC_DIR)/asymmetric/rsa/keyCheck.c \
 	$(SRC_DIR)/asymmetric/rsa/rsaPem.c \
 	$(SRC_DIR)/asymmetric/rsa/key.c \
+	$(SRC_DIR)/asymmetric/dsa/dsaPem.c \
+	$(SRC_DIR)/asymmetric/dsa/dsaKeygen.c \
 	$(SRC_DIR)/hash/common/padding.c \
 	$(SRC_DIR)/hash/common/endian.c \
 	$(SRC_DIR)/hash/md5/md5.c \
@@ -106,6 +109,7 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/prompt.c \
 	$(SRC_DIR)/cli/password.c \
 	$(SRC_DIR)/cli/rsa.c \
+	$(SRC_DIR)/cli/pkeyGen.c \
 	$(SRC_DIR)/cli/pkeyutl.c
 
 TEST_SRC = \
