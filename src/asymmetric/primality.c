@@ -2,7 +2,7 @@
 #include "../../hajlib/include/hprintf.h"
 #include "../../hajlib/include/hio.h"
 
-#include "../../includes/asymmetric/rsa.h"
+#include "../../includes/asymmetric/primality.h"
 
 static int isPrimeSmall(const t_bigInt *n)
 {
@@ -32,7 +32,7 @@ static int isPrimeSmall(const t_bigInt *n)
 	return (result);
 }
 
-int rsaIsPrimeMillerRabin(t_bigInt *n, int rounds)
+int hcIsPrimeMillerRabin(t_bigInt *n, int rounds)
 {
 	t_bigInt	*d, *a, *x, *nMinus1, *one, *two;
 	int			s = 0, result = 1;
@@ -105,7 +105,7 @@ end:
 	return (result);
 }
 
-t_bigInt *rsaGeneratePrime(int bits, double certainty)
+t_bigInt *hcGeneratePrime(int bits, double certainty)
 {
 	t_bigInt	*candidate;
 	int			rounds;
@@ -121,7 +121,7 @@ t_bigInt *rsaGeneratePrime(int bits, double certainty)
 	while (1) {
 		bigIntRandom(candidate, bits);
 		
-		if (rsaIsPrimeMillerRabin(candidate, rounds)) {
+		if (hcIsPrimeMillerRabin(candidate, rounds)) {
 			ft_dprintf(STDERR_FILENO, "++++++++++++\n");
 			return (candidate);
 		}
