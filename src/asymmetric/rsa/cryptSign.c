@@ -1,172 +1,260 @@
 #include <stdlib.h>
 
 #include "../../../hajlib/include/hmemory.h"
+#include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
+#include "../../../includes/asymmetric/pkey.h"
 
 #include "../../../includes/asymmetric/rsa.h"
 
-/**
- * @brief Performs RSA public key operation (encryption).
- *
- * Encrypts data using the RSA public key operation. The plaintext message is
- * converted to a big integer, raised to the power of the public exponent modulo
- * the RSA modulus, and the result is converted back to bytes.
- *
- * @param data	  Pointer to the input data (plaintext message).
- * @param dataLen   Length of the input data in bytes.
- * @param key	   Pointer to the RSA public key structure containing modulus (n)
- *				  and public exponent (e).
- * @param out	   Pointer to the output buffer where encrypted data is stored.
- * @param outLen	Pointer to size_t that receives the length of encrypted output
- *				  in bytes.
- * @return 1 on success, 0 on failure (memory allocation error).
- */
-static int rsaPublicOp(const uint8_t	*data,	size_t	dataLen,
-					   const t_rsaKey	*key,
-					   uint8_t			*out,	size_t	*outLen)
-{
-	t_bigInt	*m = bigIntFromBytes(data, dataLen);
-	t_bigInt	*c = bigIntNew(key->n->numWords + 1);
-	if (!m || !c)
-		goto fail;
 
+/**
+ * @brief Performs RSA public key operation on input data.
+ *
+ * Executes modular exponentiation using the public exponent and modulus
+ * (c = m^e mod n), converting input bytes to a big integer, computing the
+ * result, and serializing it back to a fixed-size byte array.
+ *
+ * @param data   Input buffer containing the message representative.
+ * @param dataLen Length of the input buffer in bytes.
+ * @param key    Pointer to the RSA public key.
+ * @param out    Output buffer for the resulting ciphertext representative.
+ * @param outLen Pointer to receive the number of bytes written to out.
+ *
+ * @return 1 on success, 0 on allocation failure.
+ */
+static int	rsaPublicOp(const uint8_t	*data,	size_t	dataLen,
+						const t_rsaKey	*key,
+						uint8_t			*out,	size_t	*outLen)
+{
+	t_bigInt	*m;
+	t_bigInt	*c;
+	size_t		k;
+
+	m = bigIntFromBytes(data, dataLen);
+	c = bigIntNew(key->n->numWords + 1);
+	if (!m || !c)
+	{
+		bigIntFree(m);
+		bigIntFree(c);
+		return (0);
+	}
 	bigIntModExp(c, m, key->e, key->n);
-	size_t k = rsaModulusBytes(key);
+	k = rsaModulusBytes(key);
 	*outLen = bigIntToBytes(c, out, k);
 	bigIntFree(m);
 	bigIntFree(c);
 	return (1);
-
-fail:
-	bigIntFree(m);
-	bigIntFree(c);
-	return (0);
 }
 
 /**
- * @brief Performs RSA private key operation (decryption).
+ * @brief Performs RSA private key operation on the input data.
  *
- * Decrypts data using the RSA private key operation. The ciphertext message is
- * converted to a big integer, raised to the power of the private exponent modulo
- * the RSA modulus, and the result is converted back to bytes.
+ * This function converts the input byte array into a big integer, computes the
+ * modular exponentiation using the private exponent and modulus (m = c^d mod n),
+ * and writes the result as a fixed-size byte array corresponding to the modulus
+ * length.
  *
- * @param data	  Pointer to the input data (ciphertext message).
- * @param dataLen   Length of the input data in bytes.
- * @param key	   Pointer to the RSA private key structure containing modulus (n),
- *				  private exponent (d), and public exponent (e).
- * @param out	   Pointer to the output buffer where decrypted data is stored.
- * @param outLen	Pointer to size_t that receives the length of decrypted output
- *				  in bytes.
- * @return 1 on success, 0 on failure (memory allocation error).
+ * @param data    Input data buffer to be processed.
+ * @param dataLen Length of the input data in bytes.
+ * @param key     RSA key containing the private exponent and modulus.
+ * @param out     Output buffer to receive the operation result.
+ * @param outLen  Pointer to receive the length of the output in bytes.
+ *
+ * @return 1 on success, 0 on failure (e.g., allocation error).
  */
-static int rsaPrivateOp(const uint8_t	*data,		size_t	dataLen,
-						const t_rsaKey	*key,
-						uint8_t			*out,		size_t	*outLen)
+static int	rsaPrivateOp(const uint8_t	*data,	size_t	dataLen,
+						 const t_rsaKey	*key,
+						 uint8_t		*out,	size_t	*outLen)
 {
-	t_bigInt	*c = bigIntFromBytes(data, dataLen);
-	t_bigInt	*m = bigIntNew(key->n->numWords + 1);
-	if (!c || !m)
-		goto fail;
+	t_bigInt	*c;
+	t_bigInt	*m;
+	size_t		k;
 
+	c = bigIntFromBytes(data, dataLen);
+	m = bigIntNew(key->n->numWords + 1);
+	if (!c || !m)
+	{
+		bigIntFree(c);
+		bigIntFree(m);
+		return (0);
+	}
 	bigIntModExp(m, c, key->d, key->n);
-	size_t k = rsaModulusBytes(key);
+	k = rsaModulusBytes(key);
 	*outLen = bigIntToBytes(m, out, k);
 	bigIntFree(c);
 	bigIntFree(m);
 	return (1);
-
-fail:
-	bigIntFree(c);
-	bigIntFree(m);
-	return (0);
 }
 
-/* ---------- Crypt ---------- */
 
-int	rsaEncryptPkcs1v15(const uint8_t	*input,		size_t	inputLen,
-					   const t_rsaKey	*key,
-					   uint8_t			*output,	size_t	*outputLen)
+
+int	rsaEncrypt(const uint8_t	*input,		size_t	inputLen,
+			   const void		*key,
+			   uint8_t			*output,	size_t	*outputLen,
+			   t_pkeyPadding	padding)
 {
-	size_t	k = rsaModulusBytes(key);
-	uint8_t	*padded = malloc(k);
-	if (!padded) return (0);
+	const t_rsaKey	*rsa;
+	size_t			k;
+	uint8_t			*padded;
+	int				padOk;
+	int				opOk;
 
-	if (!rsaPkcs1v15PadEncrypt(input, inputLen, key, padded, k)) {
+	rsa = (const t_rsaKey *)key;
+	k = rsaModulusBytes(rsa);
+	padded = malloc(k);
+	if (!padded)
+		return (0);
+
+	/* Select padding function */
+	padOk = 0;
+	if (padding == PKEY_PADDING_PKCS1V15)
+		padOk = rsaPkcs1v15PadEncrypt(input, inputLen, rsa, padded, k);
+	else if (padding == PKEY_PADDING_OAEP)
+		padOk = rsaOaepPadEncrypt(input, inputLen, rsa, padded, k);
+	else
+	{
+		HAJCRYPT_DPRINT("rsaEncrypt: unsupported padding mode %d\n", padding);
 		free(padded);
 		return (0);
 	}
-
-	/* Apply public exponentiation */
-	int ret = rsaPublicOp(padded, k, key, output, outputLen);
+	if (!padOk)
+	{
+		free(padded);
+		return (0);
+	}
+	opOk = rsaPublicOp(padded, k, rsa, output, outputLen);
 	free(padded);
-	return (ret);
+	return (opOk);
 }
 
-int	rsaDecryptPkcs1v15(const uint8_t	*input,		size_t	inputLen,
-					   const t_rsaKey	*key,
-					   uint8_t			*output,	size_t	*outputLen)
+int	rsaDecrypt(const uint8_t	*input,		size_t	inputLen,
+			   const void		*key,
+			   uint8_t			*output,	size_t	*outputLen,
+			   t_pkeyPadding	padding)
 {
-	size_t	k = rsaModulusBytes(key);
+	const t_rsaKey	*rsa;
+	size_t			k;
+	uint8_t			*padded;
+	size_t			paddedLen;
+	int				unpadOk;
+
+	rsa = (const t_rsaKey *)key;
+	k = rsaModulusBytes(rsa);
 	if (inputLen != k)
 		return (0);
-
-	uint8_t	*padded = malloc(k);
-	if (!padded) return (0);
-
-	if (!rsaPrivateOp(input, k, key, padded, &k)) {
-		free(padded);
-		return (0);
-	}
-
-	int	ret = rsaPkcs1v15UnpadEncrypt(padded, k, output, outputLen);
-	free(padded);
-	return (ret);
-}
-
-/* ---------- Sign ---------- */
-
-int rsaSignPkcs1v15(const uint8_t	*digest,	size_t	digestLen,
-					const t_algoId	*digestAlgo,
-					const t_rsaKey	*key,
-					uint8_t			*sig,		size_t	*sigLen)
-{
-	size_t	k = rsaModulusBytes(key);
-	uint8_t	*padded = malloc(k);
-
+	padded = malloc(k);
 	if (!padded)
 		return (0);
-	if (!rsaPkcs1v15PadSign(digest, digestLen, digestAlgo, key, padded, k)) {
+	if (!rsaPrivateOp(input, k, rsa, padded, &paddedLen))
+	{
 		free(padded);
 		return (0);
 	}
-	int ret = rsaPrivateOp(padded, k, key, sig, sigLen);
-	free(padded);
-	return (ret);
-}
 
-int rsaVerifyPkcs1v15(const uint8_t		*digest,		size_t	digestLen,
-					  const t_algoId	*digestAlgo,
-					  const t_rsaKey	*key,
-					  const uint8_t		*sig,		size_t	*sigLen)
-{
-	size_t	k = rsaModulusBytes(key);
-
-	if (*sigLen != k)
-		return (0);
-	uint8_t	*padded = malloc(k);
-	if (!padded)
-		return (0);
-	size_t	paddedLen;
-	if (!rsaPublicOp(sig, *sigLen, key, padded, &paddedLen)) {
-		free(padded);
-		return (0);
-	}
-	uint8_t	recoveredDigest[64];	/* max 512-bit hash */
-	size_t	recoveredLen;
-	int		ret = rsaPkcs1v15UnpadSign(padded, k, recoveredDigest, &recoveredLen,
-				digestAlgo);
+	/* Select unpadding function */
+	unpadOk = 0;
+	if (padding == PKEY_PADDING_PKCS1V15)
+		unpadOk = rsaPkcs1v15UnpadEncrypt(padded, paddedLen, output, outputLen);
+	else if (padding == PKEY_PADDING_OAEP)
+		unpadOk = rsaOaepUnpadEncrypt(padded, paddedLen, output, outputLen);
+	else
+		HAJCRYPT_DPRINT("rsaDecrypt: unsupported padding mode %d\n", padding);
 	free(padded);
-	if (!ret || recoveredLen != digestLen ||
-		ft_memcmp(recoveredDigest, digest, digestLen) != 0)
+	if (!unpadOk)
 		return (0);
 	return (1);
+}
+
+int	rsaSign(const uint8_t	*digest,	size_t	digestLen,
+			const t_algoId *digestAlgo,
+			const void		*key,
+			uint8_t			*sig,		size_t	*sigLen,
+			t_pkeyPadding	padding)
+{
+	const t_rsaKey	*rsa;
+	size_t			k;
+	uint8_t			*padded;
+	int				padOk;
+	int				opOk;
+
+	rsa = (const t_rsaKey *)key;
+	k = rsaModulusBytes(rsa);
+	padded = malloc(k);
+	if (!padded)
+		return (0);
+
+	/* Select padding function */
+	padOk = 0;
+	if (padding == PKEY_PADDING_PKCS1V15)
+		padOk = rsaPkcs1v15PadSign(digest, digestLen, digestAlgo,
+					rsa, padded, k);
+	else if (padding == PKEY_PADDING_PSS)
+		padOk = rsaPssPadSign(digest, digestLen, digestAlgo,
+					rsa, padded, k);
+	else
+	{
+		HAJCRYPT_DPRINT("rsaSign: unsupported padding mode %d\n", padding);
+		free(padded);
+		return (0);
+	}
+	if (!padOk)
+	{
+		free(padded);
+		return (0);
+	}
+	opOk = rsaPrivateOp(padded, k, rsa, sig, sigLen);
+	free(padded);
+	return (opOk);
+}
+
+
+int	rsaVerify(const uint8_t		*digest,	size_t	digestLen,
+			  const t_algoId	*digestAlgo,
+			  const void		*key,
+			  const uint8_t		*sig,		size_t	sigLen,
+			  t_pkeyPadding		padding)
+{
+	const t_rsaKey	*rsa;
+	size_t			k;
+	uint8_t			*padded;
+	size_t			paddedLen;
+	int				ret;
+
+	rsa = (const t_rsaKey *)key;
+	k = rsaModulusBytes(rsa);
+	if (sigLen != k)
+		return (0);
+	padded = malloc(k);
+	if (!padded)
+		return (0);
+	if (!rsaPublicOp(sig, sigLen, rsa, padded, &paddedLen))
+	{
+		free(padded);
+		return (0);
+	}
+
+	ret = 0;
+	if (padding == PKEY_PADDING_PKCS1V15)
+	{
+		uint8_t	recoveredDigest[64];
+		size_t	recoveredLen;
+
+		if (rsaPkcs1v15UnpadSign(padded, paddedLen,
+				recoveredDigest, &recoveredLen, digestAlgo))
+		{
+			if (recoveredLen == digestLen
+				&& ft_memcmp(recoveredDigest, digest, digestLen) == 0)
+				ret = 1;
+		}
+	}
+	else if (padding == PKEY_PADDING_PSS)
+	{
+		if (rsaPssUnpadSign(padded, paddedLen,
+				digest, digestLen, digestAlgo))
+			ret = 1;
+	}
+	else
+		HAJCRYPT_DPRINT("rsaVerify: unsupported padding mode %d\n", padding);
+	free(padded);
+	return (ret);
 }

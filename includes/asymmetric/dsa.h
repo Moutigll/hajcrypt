@@ -3,10 +3,8 @@
 
 #include "../cipher/cipher.h"
 #include "../hajcrypt.h"
-#include "pkeyPem.h"
+#include "pkey.h"
 #include "bigint.h"
-
-#define DSA_OID_LEN 7	/* 1.2.840.10040.4.1 (id-dsa) */
 
 /**
  * @brief Structure representing a DSA key (Digital Signature Algorithm).
@@ -23,7 +21,7 @@ typedef struct s_dsaKey {
 	int			bits;	/* size of p in bits */
 }	t_dsaKey;
 
-extern const t_pkeyPemDef g_dsaPemDef;
+extern const t_pkeyDef g_dsaPkeyDef;
 
 /**
  * @brief Generate a complete DSA key (parameters and key pair).
@@ -52,6 +50,7 @@ void		dsaFreeKey(t_dsaKey *key);
  *
  * @param key Pointer to the DSA key structure.
  * @param isPrivate Set to 1 for a private key, 0 for a public key.
+ * @param useTraditional Set to 1 to use old pkcs1 encoding
  * @param password Optional password for encrypting the private key.
  *                 Ignored for public keys.
  * @param cipher Optional cipher for encryption. Ignored for public keys.
@@ -59,8 +58,11 @@ void		dsaFreeKey(t_dsaKey *key);
  * @return A newly allocated string containing the PEM-encoded key,
  *         or NULL on failure.
  */
-char		*dsaKeyToPem(t_dsaKey *key, int isPrivate,
-				 const char *password, const t_cipher *cipher);
+char	*dsaKeyToPem(t_dsaKey		*key,
+					 int			isPrivate,
+					 int			useTraditional,
+					 const char		*password,
+					 const t_cipher	*cipher);
 
 /**
  * @brief Parse a PEM-formatted string and extract a DSA key.
@@ -74,8 +76,7 @@ char		*dsaKeyToPem(t_dsaKey *key, int isPrivate,
  * @return 1 if parsing is successful, 0 on failure (e.g., invalid format,
  *         decryption error).
  */
-int			dsaKeyFromPem(const char *pem, t_dsaKey *key,
-					  int isPrivate, const char *password);
+int			dsaKeyFromPem(const char *pem, t_dsaKey *key, int isPrivate, const char *password);
 
 /**
  * @brief Print the components of a DSA key in a human-readable format.

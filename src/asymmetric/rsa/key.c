@@ -3,6 +3,7 @@
 #include "../../../hajlib/include/hmemory.h"
 #include "../../../hajlib/include/hprintf.h"
 #include "../../../hajlib/include/hstring.h"
+#include "../../../includes/asymmetric/primality.h"
 
 #include "../../../includes/asymmetric/rsa.h"
 
@@ -22,8 +23,8 @@ int	rsaGenerateKey(t_rsaKey *key, size_t bits, uint64_t e_val)
 	}
 
 	while (1) {
-		key->p = rsaGeneratePrime(bits / 2, 0.999999);
-		key->q = rsaGeneratePrime(bits - (bits / 2), 0.999999);
+		key->p = hcGeneratePrime(bits / 2, 0.999999);
+		key->q = hcGeneratePrime(bits - (bits / 2), 0.999999);
 
 		if (bigIntCmp(key->p, key->q) == 0) {
 			rsaFreeKey(key);

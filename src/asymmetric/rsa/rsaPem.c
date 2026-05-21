@@ -2,7 +2,7 @@
 
 #include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
 #include "../../../hajlib/include/hmemory.h"
-#include "../../../includes/asymmetric/pkeyPem.h"
+#include "../../../includes/asymmetric/pkey.h"
 #include "../../../includes/asymmetric/bigint.h"
 #include "../../../includes/x509/asn1.h"
 
@@ -125,25 +125,79 @@ cleanup:
 }
 
 
+static int rsaValidateBits(int bits)
+{
+	if (bits < RSA_MIN_BITS || bits > RSA_MAX_BITS)
+		return (HAJCRYPT_DPRINT("Invalid RSA key size: %d bits. Supported range: %d - %d bits.\n", bits, RSA_MIN_BITS, RSA_MAX_BITS), (0));
+	return (1);
+}
 
-const t_pkeyPemDef g_rsaPemDef = {
+static size_t rsaKeySizeBytes(const void *key)
+{
+	const t_rsaKey	*k;
+
+	k = (const t_rsaKey *)key;
+	return ((k->bits + 7) / 8);
+}
+
+/* =========================================================================
+ *              Wrappers for generic interface
+ * ========================================================================= */
+
+static int	rsaGenerateWrapper(void *key, int bits)
+{
+	if (bits <= 0)
+		return (0);
+	return (rsaGenerateKey((t_rsaKey *)key, (size_t)bits, 65537));
+}
+
+static int	rsaCheckKeyWrapper(const void *key)
+{
+	return (rsaCheckKey((t_rsaKey *)key, 64));
+}
+
+const t_pkeyDef	g_rsaPkeyDef = {
+	/* Identity */
+	.type			= PKEY_TYPE_RSA,
+	.oid			= OID_DEF("RSA", RSA_OID),
+	.name			= "rsa",
+	.keyLen			= sizeof(t_rsaKey),
+	.caps			= PKEY_CAP_ENCRYPT | PKEY_CAP_SIGN | PKEY_CAP_KEY_ENCIPHER,
+	.defaultBits	= 2048,
+
+	/* PEM serialization */
 	.tradPubLabel		= "RSA PUBLIC KEY",
 	.tradPrivLabel		= "RSA PRIVATE KEY",
-	.oid				= OID_DEF("rsa", RSA_OID),
-	.keyLen				= sizeof(t_rsaKey),
 	.encodeAlgoParams	= NULL,
 	.encodePubKey		= rsaPubEncode,
 	.encodePrivKey		= rsaPrivEncode,
 	.decodePubKey		= rsaPubDecode,
 	.decodePrivKey		= rsaPrivDecode,
+
+	/* Key generation */
+	.generate		= rsaGenerateWrapper,
+	.freeKey		= (void (*)(void *))rsaFreeKey,
+	.validateBits	= rsaValidateBits,
+
+	/* Cryptographic operations */
+	.encrypt		= rsaEncrypt,
+	.decrypt		= rsaDecrypt,
+	.sign			= rsaSign,
+	.verify			= rsaVerify,
+
+	/* Utility */
+	.maxSignatureLen	= rsaKeySizeBytes,
+	.keySizeBytes		= rsaKeySizeBytes,
+	.checkKey			= rsaCheckKeyWrapper,
+	.printKey			= (void (*)(const void *, int))rsaPrintKey
 };
 
 char *rsaKeyToPem(t_rsaKey *key, int isPrivate, int useTraditional, const char *password, const t_cipher *cipher)
 {
-	t_pkey pkey;
-	pkey.type = PKEY_TYPE_RSA;
+	t_pkey	pkey;
+
+	pkey.def = &g_rsaPkeyDef;
 	pkey.key = key;
-	pkey.def = &g_rsaPemDef;
 	return (pkeyToPem(&pkey, isPrivate, useTraditional, password, cipher));
 }
 
@@ -155,11 +209,8 @@ int rsaKeyFromPem(const char *pem, t_rsaKey *key, int isPrivate, const char *pas
 	if (!pem || !key)
 		return (0);
 	ft_bzero(key, sizeof(t_rsaKey));
-
-	pkey.type	= PKEY_TYPE_RSA;
-	pkey.key	= NULL;
-	pkey.def	= &g_rsaPemDef;
-
+	pkey.def = &g_rsaPkeyDef;
+	pkey.key = NULL;
 	ret = pkeyFromPem(pem, &pkey, isPrivate, password);
 	if (ret == 1)
 	{

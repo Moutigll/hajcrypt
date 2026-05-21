@@ -1,4 +1,5 @@
 #include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
+#include "../../../includes/asymmetric/primality.h"
 
 #include "../../../includes/asymmetric/rsa.h"
 
@@ -62,11 +63,11 @@ static int checkPrimality(const t_rsaKey *key, int rounds)
 	if (!key->p || !key->q)
 		return (1);
 
-	if (!rsaIsPrimeMillerRabin(key->p, rounds)) {
+	if (!hcIsPrimeMillerRabin(key->p, rounds)) {
 		HAJCRYPT_DPRINT("RSA check failed: p is not prime\n");
 		return (0);
 	}
-	if (!rsaIsPrimeMillerRabin(key->q, rounds)) {
+	if (!hcIsPrimeMillerRabin(key->q, rounds)) {
 		HAJCRYPT_DPRINT("RSA check failed: q is not prime\n");
 		return (0);
 	}
