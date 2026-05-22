@@ -2,6 +2,8 @@
 
 #include "../../../includes/asymmetric/dsa.h"
 
+#define PRINT_FAILED HAJCRYPT_DPRINT(P_RED "Failed\n" P_RESET)
+#define PRINT_PASSED HAJCRYPT_DPRINT(P_GREEN "Passed\n" P_RESET);
 
 /**
  * @brief dsaCheckKey - Validate DSA parameters and (optionally) key pair consistency.
@@ -56,40 +58,47 @@ int	dsaCheckKey(t_dsaKey *key)
 	}
 
 	/* 1. q divise p-1 ? */
+	HAJCRYPT_DPRINT("Check if q divides p-1... ");
 	bigIntSub(pm1, pm1, one);
 	bigIntMod(tmp, pm1, key->q);
 	if (!bigIntIsZero(tmp))
 	{
-		HAJCRYPT_DPRINT("dsaCheck: q does not divide p-1\n");
+		PRINT_FAILED;
 		ret = 0;
 		goto cleanup;
 	}
+	PRINT_PASSED;
 
 	/* 2. g^q mod p == 1 ? */
+	HAJCRYPT_DPRINT("Check if g^q mod p == 1... ");
 	bigIntModExp(tmp, key->g, key->q, key->p);
 	if (bigIntCmp(tmp, one) != 0)
 	{
-		HAJCRYPT_DPRINT("dsaCheck: g^q mod p != 1\n");
+		PRINT_FAILED;
 		ret = 0;
 		goto cleanup;
 	}
+	PRINT_PASSED;
 
 	/* 3. g != 1 */
+	HAJCRYPT_DPRINT("Check if g != 1... ");
 	if (bigIntCmp(key->g, one) == 0)
 	{
-		HAJCRYPT_DPRINT("dsaCheck: g == 1 (invalid generator)\n");
+		PRINT_FAILED;
 		ret = 0;
 		goto cleanup;
 	}
+	PRINT_PASSED;
 
 	/* 4. Verify key pair consistency */
 	if (key->priv && key->pub)
 	{
+		HAJCRYPT_DPRINT("Check key pair consistency... ");
 		/* 0 < x < q */
 		if (bigIntIsZero(key->priv)
 			|| bigIntCmp(key->priv, key->q) >= 0)
 		{
-			HAJCRYPT_DPRINT("dsaCheck: x out of range\n");
+			PRINT_FAILED;
 			ret = 0;
 			goto cleanup;
 		}
@@ -98,10 +107,11 @@ int	dsaCheckKey(t_dsaKey *key)
 		bigIntModExp(expectedY, key->g, key->priv, key->p);
 		if (bigIntCmp(key->pub, expectedY) != 0)
 		{
-			HAJCRYPT_DPRINT("dsaCheck: y != g^x mod p\n");
+			PRINT_FAILED;
 			ret = 0;
 			goto cleanup;
 		}
+		PRINT_PASSED;
 	}
 
 cleanup:

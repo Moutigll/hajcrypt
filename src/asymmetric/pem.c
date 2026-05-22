@@ -197,9 +197,9 @@ char	*pkeyToPem(t_pkey *pkey, int isPrivate, int useTraditional, const char *pas
 	def = pkey->def;
 	if (!isPrivate)
 	{
-		if (useTraditional && def->encodePubKey)
+		if (useTraditional && def->encodePubKeyPkcs1)
 		{
-			der = def->encodePubKey(pkey->key, &derLen);
+			der = def->encodePubKeyPkcs1(pkey->key, &derLen);
 			type = def->tradPubLabel;
 		}
 		else
@@ -207,7 +207,7 @@ char	*pkeyToPem(t_pkey *pkey, int isPrivate, int useTraditional, const char *pas
 			uint8_t	*pubDer, *paramsDer;
 			size_t	paramsLen;
 
-			pubDer = def->encodePubKey(pkey->key, &derLen);
+			pubDer = def->encodePubKeySpki(pkey->key, &derLen);
 			if (!pubDer)
 				return (NULL);
 			paramsDer = NULL;
@@ -230,9 +230,9 @@ char	*pkeyToPem(t_pkey *pkey, int isPrivate, int useTraditional, const char *pas
 	}
 	else
 	{
-		if (useTraditional && def->encodePrivKey)
+		if (useTraditional && def->encodePrivKeyPkcs1)
 		{
-			der = def->encodePrivKey(pkey->key, &derLen);
+			der = def->encodePrivKeyPkcs1(pkey->key, &derLen);
 			type = def->tradPrivLabel;
 		}
 		else
@@ -240,7 +240,7 @@ char	*pkeyToPem(t_pkey *pkey, int isPrivate, int useTraditional, const char *pas
 			uint8_t	*privDer, *paramsDer;
 			size_t	paramsLen;
 
-			privDer = def->encodePrivKey(pkey->key, &derLen);
+			privDer = def->encodePrivKeyPkcs8(pkey->key, &derLen);
 			if (!privDer)
 				return (NULL);
 			paramsDer = NULL;
@@ -275,7 +275,7 @@ char	*pkeyToPem(t_pkey *pkey, int isPrivate, int useTraditional, const char *pas
 
 			encCipher = &g_aes256CbcCipher;
 		}
-		if (useTraditional)
+		if (useTraditional && def->encodePrivKeyPkcs1)
 			pem = pkcs1EncryptPem(type, der, derLen, encCipher, password);
 		else
 			pem = pkcs8EncryptPem(der, derLen, encCipher, password, NULL);
@@ -316,6 +316,7 @@ static int	parsePublicKey(const char *pem, void *key, const t_pkeyDef *def)
 {
 	t_pemBlock	block;
 	char		header[128];
+	int			ret = 0;
 
 	ft_snprintf(header, sizeof(header), "-----BEGIN %s-----", def->tradPubLabel);
 	if (ft_strstr(pem, header))
@@ -324,20 +325,15 @@ static int	parsePublicKey(const char *pem, void *key, const t_pkeyDef *def)
 			return (0);
 		if (def->decodePubKey)
 		{
-			int	ret;
-
-			ret = def->decodePubKey(block.der, block.derLen, key);
-			pemFreeBlock(&block);
-			return (ret);
+			ret = def->decodePubKey(block.der, block.derLen, NULL, 0, key);
 		}
-		pemFreeBlock(&block);
-		return (0);
 	}
-	if (ft_strstr(pem, "-----BEGIN PUBLIC KEY-----"))
+	else if (ft_strstr(pem, "-----BEGIN PUBLIC KEY-----"))
 	{
-		uint8_t	*content, *algoSeq, *bitStr;
-		size_t	contentLen, consumed, algoLen, bitLen;
-		int		ret;
+		uint8_t			*content,	*algoSeq,	*bitStr,	*oid;
+		size_t			contentLen,	consumed,	algoLen,	bitLen,	oidLen;
+		const uint8_t	*params = NULL;
+		size_t			paramsLen = 0;
 
 		if (!pemDecode(pem, &block))
 			return (0);
@@ -345,25 +341,27 @@ static int	parsePublicKey(const char *pem, void *key, const t_pkeyDef *def)
 				&content, &contentLen, &consumed)
 			|| !asn1ParseSequence(content, contentLen,
 				&algoSeq, &algoLen, &consumed))
+			goto exit;
+		content += consumed; contentLen -= consumed;
+		if (!asn1ParseOid(algoSeq, algoLen, &oid, &oidLen, &consumed))
+			goto exit;
+		algoSeq += consumed; algoLen -= consumed;
+
+		if (algoLen > 0)
 		{
-			pemFreeBlock(&block);
-			return (0);
+			params = algoSeq;
+			paramsLen = algoLen;
 		}
-		content += consumed;
-		contentLen -= consumed;
 		if (!asn1ParseBitString(content, contentLen,
 				&bitStr, &bitLen, &consumed))
-		{
-			pemFreeBlock(&block);
-			return (0);
-		}
+			goto exit;
 		ret = 0;
 		if (def->decodePubKey)
-			ret = def->decodePubKey(bitStr, bitLen, key);
-		pemFreeBlock(&block);
-		return (ret);
+			ret = def->decodePubKey(bitStr, bitLen, params, paramsLen, key);
 	}
-	return (0);
+exit:
+	pemFreeBlock(&block);
+	return (ret);
 }
 
 /**
@@ -383,10 +381,12 @@ static int	parsePublicKey(const char *pem, void *key, const t_pkeyDef *def)
  */
 static int	parsePrivateKeyInfoDer(const uint8_t *der, size_t derLen, void *key, const t_pkeyDef *def)
 {
-	uint8_t	*content,	*algoSeq,	*octetStr;
-	size_t	contentLen,	consumed,	algoLen,	octetLen;
-	uint8_t	*ver;
-	size_t	verLen;
+	uint8_t			*content,	*algoSeq,	*octetStr, *oid;
+	size_t			contentLen,	consumed,	algoLen,	octetLen, oidLen;
+	const uint8_t	*params = NULL;
+	size_t			paramsLen = 0;
+	uint8_t			*ver;
+	size_t			verLen;
 
 	if (!asn1ParseSequence(der, derLen, &content, &contentLen, &consumed))
 		return (0);
@@ -398,12 +398,22 @@ static int	parsePrivateKeyInfoDer(const uint8_t *der, size_t derLen, void *key, 
 		return (0);
 	content += consumed;
 	contentLen -= consumed;
+	if (!asn1ParseOid(algoSeq, algoLen, &oid, &oidLen, &consumed))
+		return (0);
+	algoSeq += consumed;
+	algoLen -= consumed;
+
+	if (algoLen > 0)
+	{
+		params = algoSeq;
+		paramsLen = algoLen;
+	}
 	if (!asn1ParseOctetString(content, contentLen,
 			&octetStr, &octetLen, &consumed))
 		return (0);
 	if (!def->decodePrivKey)
 		return (0);
-	return (def->decodePrivKey(octetStr, octetLen, key));
+	return (def->decodePrivKey(octetStr, octetLen, params, paramsLen, key));
 }
 
 
@@ -478,7 +488,7 @@ static int	parsePrivateTraditional(const char *pem, void *key, const t_pkeyDef *
 			return (0);
 		ret = 0;
 		if (def->decodePrivKey)
-			ret = def->decodePrivKey(decryptedDer, decryptedLen, key);
+			ret = def->decodePrivKey(decryptedDer, decryptedLen, NULL, 0, key);
 		free(decryptedDer);
 		return (ret);
 	}
@@ -492,7 +502,7 @@ static int	parsePrivateTraditional(const char *pem, void *key, const t_pkeyDef *
 	{
 		int	ret;
 
-		ret = def->decodePrivKey(block.der, block.derLen, key);
+		ret = def->decodePrivKey(block.der, block.derLen, NULL, 0, key);
 		pemFreeBlock(&block);
 		return (ret);
 	}
@@ -527,7 +537,6 @@ static int	tryParseWithDef(const char *pem, t_pkey *pkey, const t_pkeyDef *def, 
 	if (ret == 1)
 	{
 		pkey->key = concreteKey;
-		pkey->def = def;
 		return (1);
 	}
 	free(concreteKey);
@@ -556,7 +565,10 @@ int	pkeyFromPem(const char *pem, t_pkey *pkey, int isPrivate, const char *passwo
 			{
 				ret = tryParseWithDef(pem, pkey, def, isPrivate, password);
 				if (ret != 0)
+				{
+					pkey->def = def;
 					return (ret);
+				}
 			}
 			t++;
 		}

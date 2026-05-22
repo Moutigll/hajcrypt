@@ -221,15 +221,33 @@ void	dsaPrintKey(t_dsaKey *key, int showPrivate)
 {
 	if (!key || !key->p || !key->q || !key->g || !key->pub)
 	{
+		if (!key)
+			ft_dprintf(STDERR_FILENO, "Missing DSA key\n");
+		if (!key->p)
+			ft_dprintf(STDERR_FILENO, "Missing DSA key parameter 'p'\n");
+		if (!key->q)
+			ft_dprintf(STDERR_FILENO, "Missing DSA key parameter 'q'\n");
+		if (!key->g)
+			ft_dprintf(STDERR_FILENO, "Missing DSA key parameter 'g'\n");
+		if (!key->pub)
+			ft_dprintf(STDERR_FILENO, "Missing DSA key parameter 'pub'\n");
 		ft_printf("Invalid DSA key\n");
 		return;
 	}
-	ft_printf("%s-DSA-Key: (%d bit)\n",
-		showPrivate ? "Private" : "Public", key->bits);
-	printComponent("p", key->p);
-	printComponent("q", key->q);
-	printComponent("g", key->g);
-	printComponent("pub", key->pub);
 	if (showPrivate)
+	{
+		ft_printf("Private-Key: (%d bit)\n", key->bits);
 		printComponent("priv", key->priv);
+		ft_printf("pub: \n");
+		printComponent("", key->pub);
+	}
+	else
+	{
+		ft_printf("Public-Key: (%d bit)\n", key->bits);
+		ft_printf("pub: \n");
+		printComponent("", key->pub);
+	}
+	printComponent("P", key->p);
+	printComponent("Q", key->q);
+	printComponent("G", key->g);
 }

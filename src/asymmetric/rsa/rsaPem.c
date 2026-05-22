@@ -14,6 +14,9 @@ static uint8_t	*rsaPubEncode(const void *key, size_t *outLen)
 	uint8_t			*nDer, *eDer, *seq;
 	size_t			seqLen;
 
+	if (!k || !outLen || !k->n || !k->e)
+		return (NULL);
+
 	nDer = bigIntToDerInteger(k->n, &nLen);
 	if (!nDer) return (NULL);
 	eDer = bigIntToDerInteger(k->e, &eLen);
@@ -38,6 +41,9 @@ static uint8_t	*rsaPrivEncode(const void *key, size_t *outLen)
 	size_t			lens[8];
 	const t_bigInt	*ints[8] = {k->n, k->e, k->d, k->p, k->q, k->dp, k->dq, k->qinv};
 	int				i;
+
+	if (!k || !outLen || !k->n || !k->e || !k->d)
+		return (NULL);
 
 	vDer = asn1EncodeInteger(version, 1, &vLen);
 	if (!vDer) return (NULL);
@@ -64,11 +70,16 @@ static uint8_t	*rsaPrivEncode(const void *key, size_t *outLen)
 	return (seq);
 }
 
-static int	rsaPubDecode(const uint8_t *der, size_t len, void *key)
+static int	rsaPubDecode(const uint8_t *der, size_t len, const uint8_t *algoParams, size_t algoParamsLen, void *key)
 {
+	(void)algoParams;
+	(void)algoParamsLen;
 	t_rsaKey	*k = (t_rsaKey *)key;
 	uint8_t		*content, *nVal, *eVal;
 	size_t		contentLen, consumed, nLen, eLen;
+
+	if (!k || !der || len == 0)
+		return (0);
 
 	if (!asn1ParseSequence(der, len, &content, &contentLen, &consumed))
 		return (0);
@@ -88,14 +99,19 @@ static int	rsaPubDecode(const uint8_t *der, size_t len, void *key)
 	return (1);
 }
 
-static int	rsaPrivDecode(const uint8_t *der, size_t len, void *key)
+static int	rsaPrivDecode(const uint8_t *der, size_t len, const uint8_t *algoParams, size_t paramsLen, void *key)
 {
+	(void)algoParams;
+	(void)paramsLen;
 	t_rsaKey	*k = (t_rsaKey *)key;
 	uint8_t		*content, *vals[9];
 	size_t		contentLen, consumed, lens[9];
 	const char	*names[] = {"version", "n", "e", "d", "p", "q", "dp", "dq", "qinv"};
 	t_bigInt	**ptrs[9] = {NULL, &k->n, &k->e, &k->d, &k->p, &k->q, &k->dp, &k->dq, &k->qinv};
 	int ret = 0;
+
+	if (!k || !der || len == 0)
+		return (0);
 
 	if (!asn1ParseSequence(der, len, &content, &contentLen, &consumed))
 		return (0);
@@ -168,8 +184,10 @@ const t_pkeyDef	g_rsaPkeyDef = {
 	.tradPubLabel		= "RSA PUBLIC KEY",
 	.tradPrivLabel		= "RSA PRIVATE KEY",
 	.encodeAlgoParams	= NULL,
-	.encodePubKey		= rsaPubEncode,
-	.encodePrivKey		= rsaPrivEncode,
+	.encodePubKeyPkcs1	= rsaPubEncode,
+	.encodePubKeySpki	= rsaPubEncode,
+	.encodePrivKeyPkcs1	= rsaPrivEncode,
+	.encodePrivKeyPkcs8	= rsaPrivEncode,
 	.decodePubKey		= rsaPubDecode,
 	.decodePrivKey		= rsaPrivDecode,
 

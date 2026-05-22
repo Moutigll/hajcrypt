@@ -81,43 +81,85 @@ struct s_pkeyDef
 	uint8_t	*(*encodeAlgoParams)(const void *key, size_t *outLen);
 
 	/**
-	 * @brief Encode a public key in traditional DER format.
+	 * @brief Encode a public key in PKCS#1 / traditional DER format.
+	 *
+	 * RSA : SEQUENCE { n, e }
+	 * DSA : SEQUENCE { p, q, g, y }
 	 *
 	 * @param key    Pointer to the concrete key structure.
 	 * @param outLen Output: length of the returned DER buffer.
 	 * @return Heap-allocated DER buffer, or NULL on failure.
 	 */
-	uint8_t	*(*encodePubKey)(const void *key, size_t *outLen);
+	uint8_t	*(*encodePubKeyPkcs1)(const void *key, size_t *outLen);
 
 	/**
-	 * @brief Encode a private key in traditional DER format.
+	 * @brief Encode a public key payload for SubjectPublicKeyInfo (SPKI).
+	 *
+	 * This is the content placed inside the BIT STRING of the SPKI.
+	 * RSA : SEQUENCE { n, e }     (same as PKCS#1)
+	 * DSA : INTEGER y             (different from PKCS#1)
 	 *
 	 * @param key    Pointer to the concrete key structure.
 	 * @param outLen Output: length of the returned DER buffer.
 	 * @return Heap-allocated DER buffer, or NULL on failure.
 	 */
-	uint8_t	*(*encodePrivKey)(const void *key, size_t *outLen);
+	uint8_t	*(*encodePubKeySpki)(const void *key, size_t *outLen);
 
 	/**
-	 * @brief Parse a traditional DER-encoded public key.
+	 * @brief Encode a private key in PKCS#1 / traditional DER format.
 	 *
-	 * @param der  DER-encoded data.
+	 * RSA : SEQUENCE { version, n, e, d, p, q, dp, dq, qinv }
+	 * DSA : SEQUENCE { version, p, q, g, y, x }
+	 *
+	 * @param key    Pointer to the concrete key structure.
+	 * @param outLen Output: length of the returned DER buffer.
+	 * @return Heap-allocated DER buffer, or NULL on failure.
+	 */
+	uint8_t	*(*encodePrivKeyPkcs1)(const void *key, size_t *outLen);
+
+	/**
+	 * @brief Encode a private key payload for PKCS#8 (OCTET STRING content).
+	 *
+	 * RSA : SEQUENCE { version, n, e, d, p, q, dp, dq, qinv }  (same as PKCS#1)
+	 * DSA : INTEGER x                                           (different from PKCS#1)
+	 *
+	 * @param key    Pointer to the concrete key structure.
+	 * @param outLen Output: length of the returned DER buffer.
+	 * @return Heap-allocated DER buffer, or NULL on failure.
+	 */
+	uint8_t	*(*encodePrivKeyPkcs8)(const void *key, size_t *outLen);
+
+	/**
+	 * @brief Parse a DER-encoded public key payload.
+	 *
+	 * Receives the raw public key bytes, either from a traditional PEM block
+	 * (PKCS#1) or from the BIT STRING of a SubjectPublicKeyInfo (SPKI).
+	 * The function detects the format automatically.
+	 *
+	 * @param der  DER-encoded public key data.
 	 * @param len  Length of @p der.
+	 * @param algoParams  Algorithm parameters (if any).
+	 * @param algoParamsLen  Length of @p algoParams.
 	 * @param key  Pre-allocated buffer of size keyLen to fill.
 	 * @return 1 on success, 0 on failure.
 	 */
-	int		(*decodePubKey)(const uint8_t *der, size_t len, void *key);
+	int		(*decodePubKey)(const uint8_t *der, size_t len, const uint8_t *algoParams, size_t algoParamsLen, void *key);
 
 	/**
-	 * @brief Parse a traditional DER-encoded private key.
+	 * @brief Parse a DER-encoded private key payload.
 	 *
-	 * @param der  DER-encoded data.
+	 * Receives the raw private key bytes, either from a traditional PEM block
+	 * (PKCS#1) or from the OCTET STRING of a PrivateKeyInfo (PKCS#8).
+	 * The function detects the format automatically.
+	 *
+	 * @param der  DER-encoded private key data.
 	 * @param len  Length of @p der.
+	 * @param algoParams  Algorithm parameters (if any).
+	 * @param algoParamsLen  Length of @p algoParams.
 	 * @param key  Pre-allocated buffer of size keyLen to fill.
 	 * @return 1 on success, 0 on failure.
 	 */
-	int		(*decodePrivKey)(const uint8_t *der, size_t len, void *key);
-
+	int		(*decodePrivKey)(const uint8_t *der, size_t len, const uint8_t *algoParams, size_t algoParamsLen, void *key);
 
 	/* ----- Key generation ----- */
 
