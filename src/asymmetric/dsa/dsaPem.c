@@ -2,7 +2,6 @@
 
 #include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
 #include "../../../hajlib/include/hmemory.h"
-#include "../../../includes/asymmetric/bigint.h"
 #include "../../../includes/asymmetric/pkey.h"
 #include "../../../includes/cipher/cipher.h"
 #include "../../../includes/x509/asn1.h"
@@ -390,8 +389,8 @@ const t_pkeyDef	g_dsaPkeyDef = {
 	/* Utility */
 	.maxSignatureLen	= dsaMaxSignatureLen,
 	.keySizeBytes		= dsaKeySizeBytes,
-	.checkKey			= NULL, /* TODO: dsaCheckKeyWrapper */
-	.printKey			= NULL, /* TODO: dsaPrintKeyWrapper */
+	.checkKey			= (int (*)(const void *))dsaCheckKey,
+	.printKey			= (void (*)(const void *, int))dsaPrintKey
 };
 
 

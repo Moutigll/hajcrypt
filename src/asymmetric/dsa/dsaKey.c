@@ -1,7 +1,9 @@
 #include "../../../hajlib/include/hmemory.h"
+#include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
 #include "../../../includes/asymmetric/primality.h"
 
 #include "../../../includes/asymmetric/dsa.h"
+#include <unistd.h>
 
 /**
  * @brief Select the q-bit length based on the p-bit length (FIPS 186-4).
@@ -62,6 +64,8 @@ static t_bigInt	*generateP(t_bigInt *q, int pBits)
 		bigIntFree(tmp);
 		return (NULL);
 	}
+	HAJCRYPT_DPRINT("Finding a prime p of size %d bits...", pBits);
+	int attempts = 0;
 	while (1)
 	{
 		bigIntRandom(k, kBits);
@@ -71,7 +75,16 @@ static t_bigInt	*generateP(t_bigInt *q, int pBits)
 		if (bigIntBitLength(p) != (size_t)pBits)
 			continue;
 		if (hcIsPrimeMillerRabin(p, 8))
+		{
+			ft_dprintf(STDERR_FILENO, "++++++++++++\n");
 			break;
+		}
+		if (attempts % 192 == 0)
+			HAJCRYPT_DPRINT("\n");
+		++attempts;
+		if (attempts % 3 == 0)
+			HAJCRYPT_DPRINT(".");
+			
 	}
 	bigIntFree(k);
 	bigIntFree(tmp);
@@ -202,4 +215,21 @@ void	dsaFreeKey(t_dsaKey *key)
 	bigIntFree(key->pub);
 	bigIntFree(key->priv);
 	ft_bzero(key, sizeof(t_dsaKey));
+}
+
+void	dsaPrintKey(t_dsaKey *key, int showPrivate)
+{
+	if (!key || !key->p || !key->q || !key->g || !key->pub)
+	{
+		ft_printf("Invalid DSA key\n");
+		return;
+	}
+	ft_printf("%s-DSA-Key: (%d bit)\n",
+		showPrivate ? "Private" : "Public", key->bits);
+	printComponent("p", key->p);
+	printComponent("q", key->q);
+	printComponent("g", key->g);
+	printComponent("pub", key->pub);
+	if (showPrivate)
+		printComponent("priv", key->priv);
 }

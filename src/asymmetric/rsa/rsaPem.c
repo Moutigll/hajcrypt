@@ -3,7 +3,6 @@
 #include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
 #include "../../../hajlib/include/hmemory.h"
 #include "../../../includes/asymmetric/pkey.h"
-#include "../../../includes/asymmetric/bigint.h"
 #include "../../../includes/x509/asn1.h"
 
 #include "../../../includes/asymmetric/rsa.h"

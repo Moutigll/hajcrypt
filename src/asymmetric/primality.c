@@ -1,6 +1,6 @@
 #include "../../hajlib/include/hmath.h"
-#include "../../hajlib/include/hprintf.h"
-#include "../../hajlib/include/hio.h"
+#include "../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
+#include "../../includes/hajcrypt.h"
 
 #include "../../includes/asymmetric/primality.h"
 
@@ -122,14 +122,14 @@ t_bigInt *hcGeneratePrime(int bits, double certainty)
 		bigIntRandom(candidate, bits);
 		
 		if (hcIsPrimeMillerRabin(candidate, rounds)) {
-			ft_dprintf(STDERR_FILENO, "++++++++++++\n");
+			HAJCRYPT_DPRINT("++++++++++++\n");
 			return (candidate);
 		}
 		
 		if (count % 192 == 0)
-			ft_putchar_fd('\n', STDERR_FILENO);
-		count++;
+			HAJCRYPT_DPRINT("\n");
+		++count;
 		if (count % 3 == 0)
-			ft_dprintf(STDERR_FILENO, ".");
+			HAJCRYPT_DPRINT(".");
 	}
 }

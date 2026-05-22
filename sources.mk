@@ -41,11 +41,12 @@ LIB_SRC = \
 	$(SRC_DIR)/asymmetric/pkey.c \
 	$(SRC_DIR)/asymmetric/rsa/rsaPadding.c \
 	$(SRC_DIR)/asymmetric/rsa/cryptSign.c \
-	$(SRC_DIR)/asymmetric/rsa/keyCheck.c \
+	$(SRC_DIR)/asymmetric/rsa/rsaCheck.c \
 	$(SRC_DIR)/asymmetric/rsa/rsaPem.c \
-	$(SRC_DIR)/asymmetric/rsa/key.c \
+	$(SRC_DIR)/asymmetric/rsa/rsaKey.c \
+	$(SRC_DIR)/asymmetric/dsa/dsaCheck.c \
 	$(SRC_DIR)/asymmetric/dsa/dsaPem.c \
-	$(SRC_DIR)/asymmetric/dsa/dsaKeygen.c \
+	$(SRC_DIR)/asymmetric/dsa/dsaKey.c \
 	$(SRC_DIR)/hash/common/padding.c \
 	$(SRC_DIR)/hash/common/endian.c \
 	$(SRC_DIR)/hash/md5/md5.c \

@@ -2,6 +2,7 @@
 
 #include "../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
 #include "../../hajlib/include/hmemory.h"
+#include "../../hajlib/include/hstring.h"
 #include "../../includes/hajcrypt.h"
 
 #include "../../includes/asymmetric/pkey.h"
@@ -92,4 +93,45 @@ int	pkeyVerify(t_pkey			*pkey,
 	if (!(pkey->def->caps & PKEY_CAP_SIGN) || !pkey->def->verify)
 		return (HAJCRYPT_DPRINT("pkeyVerify: key does not support signature verification\n"), 0);
 	return (pkey->def->verify(digest, digestLen, digestAlgo, pkey->key, sig, sigLen, padding));
+}
+
+void printComponent(const char *name, const t_bigInt *num)
+{
+	char	*hex;
+	char	*paddedHex = NULL;
+	size_t   len;
+	size_t   i;
+
+	if (!num) return;
+	hex = bigIntToHex(num);
+	if (!hex) return;
+	len = ft_strlen(hex);
+
+	/* If the most significant hex digit is >= 8, prepend a '00' to indicate it's positive */
+	if (len > 0 && ((hex[0] >= '8' && hex[0] <= '9') ||
+					(hex[0] >= 'a' && hex[0] <= 'f')))
+	{
+		paddedHex = malloc(len + 3);
+		if (paddedHex) {
+			ft_strlcpy(paddedHex, "00", len + 3);
+			ft_strlcpy(paddedHex + 2, hex, len + 1);
+			free(hex);
+			hex = paddedHex;
+			len += 2;
+		}
+	}
+
+	ft_printf("%s:\n    ", name);
+	for (i = 0; i < len; i += 2) {
+		if (i > 0 && (i / 2) % 15 == 0)
+			ft_printf("\n    ");
+		if (hex[i + 1])
+			ft_printf("%c%c", hex[i], hex[i+1]);
+		else
+			ft_printf("%c", hex[i]);
+		if (i + 2 < len)
+			ft_printf(":");
+	}
+	ft_printf("\n");
+	free(hex);
 }

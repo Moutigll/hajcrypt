@@ -2,6 +2,7 @@
 # define HAJCRYPT_PKEY_H
 
 # include "../x509/oid.h"
+# include "bigint.h"
 
 /* Forward declarations */
 typedef struct s_pkeyDef	t_pkeyDef;
@@ -409,5 +410,12 @@ int		pkeyVerify(t_pkey			*pkey,
 				   const t_algoId	*digestAlgo,
 				   const uint8_t	*sig,		size_t	sigLen,
 				   t_pkeyPadding	padding);
+
+
+/* ==================================================
+					Internal utils
+   ================================================== */
+
+void printComponent(const char *name, const t_bigInt *num);
 
 #endif /* HAJCRYPT_PKEY_H */
