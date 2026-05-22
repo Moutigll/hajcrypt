@@ -5,7 +5,6 @@
 #include "../../includes/utils/dispatch.h"
 #include "../../includes/cli/password.h"
 #include "../../includes/cipher/aes.h"
-
 #include "../../includes/cli/pkey.h"
 
 static const tFtLongOption	g_genpkeyLongOpts[] = {
@@ -50,7 +49,7 @@ static int	parseGenpkeyArgs(int				argc,
 	*cipher = NULL;
 	*bits = def->defaultBits;
 
-	ft_getoptInit(&st, argc - 2, argv + 2);
+	ft_getoptInit(&st, argc, argv);
 	st.index = 0;
 	while (1)
 	{
@@ -61,7 +60,7 @@ static int	parseGenpkeyArgs(int				argc,
 		{
 			bitsStr = st.optArg;
 			if (!bitsStr)
-				bitsStr = argv[2 + st.index];
+				bitsStr = argv[st.index];
 			if (!bitsStr)
 			{
 				ft_dprintf(STDERR_FILENO,
@@ -69,6 +68,12 @@ static int	parseGenpkeyArgs(int				argc,
 				return (0);
 			}
 			*bits = ft_atoi((char *)bitsStr);
+			if (*bits <= 0)
+			{
+				ft_dprintf(STDERR_FILENO,
+					"ft_ssl: %s: invalid bits argument '%s'\n", def->name, bitsStr);
+				return (0);
+			}
 			st.index++;
 			continue ;
 		}
@@ -130,6 +135,12 @@ static int	parseGenpkeyArgs(int				argc,
 			return (0);
 		}
 		*bits = ft_atoi((char *)bitsStr);
+		if (*bits <= 0)
+		{
+			ft_dprintf(STDERR_FILENO,
+				"ft_ssl: %s: invalid bits argument '%s'\n", def->name, bitsStr);
+			return (0);
+		}
 		st.index++;
 	}
 	if (!def->validateBits(*bits))
@@ -137,7 +148,7 @@ static int	parseGenpkeyArgs(int				argc,
 	return (1);
 }
 
-static int	writeOutput(const char *filename, const char *data)
+int	writePkeyOutput(const char *filename, const char *data)
 {
 	int	fd;
 
@@ -158,7 +169,6 @@ static int	writeOutput(const char *filename, const char *data)
 	return (1);
 }
 
-
 int	cmdGenPkey(int argc, char **argv, char **env)
 {
 	const t_pkeyDef	*def;
@@ -170,19 +180,49 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 	char			*privPem;
 	char			*pubPem;
 	int				ret;
+	int				offset;
 
-	if (argc < 2) /* Should not happen */
+	if (argc < 2)
 	{
 		ft_dprintf(STDERR_FILENO,
-			"Usage: ft_ssl genrsa|gendsa [options] [bits]\n");
+			"Usage: ft_ssl genpkey [<key_type>] [options] [bits]\n");
 		return (1);
 	}
-	def = getPkeyDefByName(argv[1] + 3);
-	if (!def)
+	if (ft_strcmp(argv[1], "genpkey") == 0)
 	{
-		ft_dprintf(STDERR_FILENO,
-			"ft_ssl: unknown algorithm '%s'\n", argv[1]);
-		return (1);
+		if (argc >= 3 && argv[2][0] != '-' && !ft_isdigit(argv[2][0]))
+		{
+			def = getPkeyDefByName(argv[2]);
+			if (!def)
+			{
+				ft_dprintf(STDERR_FILENO,
+					"ft_ssl: unknown key type '%s'\n", argv[2]);
+				return (1);
+			}
+			offset = 3;
+		}
+		else
+		{
+			if (g_pkeyTable[0].def == NULL)
+			{
+				ft_dprintf(STDERR_FILENO,
+					"ft_ssl: no asymmetric key algorithms available\n");
+				return (1);
+			}
+			def = g_pkeyTable[0].def;
+			offset = 2;
+		}
+	}
+	else
+	{
+		def = getPkeyDefByName(argv[1] + 3);
+		if (!def)
+		{
+			ft_dprintf(STDERR_FILENO,
+				"ft_ssl: unknown algorithm '%s'\n", argv[1]);
+			return (1);
+		}
+		offset = 2;
 	}
 	if (!def->generate)
 	{
@@ -190,8 +230,8 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 			"ft_ssl: %s does not support key generation\n", def->name);
 		return (1);
 	}
-
-	ret = parseGenpkeyArgs(argc, argv, def, &opts, &cipher, &bits);
+	ret = parseGenpkeyArgs(argc - offset, argv + offset, def,
+			&opts, &cipher, &bits);
 	if (ret <= 0)
 		return (ret == -1 ? 0 : 1);
 
@@ -256,7 +296,7 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 			free(password);
 			return (1);
 		}
-		if (!writeOutput(opts.pubOutFile, pubPem))
+		if (!writePkeyOutput(opts.pubOutFile, pubPem))
 		{
 			free(pubPem);
 			free(privPem);
@@ -266,8 +306,7 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 		}
 		free(pubPem);
 	}
-
-	if (!writeOutput(opts.outFile, privPem))
+	if (!writePkeyOutput(opts.outFile, privPem))
 	{
 		free(privPem);
 		pkeyFree(&pkey);

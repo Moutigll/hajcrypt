@@ -109,8 +109,8 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/cipherIo.c \
 	$(SRC_DIR)/cli/prompt.c \
 	$(SRC_DIR)/cli/password.c \
-	$(SRC_DIR)/cli/rsa.c \
-	$(SRC_DIR)/cli/pkeyGen.c \
+	$(SRC_DIR)/cli/pkey.c \
+	$(SRC_DIR)/cli/pkeygen.c \
 	$(SRC_DIR)/cli/pkeyutl.c
 
 TEST_SRC = \

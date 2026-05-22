@@ -1,23 +1,20 @@
 #compdef ft_ssl
 
-local -a standard_cmds
-local -a hash_cmds
-local -a cipher_cmds
-local -a cipher_names
-local cmd
-
 _ft_ssl_build_command_list()
 {
-	local output
-	local line
+	local output line
 
 	standard_cmds=(
 		'list:List available groups'
-		'gendsa:Generate DSA private key'
+		'genpkey:Generate a key pair (RSA, DSA, …)'
 		'genrsa:Generate RSA private key'
+		'gendsa:Generate DSA private key'
+		'pkey:Public/private key management'
 		'rsa:RSA key management'
-		'rsautl:RSA utility'
+		'dsa:DSA key management'
 		'pkeyutl:Public key utility'
+		'rsautl:RSA utility'
+		'dsautl:DSA utility'
 	)
 
 	hash_cmds=()
@@ -136,6 +133,50 @@ _ft_ssl_gendsa_opts()
 	fi
 }
 
+_ft_ssl_genpkey_opts()
+{
+	local -a key_types
+	local -a sizes
+
+	key_types=(rsa dsa)
+	sizes=()
+
+	local type=""
+	if [[ ${#words} -ge 3 && ${words[3]} != -* ]]; then
+		if [[ ${key_types[(r)${words[3]}]} == ${words[3]} ]]; then
+			type=${words[3]}
+		fi
+	fi
+
+	if [[ $CURRENT -eq 3 && -z $type ]]; then
+		compadd -a key_types
+		return
+	fi
+
+	if [[ $type == rsa ]]; then
+		sizes=(1024 2048 3072 4096 8192)
+	elif [[ $type == dsa ]]; then
+		sizes=(1024 2048 3072)
+	fi
+
+	_arguments \
+		'-o+[Output file]:file:_files' \
+		'--out=[Output file]:file:_files' \
+		'-p+[Password]:password:' \
+		'--passout=[Password]:password:' \
+		'-P+[Output public key file]:file:_files' \
+		'--pubout=[Output public key file]:file:_files' \
+		'-t[Use traditional PEM format]' \
+		'--traditional[Use traditional PEM format]' \
+		'-h[Show help]' \
+		'--help[Show help]' \
+		"*:key size:(${sizes[*]})"
+
+	if [[ $PREFIX == --* ]]; then
+		_ft_ssl_complete_prefixed_ciphers
+	fi
+}
+
 _ft_ssl_rsa_opts()
 {
 	_arguments \
@@ -157,6 +198,92 @@ _ft_ssl_rsa_opts()
 		'--noout[No output]' \
 		'-m[Print modulus]' \
 		'--modulus[Print modulus]' \
+		'-c[Check key]' \
+		'--check[Check key]' \
+		'-u[Public key input]' \
+		'--pubin[Public key input]' \
+		'-U[Public key output]' \
+		'--pubout[Public key output]' \
+		'-T[Traditional PEM]' \
+		'--traditional[Traditional PEM]' \
+		'-h[Show help]' \
+		'--help[Show help]' \
+		'*:file:_files'
+
+	if [[ $PREFIX == --* ]]; then
+		_ft_ssl_complete_prefixed_ciphers
+	fi
+}
+
+_ft_ssl_dsa_opts()
+{
+	_arguments \
+		'-I+[Input format]:format:(PEM)' \
+		'--inform=[Input format]:format:(PEM)' \
+		'-O+[Output format]:format:(PEM)' \
+		'--outform=[Output format]:format:(PEM)' \
+		'-i+[Input file]:file:_files' \
+		'--in=[Input file]:file:_files' \
+		'-o+[Output file]:file:_files' \
+		'--out=[Output file]:file:_files' \
+		'-p+[Input password]:password:' \
+		'--passin=[Input password]:password:' \
+		'-P+[Output password]:password:' \
+		'--passout=[Output password]:password:' \
+		'-t[Print text]' \
+		'--text[Print text]' \
+		'-n[No output]' \
+		'--noout[No output]' \
+		'-m[Print modulus (RSA only)]' \
+		'--modulus[Print modulus (RSA only)]' \
+		'-c[Check key]' \
+		'--check[Check key]' \
+		'-u[Public key input]' \
+		'--pubin[Public key input]' \
+		'-U[Public key output]' \
+		'--pubout[Public key output]' \
+		'-T[Traditional PEM]' \
+		'--traditional[Traditional PEM]' \
+		'-h[Show help]' \
+		'--help[Show help]' \
+		'*:file:_files'
+
+	if [[ $PREFIX == --* ]]; then
+		_ft_ssl_complete_prefixed_ciphers
+	fi
+}
+
+_ft_ssl_pkey_opts()
+{
+	local -a key_types
+	key_types=(rsa dsa)
+
+	# First positional argument (after "pkey") should be the key type
+	if [[ $CURRENT -eq 3 && $words[2] == pkey && -z $words[3] ]]; then
+		compadd -a key_types
+		return
+	fi
+
+	# Otherwise show the common key management options
+	_arguments \
+		'-I+[Input format]:format:(PEM)' \
+		'--inform=[Input format]:format:(PEM)' \
+		'-O+[Output format]:format:(PEM)' \
+		'--outform=[Output format]:format:(PEM)' \
+		'-i+[Input file]:file:_files' \
+		'--in=[Input file]:file:_files' \
+		'-o+[Output file]:file:_files' \
+		'--out=[Output file]:file:_files' \
+		'-p+[Input password]:password:' \
+		'--passin=[Input password]:password:' \
+		'-P+[Output password]:password:' \
+		'--passout=[Output password]:password:' \
+		'-t[Print text]' \
+		'--text[Print text]' \
+		'-n[No output]' \
+		'--noout[No output]' \
+		'-m[Print modulus (RSA only)]' \
+		'--modulus[Print modulus (RSA only)]' \
 		'-c[Check key]' \
 		'--check[Check key]' \
 		'-u[Public key input]' \
@@ -227,14 +354,23 @@ case "$cmd" in
 	rsa)
 		_ft_ssl_rsa_opts
 		;;
-	rsautl|pkeyutl)
-		_ft_ssl_rsautl_opts
+	dsa)
+		_ft_ssl_dsa_opts
+		;;
+	pkey)
+		_ft_ssl_pkey_opts
 		;;
 	genrsa)
 		_ft_ssl_genrsa_opts
 		;;
 	gendsa)
 		_ft_ssl_gendsa_opts
+		;;
+	genpkey)
+		_ft_ssl_genpkey_opts
+		;;
+	rsautl|pkeyutl|dsautl)
+		_ft_ssl_rsautl_opts
 		;;
 	*)
 		_ft_ssl_cipher_opts

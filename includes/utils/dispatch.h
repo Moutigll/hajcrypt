@@ -93,7 +93,7 @@ typedef struct s_pkeyDispatch
 
 extern const	t_hashDispatch		g_hashTable[];
 extern const	t_cipherDispatch	g_cipherTable[];
-extern const	t_pkeyDispatch		g_pkeyPemTable[];
+extern const	t_pkeyDispatch		g_pkeyTable[];
 
 /**
  * @brief Retrieves a hash structure based on the specified algorithm.

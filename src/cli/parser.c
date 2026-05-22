@@ -17,6 +17,7 @@ void printAlgoName(t_algo algo)
 		name++;
 	}
 }
+
 void freeSslOptions(t_sslOptions *opts)
 {
 	if (!opts)
@@ -94,7 +95,7 @@ static void	printUsage(void)
 	char	prevRoot[32];
 	char	currRoot[32];
 
-	ft_printf("Standard commands:\n\tgendsa\n\tgenrsa\n\trsa\n\trsautl/pkeyutl\n");
+	ft_printf("Standard commands:\n\tgenpkey\n\tgenrsa\n\tgendsa\n\tpkey\n\trsa\n\tdsa\n\tpkeyutl\n\trsautl\n");
 	
 	ft_printf("\nMessage Digest commands:\n");
 	i = 0;
@@ -233,14 +234,14 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 		}
 	}
 
-	if (ft_strcmp(arg, "genrsa") == 0 || ft_strcmp(arg, "gendsa") == 0) {
+	if (ft_strcmp(arg, "genpkey") == 0 || ft_strcmp(arg, "genrsa") == 0 || ft_strcmp(arg, "gendsa") == 0) {
 		opts->cmdType = CMD_GENPKEY;
 		return (0);
 	}
 
-	if (ft_strcmp(arg, "rsa") == 0) {
+	if (ft_strcmp(arg, "pkey") == 0 || ft_strcmp(arg, "rsa") == 0 || ft_strcmp(arg, "dsa") == 0) {
 		opts->algo = ALGO_NONE;
-		opts->cmdType = CMD_RSA;
+		opts->cmdType = CMD_PKEY;
 		return (0);
 	}
 
@@ -264,7 +265,7 @@ static int listCmd(int argc, char **argv)
 	}
 	if (ft_strcmp(argv[2], "commands") == 0)
 	{
-		ft_printf("genrsa\nrsa\nrsautl\npkeyutl\n");
+		ft_printf("genpkey\ngenrsa\ngendsa\npkey\nrsa\ndsa\npkeyutl\nrsautl\n");
 	}
 	else if (ft_strcmp(argv[2], "hashes") == 0)
 	{
@@ -327,8 +328,8 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		return (0);
 	}
 
-	if (opts->cmdType == CMD_RSA|| opts->cmdType == CMD_PKEYUTL || opts->cmdType == CMD_GENPKEY)
-		return (0); /* RSA and PKEYUTL have their own argument parsing */
+	if (opts->cmdType == CMD_PKEY|| opts->cmdType == CMD_PKEYUTL || opts->cmdType == CMD_GENPKEY)
+		return (0); /* PKEY and PKEYUTL have their own argument parsing */
 
 	if (opts->cmdType == CMD_HASH)
 		shortOpts = "pqrs:bh";

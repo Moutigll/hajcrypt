@@ -60,8 +60,8 @@ static int executeSsl(t_sslOptions *opts, int argc, char **argv, char **env)
 		return (executeCipher(opts));
 	else if (opts->cmdType == CMD_GENPKEY)
 		return (cmdGenPkey(argc, argv, env));
-	else if (opts->cmdType == CMD_RSA)
-		return (cmdRsa(argc, argv, env));
+	else if (opts->cmdType == CMD_PKEY)
+		return (cmdPkey(argc, argv, env));
 	else if (opts->cmdType == CMD_PKEYUTL)
 		return (cmdPkeyutl(argc, argv, env));
 	return (0);

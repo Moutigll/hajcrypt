@@ -179,7 +179,7 @@ static int loadRsaKey(const char	*keyFile,
 	char	*password;
 	int		ret;
 
-	pem = readFileContent(keyFile);
+	pem = readPkeyFileContent(keyFile);
 	if (!pem)
 		return (0);
 
@@ -246,6 +246,11 @@ static int parseRsautlArgs(int argc, char **argv, t_pkeyutlOptions *opt)
 		status = ft_getoptLong(&st, shortOpts, g_pkeyutlLongOptions);
 		if (status == FT_GETOPT_END)
 			break;
+		if (status == FT_GETOPT_POSITIONAL)
+		{
+			ft_dprintf(STDERR_FILENO, "ft_ssl: pkeyutl: unexpected argument '%s'\n", st.argv[st.index]);
+			return (0);
+		}
 		if (status == FT_GETOPT_ERROR)
 		{
 			if (st.status == FT_GETOPT_UNKNOWN)
@@ -277,9 +282,8 @@ static int parseRsautlArgs(int argc, char **argv, t_pkeyutlOptions *opt)
 				case 'd': opt->decrypt	 = 1; break;
 				case 's': opt->sign		= 1; break;
 				case 'v': opt->verify	  = 1; break;
-				default:
-					FT_PKEYUTL_ERR("internal error (unhandled option '%c')\n", st.opt);
-					return (0);
+				default: return (0);
+				continue;
 			}
 		}
 	}

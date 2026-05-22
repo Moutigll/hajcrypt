@@ -1,25 +1,24 @@
-#ifndef CLI_RSA_H
-#define CLI_RSA_H
+#ifndef CLI_PKEY_H
+#define CLI_PKEY_H
 
 #include "parser.h"
 
-typedef struct s_rsaOptions
+typedef struct s_pkeyOptions
 {
-	const char		*inFile;		/* --in */
-	const char		*outFile;		/* --out */
-	int				pubin;			/* --pubin */
-	int				pubout;			/* --pubout */
-	const char		*pubOutFile;	/* --pubout with file argument genrsa */
-	int				text;			/* --text */
-	int				noout;			/* --noout */
-	int				modulus;		/* --modulus */
-	int				check;			/* --check */
-	int				traditional;	/* --traditional */
-	int				help;			/* --help */
+	const char		*inFile;
+	const char		*outFile;
+	int				pubin;
+	int				pubout;
+	int				text;
+	int				noout;
+	int				modulus;	/* RSA only - silently ignored for others */
+	int				check;
+	int				traditional;
+	int				help;
 	const char		*passin;
 	const char		*passout;
-	const t_cipher	*cipher;		/* Cipher for encrypting private key (if any) */
-}	t_rsaOptions;
+	const t_cipher	*cipher;
+}	t_pkeyOptions;
 
 typedef struct s_genpkeyOpts
 {
@@ -61,9 +60,9 @@ typedef struct s_pkeyutlOptions
 int	cmdGenPkey(int argc, char **argv, char **env);
 
 /**
- * @brief Executes the RSA command based on the provided command-line arguments.
+ * @brief Executes the `pkey` command based on the provided command-line arguments.
  *
- * This function parses the command-line arguments specific to the RSA command,
+ * This function parses the command-line arguments specific to the PKEY command,
  * performs the requested operations (e.g., key generation, key checking, output formatting),
  * and handles input/output as specified in the options.
  *
@@ -71,10 +70,10 @@ int	cmdGenPkey(int argc, char **argv, char **env);
  * @param argv An array of pointers to command-line argument strings.
  * @param env An array of pointers to environment variable strings.
  *
- * @return Returns 0 on successful execution of the RSA command, or a non-zero
+ * @return Returns 0 on successful execution of the PKEY command, or a non-zero
  *         error code on failure (e.g., invalid arguments, file I/O errors).
  */
-int	cmdRsa(int argc, char **argv, char **env);
+int	cmdPkey(int argc, char **argv, char **env);
 
 /**
  * @brief Executes the Pkey utility command based on the provided command-line arguments.
@@ -92,7 +91,7 @@ int	cmdRsa(int argc, char **argv, char **env);
  */
 int	cmdPkeyutl(int argc, char **argv, char **env);
 
-void	writeRsaOutput(const char *fileName, const char *data);
-char	*readFileContent(const char *fileName);
+int		writePkeyOutput(const char *filename, const char *data);
+char	*readPkeyFileContent(const char *fileName);
 
-#endif // CLI_RSA_H
+#endif // CLI_PKEY_H
