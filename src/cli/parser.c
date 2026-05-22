@@ -95,7 +95,7 @@ static void	printUsage(void)
 	char	prevRoot[32];
 	char	currRoot[32];
 
-	ft_printf("Standard commands:\n\tgenpkey\n\tgenrsa\n\tgendsa\n\tpkey\n\trsa\n\tdsa\n\tpkeyutl\n\trsautl\n");
+	ft_printf("Standard commands:\n\tgenpkey\n\tgenrsa\n\tgendsa\n\tpkey\n\trsa\n\tdsa\n\tpkeyutl\n\trsautl\n\tdsautl\n");
 	
 	ft_printf("\nMessage Digest commands:\n");
 	i = 0;
@@ -245,7 +245,7 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 		return (0);
 	}
 
-	if (ft_strcmp(arg, "pkeyutl") == 0 || ft_strcmp(arg, "rsautl") == 0) {
+	if (ft_strcmp(arg, "pkeyutl") == 0 || ft_strcmp(arg, "rsautl") == 0 || ft_strcmp(arg, "dsautl") == 0) {
 		opts->algo = ALGO_NONE;
 		opts->cmdType = CMD_PKEYUTL;
 		return (0);
@@ -265,7 +265,7 @@ static int listCmd(int argc, char **argv)
 	}
 	if (ft_strcmp(argv[2], "commands") == 0)
 	{
-		ft_printf("genpkey\ngenrsa\ngendsa\npkey\nrsa\ndsa\npkeyutl\nrsautl\n");
+		ft_printf("genpkey\ngenrsa\ngendsa\npkey\nrsa\ndsa\npkeyutl\nrsautl\ndsautl\n");
 	}
 	else if (ft_strcmp(argv[2], "hashes") == 0)
 	{

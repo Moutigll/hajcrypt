@@ -1,12 +1,10 @@
 #include <fcntl.h>
-#include <unistd.h>
-#include <stdint.h>
 
-#include "../../hajlib/include/hajlib.h"	/* IWYU pragma: keep */
+#include "../../hajlib/include/hajlib.h" /* IWYU pragma: keep */
 #include "../../includes/cli/password.h"
 #include "../../includes/utils/utils.h"
 #include "../../includes/cli/pkey.h"
-#include "../../includes/asymmetric/rsa.h"
+#include "../../includes/asymmetric/pkey.h"
 
 #define FT_PKEYUTL_ERR(...) ft_dprintf(STDERR_FILENO, "ft_ssl: pkeyutl: " __VA_ARGS__)
 
@@ -29,7 +27,7 @@ static const tFtLongOption g_pkeyutlLongOptions[] = {
 };
 
 
-static void printRsautlHelp(void)
+static void printPkeyutlHelp(void)
 {
 	ft_printf(
 		"Usage: ft_ssl pkeyutl -e|-d|-s|-v [options] [input_file] [signature_file]\n"
@@ -169,11 +167,11 @@ static int hashDataInPlace(const char *dgstName, uint8_t **data, size_t *dataLen
 	return (1);
 }
 
-static int loadRsaKey(const char	*keyFile,
-					  const char	*passin,
-					  char			**env,
-					  int			wantPriv,
-					  t_rsaKey		*key)
+static int loadPkeyKey(const char	*keyFile,
+					   const char	*passin,
+					   char			**env,
+					   int			wantPriv,
+					   t_pkey		*pkey)
 {
 	char	*pem;
 	char	*password;
@@ -195,7 +193,8 @@ static int loadRsaKey(const char	*keyFile,
 		}
 	}
 
-	ret = rsaKeyFromPem(pem, key, wantPriv, password);
+	ft_bzero(pkey, sizeof(t_pkey));
+	ret = pkeyFromPem(pem, pkey, wantPriv, password);
 
 	if (ret == 2)
 	{
@@ -213,7 +212,7 @@ static int loadRsaKey(const char	*keyFile,
 			free(pem);
 			return (0);
 		}
-		ret = rsaKeyFromPem(pem, key, wantPriv, password);
+		ret = pkeyFromPem(pem, pkey, wantPriv, password);
 	}
 
 	if (password)
@@ -223,7 +222,7 @@ static int loadRsaKey(const char	*keyFile,
 	}
 	free(pem);
 
-	if (!ret)
+	if (ret != 1 || !pkey->key)
 	{
 		FT_PKEYUTL_ERR("failed to parse %s key\n", wantPriv ? "private" : "public");
 		return (0);
@@ -231,7 +230,7 @@ static int loadRsaKey(const char	*keyFile,
 	return (1);
 }
 
-static int parseRsautlArgs(int argc, char **argv, t_pkeyutlOptions *opt)
+static int parsePkeyutlArgs(int argc, char **argv, t_pkeyutlOptions *opt)
 {
 	tFtGetopt		st;
 	tFtGetoptStatus	status;
@@ -248,7 +247,7 @@ static int parseRsautlArgs(int argc, char **argv, t_pkeyutlOptions *opt)
 			break;
 		if (status == FT_GETOPT_POSITIONAL)
 		{
-			ft_dprintf(STDERR_FILENO, "ft_ssl: pkeyutl: unexpected argument '%s'\n", st.argv[st.index]);
+			FT_PKEYUTL_ERR("unexpected argument '%s'\n", st.argv[st.index]);
 			return (0);
 		}
 		if (status == FT_GETOPT_ERROR)
@@ -268,23 +267,24 @@ static int parseRsautlArgs(int argc, char **argv, t_pkeyutlOptions *opt)
 		{
 			switch (st.opt)
 			{
-				case 'i': opt->inFile	  = st.optArg; break;
-				case 'o': opt->outFile	 = st.optArg; break;
-				case 'k': opt->keyFile	 = st.optArg; break;
-				case 'p': opt->passin	  = st.optArg; break;
-				case 'g': opt->dgstName	= st.optArg; break;
-				case 'S': opt->sigFile	 = st.optArg; break;
-				case 'x': opt->hexdump	 = 1; break;
-				case 'h': opt->help		= 1; break;
-				case 'H': opt->hashInput   = 1; break;
-				case 'u': opt->pubin	   = 1; break;
-				case 'e': opt->encrypt	 = 1; break;
-				case 'd': opt->decrypt	 = 1; break;
-				case 's': opt->sign		= 1; break;
-				case 'v': opt->verify	  = 1; break;
+				case 'i': opt->inFile		= st.optArg; break;
+				case 'o': opt->outFile		= st.optArg; break;
+				case 'k': opt->keyFile		= st.optArg; break;
+				case 'p': opt->passin		= st.optArg; break;
+				case 'g': opt->dgstName		= st.optArg; break;
+				case 'S': opt->sigFile		= st.optArg; break;
+				case 'x': opt->hexdump		= 1; break;
+				case 'h': opt->help			= 1; break;
+				case 'H': opt->hashInput	= 1; break;
+				case 'u': opt->pubin		= 1; break;
+				case 'e': opt->encrypt		= 1; break;
+				case 'd': opt->decrypt		= 1; break;
+				case 's': opt->sign			= 1; break;
+				case 'v': opt->verify		= 1; break;
 				default: return (0);
 				continue;
 			}
+			continue;
 		}
 	}
 
@@ -329,16 +329,17 @@ static void writeHexOutput(const char *file, const uint8_t *data, size_t len)
 int cmdPkeyutl(int argc, char **argv, char **env)
 {
 	t_pkeyutlOptions	opt;
-	t_rsaKey		key;
-	uint8_t			*in;
-	uint8_t			*sig;
-	uint8_t			*out;
-	size_t			inLen;
-	size_t			sigLen;
-	size_t			outLen;
-	const t_algoId	*algo;
-	int				wantPriv;
-	int				ret;
+	t_pkey				pkey;
+	uint8_t				*in;
+	uint8_t				*sig;
+	uint8_t				*out;
+	size_t				inLen;
+	size_t				sigLen;
+	size_t				outLen;
+	size_t				bufSize;
+	const t_algoId		*algo;
+	int					wantPriv;
+	int					ret;
 
 	in		= NULL;
 	sig		= NULL;
@@ -348,10 +349,10 @@ int cmdPkeyutl(int argc, char **argv, char **env)
 	outLen	= 0;
 	ret		= 1;
 
-	if (!parseRsautlArgs(argc, argv, &opt))
-		return (printRsautlHelp(), 1);
+	if (!parsePkeyutlArgs(argc, argv, &opt))
+		return (printPkeyutlHelp(), 1);
 	if (opt.help)
-		return (printRsautlHelp(), 0);
+		return (printPkeyutlHelp(), 0);
 
 	if (opt.encrypt + opt.decrypt + opt.sign + opt.verify != 1)
 	{
@@ -376,38 +377,45 @@ int cmdPkeyutl(int argc, char **argv, char **env)
 	}
 
 	/* 3. Load key */
-	ft_bzero(&key, sizeof(t_rsaKey));
+	ft_bzero(&pkey, sizeof(t_pkey));
 	wantPriv = (opt.decrypt || opt.sign) ? 1 : 0;
 	if (opt.pubin)
 		wantPriv = 0;
-	if (!loadRsaKey(opt.keyFile, opt.passin, env, wantPriv, &key))
+	if (!loadPkeyKey(opt.keyFile, opt.passin, env, wantPriv, &pkey))
 		goto cleanup;
 
-	out = malloc(rsaModulusBytes(&key));
+	/* Allocate output buffer */
+	bufSize = 0;
+	if (opt.encrypt || opt.decrypt)
+		bufSize = pkey.def->keySizeBytes(pkey.key);
+	else if (opt.sign)
+		bufSize = pkey.def->maxSignatureLen(pkey.key);
+	out = malloc(bufSize ? bufSize : 8192);
 	if (!out)
 	{
 		FT_PKEYUTL_ERR("memory allocation failed\n");
 		goto cleanup;
 	}
+	outLen = bufSize;
 
 	/* 4. Perform the requested operation */
 	if (opt.encrypt)
 	{
-		if (!rsaEncrypt(in, inLen, &key, out, &outLen, PKEY_PADDING_PKCS1V15))
-			{FT_PKEYUTL_ERR("RSA encryption failed\n"); ret = 1; goto cleanup;}
+		if (!pkeyEncrypt(&pkey, in, inLen, out, &outLen, PKEY_PADDING_PKCS1V15))
+			{FT_PKEYUTL_ERR("%s encryption failed\n", pkey.def->name); ret = 1; goto cleanup;}
 	}
 	else if (opt.decrypt)
 	{
-		if (!rsaDecrypt(in, inLen, &key, out, &outLen, PKEY_PADDING_PKCS1V15))
-			{FT_PKEYUTL_ERR("RSA decryption failed\n"); ret = 1; goto cleanup;}
+		if (!pkeyDecrypt(&pkey, in, inLen, out, &outLen, PKEY_PADDING_PKCS1V15))
+			{FT_PKEYUTL_ERR("%s decryption failed\n", pkey.def->name); ret = 1; goto cleanup;}
 	}
 	else if (opt.sign)
 	{
 		algo = getDigestOid(opt.dgstName);
 		if (!algo)
 			algo = getDigestOid("sha256");
-		if (!rsaSign(in, inLen, algo, &key, out, &outLen, PKEY_PADDING_PKCS1V15))
-			{FT_PKEYUTL_ERR("RSA signing failed\n"); ret = 1; goto cleanup;}
+		if (!pkeySign(&pkey, in, inLen, algo, out, &outLen, PKEY_PADDING_PKCS1V15))
+			{FT_PKEYUTL_ERR("%s signing failed\n", pkey.def->name); ret = 1; goto cleanup;}
 	}
 	else if (opt.verify)
 	{
@@ -417,7 +425,7 @@ int cmdPkeyutl(int argc, char **argv, char **env)
 		if (!algo)
 			algo = getDigestOid("sha256");
 		ret = 0;
-		if (rsaVerify(in, inLen, algo, &key, sig, sigLen, PKEY_PADDING_PKCS1V15))
+		if (pkeyVerify(&pkey, in, inLen, algo, sig, sigLen, PKEY_PADDING_PKCS1V15))
 			ft_printf("Verified OK\n");
 		else
 		{
@@ -439,6 +447,6 @@ cleanup:
 	free(in);
 	free(sig);
 	free(out);
-	rsaFreeKey(&key);
+	pkeyFree(&pkey);
 	return (ret);
 }

@@ -548,8 +548,8 @@ const t_pkeyDef	g_dsaPkeyDef = {
 	/* Cryptographic operations */
 	.encrypt		= NULL,
 	.decrypt		= NULL,
-	.sign			= NULL,
-	.verify			= NULL,
+	.sign			= dsaSign,
+	.verify			= dsaVerify,
 
 	/* Utility */
 	.maxSignatureLen	= dsaMaxSignatureLen,

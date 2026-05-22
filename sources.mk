@@ -45,6 +45,7 @@ LIB_SRC = \
 	$(SRC_DIR)/asymmetric/rsa/rsaPem.c \
 	$(SRC_DIR)/asymmetric/rsa/rsaKey.c \
 	$(SRC_DIR)/asymmetric/dsa/dsaCheck.c \
+	$(SRC_DIR)/asymmetric/dsa/cryptSign.c \
 	$(SRC_DIR)/asymmetric/dsa/dsaPem.c \
 	$(SRC_DIR)/asymmetric/dsa/dsaKey.c \
 	$(SRC_DIR)/hash/common/padding.c \

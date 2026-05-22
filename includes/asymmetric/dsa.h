@@ -102,6 +102,35 @@ void		dsaPrintKey(t_dsaKey *key, int showPrivate);
 int			dsaCheckKey(t_dsaKey *key);
 
 
+/**
+ * @brief Sign a digest using the DSA private key in PKCS#1.5 format.
+ *
+ * @param digest Digest to sign.
+ * @param digestLen Length of the digest.
+ * @param key DSA key containing domain parameters and the private key.
+ * @param sig Buffer where the signature will be stored (allocated by the caller).
+ * @param sigLen Pointer to receive the actual length of the signature.
+ *
+ * @return 1 on success, 0 on failure.
+ */
+int			dsaSignPkcs15(const uint8_t		*digest,	size_t	digestLen,
+						  const t_dsaKey	*key,
+						  uint8_t			*sig,		size_t	*sigLen);
+
+/**
+ * @brief Verify a DSA signature against a digest in PKCS#1.5 format.
+ *
+ * @param digest Digest of the message.
+ * @param digestLen Length of the digest.
+ * @param key DSA key containing domain parameters and the public key.
+ * @param sig Pointer to the signature data.
+ * @param sigLen Length of the signature data.
+ *
+ * @return 1 if the signature is valid, 0 otherwise.
+ */
+int			dsaVerifyPkcs15(const uint8_t	*digest,	size_t	digestLen,
+							const t_dsaKey	*key,
+							const uint8_t	*sig,		size_t	sigLen);
 
 /**
  * @brief Sign a digest using the DSA private key.
@@ -112,15 +141,19 @@ int			dsaCheckKey(t_dsaKey *key);
  *
  * @param digest Digest to sign.
  * @param digestLen Length of the digest.
+ * @param digestAlgo Algorithm used to hash the message.
  * @param key DSA key containing domain parameters and the private key.
  * @param sig Buffer where the signature will be stored (allocated by the caller).
  * @param sigLen Pointer to receive the actual length of the signature.
+ * @param padding Padding method to use.
  *
  * @return 1 on success, 0 on failure.
  */
-int			dsaSign(const uint8_t *digest, size_t digestLen,
-					const t_dsaKey *key,
-					uint8_t *sig, size_t *sigLen);
+int			dsaSign(const uint8_t	*digest,	size_t	digestLen,
+					const t_algoId	*digestAlgo,
+					const void		*key,
+					uint8_t			*sig,		size_t	*sigLen,
+					t_pkeyPadding	padding);
 
 /**
  * @brief Verify a DSA signature against a digest.
@@ -129,14 +162,18 @@ int			dsaSign(const uint8_t *digest, size_t digestLen,
  *
  * @param digest Digest of the message.
  * @param digestLen Length of the digest.
+ * @param digestAlgo Algorithm used to hash the message.
  * @param key DSA key containing domain parameters and the public key.
  * @param sig Pointer to the signature data.
  * @param sigLen Length of the signature data.
+ * @param padding Padding method to use.
  *
  * @return 1 if the signature is valid, 0 otherwise.
  */
-int			dsaVerify(const uint8_t *digest, size_t digestLen,
-					  const t_dsaKey *key,
-					  const uint8_t *sig, size_t sigLen);
+int			dsaVerify(const uint8_t		*digest,	size_t	digestLen,
+					  const t_algoId	*digestAlgo,
+					  const void		*key,
+					  const uint8_t		*sig,		size_t	sigLen,
+					  t_pkeyPadding		padding);
 
 #endif
