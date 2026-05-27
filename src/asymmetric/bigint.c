@@ -87,7 +87,7 @@ t_bigInt *bigIntFromHex(const char *hex, size_t numWords)
 	size_t		len = ft_strlen(hex);
 	size_t		bytes = (len + 1) / 2;
 	size_t		words = (bytes + 7) / 8;
-	t_bigInt	*n = bigIntNew(numWords ? numWords : words);
+	t_bigInt	*n = bigIntNew(numWords > words ? numWords : words);
 	uint8_t		*byteArray;
 
 	if (!n)
@@ -457,6 +457,8 @@ static void bigIntDivModKnuth(t_bigInt *quot, t_bigInt *rem, const t_bigInt *a, 
 			bigIntZero(quot);
 		if (rem)
 			bigIntCopy(rem, a);
+		bigIntFree(A);
+		bigIntFree(B);
 		return;
 	}
 

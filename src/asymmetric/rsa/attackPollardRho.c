@@ -1,16 +1,20 @@
+#include <sys/time.h>
 
+#include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
 #include "../../../includes/asymmetric/bigint.h"
 #include "../../../includes/asymmetric/primality.h"
 #include "../../../includes/asymmetric/rsa.h"
 
 static inline int bigIntIsOne(const t_bigInt *n)
 {
-	return (n->numWords == 1 && n->words[0] == 1);
+	return (n->used == 1 && n->words[0] == 1);
 }
 
 static int bigIntAddMod(t_bigInt *out, const t_bigInt *a, const t_bigInt *b, const t_bigInt *m)
 {
-	t_bigInt *tmp = bigIntNew(m->numWords);
+	size_t maxWords = (a->numWords > b->numWords) ? a->numWords : b->numWords;
+	t_bigInt *tmp = bigIntNew(maxWords + 1);
+	
 	if (!tmp)
 		return (0);
 	if (!bigIntAdd(tmp, a, b) || !bigIntMod(out, tmp, m)) {
@@ -26,7 +30,7 @@ static int bigIntAddMod(t_bigInt *out, const t_bigInt *a, const t_bigInt *b, con
  */
 static int pollardStep(t_bigInt *x, const t_bigInt *c, const t_bigInt *n)
 {
-	t_bigInt *square = bigIntNew(n->numWords * 2);
+	t_bigInt *square = bigIntNew(n->numWords);
 	if (!square)
 		return (0);
 	if (!bigIntMulMod(square, x, x, n)) {
@@ -52,18 +56,26 @@ static int pollardStep(t_bigInt *x, const t_bigInt *c, const t_bigInt *n)
  */
 static t_bigInt *bigIntPollardRho(t_bigInt *n)
 {
-	t_bigInt	*x = bigIntFromUint64(2);
-	t_bigInt	*y = bigIntFromUint64(2);
-	t_bigInt	*c = bigIntFromUint64(1);
-	t_bigInt	*d = bigIntFromUint64(1);
+	t_bigInt	*x = bigIntNew(n->numWords);
+	t_bigInt	*y = bigIntNew(n->numWords);
+	t_bigInt	*c = bigIntNew(n->numWords);
+	t_bigInt	*d = bigIntNew(n->numWords);
 	t_bigInt	*diff = bigIntNew(n->numWords);
-	t_bigInt	*one = bigIntFromUint64(1);
 	t_bigInt	*two = bigIntFromUint64(2);
 
-	if (!x || !y || !c || !d || !diff || !one || !two)
+	if (!x || !y || !c || !d || !diff || !two)
 		goto failure;
 
+	bigIntSetUint64(x, 2);
+	bigIntSetUint64(y, 2);
+	bigIntSetUint64(c, 1);
+	bigIntSetUint64(d, 1);
+
+	size_t		count = 0;
+	HAJCRYPT_DPRINT("attempt: 0");
 	while (bigIntIsOne(d)) {
+		if (++count > 1000)
+			HAJCRYPT_DPRINT("\rattempt: %zu", count);
 		/* x = f(x) */
 		if (!pollardStep(x, c, n))
 			goto failure;
@@ -84,19 +96,19 @@ static t_bigInt *bigIntPollardRho(t_bigInt *n)
 		if (bigIntCmp(d, n) == 0) {
 			bigIntCopy(x, two);
 			bigIntCopy(y, two);
-			if (!bigIntAdd(c, c, one))
-				goto failure;
-			bigIntCopy(d, one);
+			c->words[0]++;
+			bigIntSetUint64(d, 1);
 		}
 	}
+	HAJCRYPT_DPRINT("\n");
 
 	bigIntFree(x); bigIntFree(y); bigIntFree(c);
-	bigIntFree(diff); bigIntFree(one); bigIntFree(two);
+	bigIntFree(diff); bigIntFree(two);
 	
 	return (d);
 failure:
 	bigIntFree(x);  bigIntFree(y);  bigIntFree(c);  bigIntFree(d);
-	bigIntFree(diff);  bigIntFree(one);  bigIntFree(two);
+	bigIntFree(diff);  bigIntFree(two);
 	
 	return (NULL);
 }
