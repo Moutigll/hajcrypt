@@ -378,7 +378,7 @@ char	*pkeyToPem(t_pkey *key, int isPrivate, int useTraditional, const char *pass
  *                   heap-allocated concrete key.
  * @param isPrivate  Non-zero if a private key is expected, zero for public.
  * @param password   Passphrase for decryption (may be NULL).
- * @return 1 on success, 0 on failure,  if a password is required but
+ * @return 1 on success, 0 on failure, 2 if a password is required but
  *         was not supplied.
  */
 int		pkeyFromPem(const char *pem, t_pkey *pkey, int isPrivate, const char *password);

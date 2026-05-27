@@ -22,6 +22,9 @@ int	dsaSignPkcs15(const uint8_t		*digest,	size_t	digestLen,
 
 	if (!digest || !key || !key->priv || !sig || !sigLen)
 		return (0);
+	/* Validate key */
+	if (!key->q || !key->p || !key->g || !key->priv)
+		return (0);
 	size_t qSize = (bigIntBitLength(key->q) + 7) / 8;
 	if (digestLen > qSize)
 		digestLen = qSize;
@@ -115,6 +118,8 @@ int	dsaVerifyPkcs15(const uint8_t	*digest,	size_t	digestLen,
 	int			ret = 0;
 
 	if (!digest || !key || !sig || sigLen == 0)
+		return (0);
+	if (!key->q || !key->p || !key->g || !key->pub)
 		return (0);
 	if (!asn1ParseSequence(sig, sigLen, &content, &contentLen, &consumed))
 		return (0);

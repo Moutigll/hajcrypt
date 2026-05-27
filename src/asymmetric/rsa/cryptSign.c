@@ -104,9 +104,9 @@ static int	rsaPrivateOp(const uint8_t	*data,	size_t	dataLen,
 		goto exit;
 
 	/* Unblinding: Compute m = m' * r^(-1) mod n. */
-	bigIntModInverse(r, r, key->n);
-	
-	/* FIX BUG B: Avoid in-place multiplication and prevent buffer truncation */
+	if(!bigIntModInverse(r, r, key->n))
+		goto exit;
+
 	bigIntMul(prod, m, r);
 	bigIntMod(m, prod, key->n);
 

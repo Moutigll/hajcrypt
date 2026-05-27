@@ -257,8 +257,8 @@ int	rsaPkcs1v15UnpadSign(const uint8_t	*padded,	size_t	paddedLen,
 	errType |= ((sep >= paddedLen) || (padded[sep] != 0x00)) ? 3 : 0;
 	valid &= (sep < paddedLen && padded[sep] == 0x00);
 
+	diLen = (valid) ? (paddedLen - sep - 1) : 0;
 	di = padded + sep + 1;
-	diLen = paddedLen - sep - 1;
 
 	i = 0;
 	while (i < headerLen && i < diLen)
