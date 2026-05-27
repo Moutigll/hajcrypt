@@ -6,16 +6,11 @@
 
 static int isPrimeSmall(const t_bigInt *n)
 {
-	static const uint64_t small_primes[] = {
-		2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,
-		67,71,73,79,83,89,97,101,103,107,109,113,127,131,
-		137,139,149,151,157,163,167,173,179,181,191,193,197,199
-	};
 	if (n->used == 1) {
 		uint64_t val = n->words[0];
-		for (size_t i = 0; i < sizeof(small_primes)/sizeof(small_primes[0]); i++) {
-			if (val == small_primes[i]) return (1);
-			if (val % small_primes[i] == 0) return (0);
+		for (size_t i = 0; i < sizeof(g_smallPrimes)/sizeof(g_smallPrimes[0]); i++) {
+			if (val == g_smallPrimes[i]) return (1);
+			if (val % g_smallPrimes[i] == 0) return (0);
 		}
 		return (1);
 	}
@@ -23,8 +18,8 @@ static int isPrimeSmall(const t_bigInt *n)
 	t_bigInt *rem = bigIntNew(1);
 	if (!p || !rem) { bigIntFree(p); bigIntFree(rem); return (0); }
 	int result = 1;
-	for (size_t i = 0; i < sizeof(small_primes)/sizeof(small_primes[0]); i++) {
-		p->words[0] = small_primes[i]; p->used = 1;
+	for (size_t i = 0; i < sizeof(g_smallPrimes)/sizeof(g_smallPrimes[0]); i++) {
+		p->words[0] = g_smallPrimes[i]; p->used = 1;
 		bigIntMod(rem, n, p);
 		if (bigIntIsZero(rem) && bigIntCmp(n, p) != 0) { result = 0; break; }
 	}

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
+#include "../../../hajlib/include/hmemory.h"
 #include "../../../includes/asymmetric/pkey.h"
 
 #include "../../../includes/asymmetric/rsa.h"
@@ -140,7 +141,41 @@ int	rsaEncrypt(const uint8_t	*input,		size_t	inputLen,
 
 	/* Select padding function */
 	padOk = 0;
-	if (padding == PKEY_PADDING_PKCS1V15)
+	if (padding == PKEY_PADDING_NONE)
+	{
+		uint8_t *paddedInput;
+		
+		HAJCRYPT_DPRINT(P_ORANGE "Warning, encrypting without padding\n" P_RESET);
+		
+		if (inputLen > k)
+		{
+			HAJCRYPT_DPRINT(P_RED "rsaEncrypt: No padding: message too long (%zu > %zu)\n" P_RESET, inputLen, k);
+			free(padded);
+			return (0);
+		}
+		
+		if (inputLen == k)
+		{
+			opOk = rsaPublicOp(input, inputLen, rsa, output, outputLen);
+			free(padded);
+			return (opOk);
+		}
+		
+		/* Auto-pad with zeros on the left */
+		paddedInput = malloc(k);
+		if (!paddedInput)
+		{
+			free(padded);
+			return (0);
+		}
+		ft_memset(paddedInput, 0, k);
+		ft_memcpy(paddedInput + (k - inputLen), input, inputLen);
+		opOk = rsaPublicOp(paddedInput, k, rsa, output, outputLen);
+		free(paddedInput);
+		free(padded);
+		return (opOk);
+	}
+	else if (padding == PKEY_PADDING_PKCS1V15)
 		padOk = rsaPkcs1v15PadEncrypt(input, inputLen, rsa, padded, k);
 	else if (padding == PKEY_PADDING_OAEP)
 		padOk = rsaOaepPadEncrypt(input, inputLen, rsa, padded, k);
@@ -186,7 +221,30 @@ int	rsaDecrypt(const uint8_t	*input,		size_t	inputLen,
 
 	/* Select unpadding function */
 	unpadOk = 0;
-	if (padding == PKEY_PADDING_PKCS1V15)
+	if (padding == PKEY_PADDING_NONE)
+	{
+		size_t start;
+		
+		HAJCRYPT_DPRINT(P_ORANGE "Warning, decrypting without padding\n" P_RESET);
+		
+		/* Skip leading zeros */
+		start = 0;
+		while (start < paddedLen && padded[start] == 0)
+			start++;
+		
+		if (start == paddedLen)
+		{
+			*outputLen = 0;
+			unpadOk = 1;
+		}
+		else
+		{
+			*outputLen = paddedLen - start;
+			ft_memcpy(output, padded + start, *outputLen);
+			unpadOk = 1;
+		}
+	}
+	else if (padding == PKEY_PADDING_PKCS1V15)
 		unpadOk = rsaPkcs1v15UnpadEncrypt(padded, paddedLen, output, outputLen);
 	else if (padding == PKEY_PADDING_OAEP)
 		unpadOk = rsaOaepUnpadEncrypt(padded, paddedLen, output, outputLen);

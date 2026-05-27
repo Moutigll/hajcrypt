@@ -3,7 +3,6 @@
 #include "../../../includes/asymmetric/primality.h"
 
 #include "../../../includes/asymmetric/dsa.h"
-#include <unistd.h>
 
 /**
  * @brief Select the q-bit length based on the p-bit length (FIPS 186-4).

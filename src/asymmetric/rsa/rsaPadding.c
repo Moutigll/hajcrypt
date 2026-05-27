@@ -102,20 +102,22 @@ int	rsaPkcs1v15PadEncrypt(const uint8_t		*input,		size_t	inputLen,
 						  uint8_t			*padded,	size_t	paddedLen)
 {
 	size_t	k;
-	size_t	ps_len;
+	size_t	psLen;
 	size_t	i;
 	uint8_t	rnd[1];
 
 	k = rsaModulusBytes(key);
 	if (paddedLen < k )
 		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 padding: padded length too short\n"), (0));
+	if (k < 11)
+	return (HAJCRYPT_DPRINT("PKCS#1 v1.5 padding: key size too small (need at least 88 bits)\n"), (0));
 	if (inputLen > k - 11)
 		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 padding: input too long for key size\n"), (0));
 	padded[0] = 0x00;
 	padded[1] = 0x02;
-	ps_len = k - 3 - inputLen;
+	psLen = k - 3 - inputLen;
 	i = 0;
-	while (i < ps_len)
+	while (i < psLen)
 	{
 		hajSecRandBytes(rnd, 1);
 		if (rnd[0] != 0x00)
@@ -124,8 +126,8 @@ int	rsaPkcs1v15PadEncrypt(const uint8_t		*input,		size_t	inputLen,
 			i++;
 		}
 	}
-	padded[2 + ps_len] = 0x00;
-	ft_memcpy(padded + 3 + ps_len, input, inputLen);
+	padded[2 + psLen] = 0x00;
+	ft_memcpy(padded + 3 + psLen, input, inputLen);
 	return (1);
 }
 
@@ -201,7 +203,7 @@ int	rsaPkcs1v15PadSign(const uint8_t	*digest,	size_t	digestLen,
 	size_t			expectedDigestLen;
 	size_t			k;
 	size_t			t_len;
-	size_t			ps_len;
+	size_t			psLen;
 
 	if (!getDigestInfoHeader(digestAlgo, &header, &headerLen,
 			&expectedDigestLen))
@@ -216,11 +218,11 @@ int	rsaPkcs1v15PadSign(const uint8_t	*digest,	size_t	digestLen,
 		return (HAJCRYPT_DPRINT("Key size too small for PKCS#1 v1.5 signature padding\n"), (0));
 	padded[0] = 0x00;
 	padded[1] = 0x01;
-	ps_len = k - 3 - t_len;
-	ft_memset(padded + 2, 0xFF, ps_len);
-	padded[2 + ps_len] = 0x00;
-	ft_memcpy(padded + 3 + ps_len, header, headerLen);
-	ft_memcpy(padded + 3 + ps_len + headerLen, digest, digestLen);
+	psLen = k - 3 - t_len;
+	ft_memset(padded + 2, 0xFF, psLen);
+	padded[2 + psLen] = 0x00;
+	ft_memcpy(padded + 3 + psLen, header, headerLen);
+	ft_memcpy(padded + 3 + psLen + headerLen, digest, digestLen);
 	return (1);
 }
 

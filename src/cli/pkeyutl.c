@@ -22,6 +22,7 @@ static const tFtLongOption g_pkeyutlLongOptions[] = {
 	{"sigfile",	FT_GETOPT_REQUIRED_ARGUMENT,	'S'},
 	{"hexdump",	FT_GETOPT_NO_ARGUMENT,			'x'},
 	{"hash",		FT_GETOPT_NO_ARGUMENT,			'H'},
+	{"padding",	FT_GETOPT_REQUIRED_ARGUMENT,	'P'},
 	{"help",		FT_GETOPT_NO_ARGUMENT,			'h'},
 	{NULL,		0,								0}
 };
@@ -45,6 +46,7 @@ static void printPkeyutlHelp(void)
 		"  -H, --hash            Hash input with -g algo before sign/verify\n"
 		"  -S, --sigfile <file>  Signature file (for --verify)\n"
 		"  -x, --hexdump         Hex output\n"
+		"  -P, --padding <type>  Padding type (supported: none, pkcs1, pss, oaep) default: pkcs1\n"
 		"  -h, --help            Show this help\n"
 	);
 }
@@ -230,6 +232,19 @@ static int loadPkeyKey(const char	*keyFile,
 	return (1);
 }
 
+static int getPaddingType(const char *name)
+{
+	if (!ft_strcmp(name, "none"))
+		return (PKEY_PADDING_NONE);
+	if (!ft_strcmp(name, "pkcs1"))
+		return (PKEY_PADDING_PKCS1V15);
+	if (!ft_strcmp(name, "pss"))
+		return (PKEY_PADDING_PSS);
+	if (!ft_strcmp(name, "oaep"))
+		return (PKEY_PADDING_OAEP);
+	return (-1);
+}
+
 static int parsePkeyutlArgs(int argc, char **argv, t_pkeyutlOptions *opt)
 {
 	tFtGetopt		st;
@@ -237,6 +252,7 @@ static int parsePkeyutlArgs(int argc, char **argv, t_pkeyutlOptions *opt)
 	const char		*shortOpts;
 
 	ft_bzero(opt, sizeof(t_pkeyutlOptions));
+	opt->paddingType = PKEY_PADDING_PKCS1V15;
 	shortOpts = "i:o:k:p:g:S:xhHuedsv";
 	ft_getoptInit(&st, argc - 1, argv + 1);
 
@@ -281,6 +297,16 @@ static int parsePkeyutlArgs(int argc, char **argv, t_pkeyutlOptions *opt)
 				case 'd': opt->decrypt		= 1; break;
 				case 's': opt->sign			= 1; break;
 				case 'v': opt->verify		= 1; break;
+				case 'P':
+				{
+					opt->paddingType = getPaddingType(st.optArg);
+					if (opt->paddingType == -1)
+					{
+						FT_PKEYUTL_ERR("unsupported padding type '%s'\n", st.optArg);
+						return (0);
+					}
+					break;
+				}
 				default: return (0);
 				continue;
 			}
@@ -401,12 +427,12 @@ int cmdPkeyutl(int argc, char **argv, char **env)
 	/* 4. Perform the requested operation */
 	if (opt.encrypt)
 	{
-		if (!pkeyEncrypt(&pkey, in, inLen, out, &outLen, PKEY_PADDING_PKCS1V15))
+		if (!pkeyEncrypt(&pkey, in, inLen, out, &outLen, opt.paddingType))
 			{FT_PKEYUTL_ERR("%s encryption failed\n", pkey.def->name); ret = 1; goto cleanup;}
 	}
 	else if (opt.decrypt)
 	{
-		if (!pkeyDecrypt(&pkey, in, inLen, out, &outLen, PKEY_PADDING_PKCS1V15))
+		if (!pkeyDecrypt(&pkey, in, inLen, out, &outLen, opt.paddingType))
 			{FT_PKEYUTL_ERR("%s decryption failed\n", pkey.def->name); ret = 1; goto cleanup;}
 	}
 	else if (opt.sign)
@@ -414,7 +440,7 @@ int cmdPkeyutl(int argc, char **argv, char **env)
 		algo = getDigestOid(opt.dgstName);
 		if (!algo)
 			algo = getDigestOid("sha256");
-		if (!pkeySign(&pkey, in, inLen, algo, out, &outLen, PKEY_PADDING_PKCS1V15))
+		if (!pkeySign(&pkey, in, inLen, algo, out, &outLen, opt.paddingType))
 			{FT_PKEYUTL_ERR("%s signing failed\n", pkey.def->name); ret = 1; goto cleanup;}
 	}
 	else if (opt.verify)
@@ -425,7 +451,7 @@ int cmdPkeyutl(int argc, char **argv, char **env)
 		if (!algo)
 			algo = getDigestOid("sha256");
 		ret = 0;
-		if (pkeyVerify(&pkey, in, inLen, algo, sig, sigLen, PKEY_PADDING_PKCS1V15))
+		if (pkeyVerify(&pkey, in, inLen, algo, sig, sigLen, opt.paddingType))
 			ft_printf("Verified OK\n");
 		else
 		{

@@ -14,6 +14,7 @@ typedef struct s_pkeyOptions
 	int				modulus;	/* RSA only - silently ignored for others */
 	int				check;
 	int				traditional;
+	int				breakIt;
 	int				help;
 	const char		*passin;
 	const char		*passout;
@@ -36,6 +37,7 @@ typedef struct s_pkeyutlOptions
 	const char	*passin;
 	const char	*sigFile;
 	const char	*dgstName;
+	int			paddingType;
 
 	int			pubin;
 	int			encrypt;
