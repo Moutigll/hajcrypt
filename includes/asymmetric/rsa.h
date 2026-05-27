@@ -271,4 +271,17 @@ static inline size_t	rsaModulusBytes(const t_rsaKey *key)
 	return ((key->bits + 7) / 8);
 }
 
+/**
+ * @brief Breaks a small RSA public key and reconstructs the private key.
+ *
+ * The attack uses Pollard's Rho and trial division. It is practical only
+ * for moduli up to about 128 bits, because the time complexity is
+ * O(√p) where p is the smaller prime factor.
+ *
+ * @param pubkey  Public key containing n and e.
+ * @param privkey Output private key (caller must zero the structure).
+ * @return 1 on success, 0 on failure (modulus too large or not factorable).
+ */
+int rsaAttackBreakPrivkey(const t_rsaKey *pubkey, t_rsaKey *privkey);
+
 #endif

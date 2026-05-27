@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include "../../hajlib/include/hajlib.h" /* IWYU pragma: keep */
@@ -71,14 +72,15 @@ static const tFtLongOption	g_pkeyLongOpts[] = {
 	{"out",			FT_GETOPT_REQUIRED_ARGUMENT,	'o'},
 	{"passin",		FT_GETOPT_REQUIRED_ARGUMENT,	'p'},
 	{"passout",		FT_GETOPT_REQUIRED_ARGUMENT,	'P'},
-	{"text",		FT_GETOPT_NO_ARGUMENT,			't'},
-	{"noout",		FT_GETOPT_NO_ARGUMENT,			'n'},
+	{"text",			FT_GETOPT_NO_ARGUMENT,			't'},
+	{"noout",			FT_GETOPT_NO_ARGUMENT,			'n'},
 	{"modulus",		FT_GETOPT_NO_ARGUMENT,			'm'},
-	{"check",		FT_GETOPT_NO_ARGUMENT,			'c'},
+	{"check",			FT_GETOPT_NO_ARGUMENT,			'c'},
 	{"pubin",		FT_GETOPT_NO_ARGUMENT,			'u'},
 	{"pubout",		FT_GETOPT_NO_ARGUMENT,			'U'},
 	{"traditional",	FT_GETOPT_NO_ARGUMENT,			'T'},
-	{"help",		FT_GETOPT_NO_ARGUMENT,			'h'},
+	{"breakit",		FT_GETOPT_NO_ARGUMENT,			'b'},
+	{"help",			FT_GETOPT_NO_ARGUMENT,			'h'},
 	{NULL,			0,								0}
 };
 
@@ -102,6 +104,7 @@ static void	printPkeyHelp(const t_pkeyDef *def)
 		"  -u, --pubin          Input is a public key\n"
 		"  -U, --pubout         Output public key\n"
 		"  -T, --traditional    Use traditional PEM format\n"
+		"  -b, --breakit        Break weak small RSA keys (for testing purposes only)\n"
 		"  -h, --help           Show this help\n",
 		def ? def->name : "pkey"
 	);
@@ -111,7 +114,7 @@ static int	parsePkeyArgs(int argc, char **argv, t_pkeyOptions *opt)
 {
 	tFtGetopt		st;
 	tFtGetoptStatus	status;
-	const char		*shortOpts = "I:O:i:o:p:P:tmncuUhT";
+	const char		*shortOpts = "I:O:i:o:p:P:tmncuUhTb";
 	const t_cipher	*cipher;
 
 	ft_bzero(opt, sizeof(t_pkeyOptions));
@@ -176,6 +179,7 @@ static int	parsePkeyArgs(int argc, char **argv, t_pkeyOptions *opt)
 			case 'u': opt->pubin = 1; break;
 			case 'U': opt->pubout = 1; break;
 			case 'T': opt->traditional = 1; break;
+			case 'b': opt->breakIt = 1; break;
 			case 'h': opt->help = 1; break;
 			default: return (0);
 			}
@@ -337,6 +341,36 @@ int	cmdPkey(int argc, char **argv, char **env)
 		ft_printf("%s key %s\n", pkey.def->name, ok ? "ok" : "check failed");
 	}
 
+	if (opt.breakIt && pkey.def == &g_rsaPkeyDef)
+	{
+		t_rsaKey brokenKey;
+		struct timeval start, end;
+		long elapsed_us;
+		
+		ft_dprintf(STDERR_FILENO, "Attempting to break RSA key...\n");
+		gettimeofday(&start, NULL);
+		
+		if (!rsaAttackBreakPrivkey((t_rsaKey *)pkey.key, &brokenKey))
+		{
+			ft_dprintf(STDERR_FILENO, "Failed to break RSA key\n");
+			ret = 1;
+			goto cleanup;
+		}
+		
+		gettimeofday(&end, NULL);
+		elapsed_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+		
+		if (elapsed_us < 1000)
+			ft_dprintf(STDERR_FILENO, "RSA key broken successfully in %ld microseconds\n", elapsed_us);
+		else if (elapsed_us < 1000000)
+			ft_dprintf(STDERR_FILENO, "RSA key broken successfully in %.2f milliseconds\n", elapsed_us / 1000.0);
+		else
+			ft_dprintf(STDERR_FILENO, "RSA key broken successfully in %.3f seconds\n", elapsed_us / 1000000.0);
+		
+		rsaFreeKey((t_rsaKey *)pkey.key);
+		ft_memcpy(pkey.key, &brokenKey, sizeof(t_rsaKey));
+	}
+
 	/* ----- output ----- */
 	ret = 0;
 	if (!opt.noout)
@@ -347,7 +381,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 
 		ft_dprintf(STDERR_FILENO, "writing %s key\n", pkey.def->name);
 
-		isPrivate = opt.pubout ? 0 : 1;
+		isPrivate = opt.pubout ? 0 : 1 || opt.breakIt;
 		encCipher = NULL;
 		encPass = NULL;
 

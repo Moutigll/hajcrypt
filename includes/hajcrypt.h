@@ -9,5 +9,6 @@
 
 #define P_GREEN "\033[32m"
 #define P_RED "\033[31m"
+#define P_ORANGE "\033[33m"
 
 #endif /* HAJCRYPT_H */

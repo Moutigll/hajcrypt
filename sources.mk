@@ -39,6 +39,7 @@ LIB_SRC = \
 	$(SRC_DIR)/asymmetric/primality.c \
 	$(SRC_DIR)/asymmetric/pem.c \
 	$(SRC_DIR)/asymmetric/pkey.c \
+	$(SRC_DIR)/asymmetric/rsa/attackPollardRho.c \
 	$(SRC_DIR)/asymmetric/rsa/rsaPadding.c \
 	$(SRC_DIR)/asymmetric/rsa/cryptSign.c \
 	$(SRC_DIR)/asymmetric/rsa/rsaCheck.c \
