@@ -28,7 +28,7 @@ int	dsaSignPkcs15(const uint8_t		*digest,	size_t	digestLen,
 	h = bigIntFromBytes(digest, digestLen);
 	if (!h)
 		return (0);
-bigIntMod(h, h, key->q);   // uniquement si jamais h >= q (très rare)
+	bigIntMod(h, h, key->q);
 	k = bigIntNew(key->q->numWords);
 	kinv = bigIntNew(key->q->numWords);
 	r = bigIntNew(key->q->numWords);
@@ -43,12 +43,25 @@ bigIntMod(h, h, key->q);   // uniquement si jamais h >= q (très rare)
 			bigIntRandom(k, bigIntBitLength(key->q));
 			bigIntMod(k, k, key->q);
 		} while (bigIntIsZero(k));
-		bigIntModExp(tmp1, key->g, k, key->p);
+		bigIntModExpConstTime(tmp1, key->g, k, key->p);
 		bigIntMod(r, tmp1, key->q);
 		if (bigIntIsZero(r))
 			continue ;
-		if (!bigIntModInverse(kinv, k, key->q))
-			continue ;
+		{
+			t_bigInt *two = bigIntFromUint64(2);
+			t_bigInt *exp = bigIntNew(key->q->numWords);
+			if (!two || !exp) {
+				bigIntFree(two); bigIntFree(exp);
+				goto cleanup;
+			}
+			bigIntSub(exp, key->q, two);          /* exp = q - 2 */
+			if (!bigIntModExpConstTime(kinv, k, exp, key->q)) {
+				bigIntFree(two); bigIntFree(exp);
+				continue;
+			}
+			bigIntFree(two);
+			bigIntFree(exp);
+		}
 		bigIntMulMod(tmp2, key->priv, r, key->q);
 		bigIntAdd(tmp2, tmp2, h);
 		bigIntMod(tmp2, tmp2, key->q);

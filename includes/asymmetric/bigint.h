@@ -267,6 +267,21 @@ t_bigInt	*bigIntMulMod(t_bigInt *result, const t_bigInt *a, const t_bigInt *b, c
 t_bigInt	*bigIntModExp(t_bigInt *result, const t_bigInt *base, const t_bigInt *exp, const t_bigInt *mod);
 
 /**
+ * @brief Computes the modular exponentiation of a big integer with constant-time implementation.
+ * 
+ * Raises the base big integer to the power of the exponent big integer,
+ * reduces the result modulo a third big integer, and stores the final result
+ * in the provided result structure.
+ * 
+ * @param result Pointer to the t_bigInt structure where the final result will be stored.
+ * @param base Pointer to the t_bigInt structure representing the base value.
+ * @param exp Pointer to the t_bigInt structure representing the exponent value.
+ * @param mod Pointer to the t_bigInt structure representing the modulus for reduction.
+ * @return A pointer to result if the operation is successful, or NULL if an error occurs (e.g., modulus by zero).
+ */
+t_bigInt	*bigIntModExpConstTime(t_bigInt *result, const t_bigInt *base, const t_bigInt *exp, const t_bigInt *mod);
+
+/**
  * @brief Computes the modular inverse of a big integer.
  * 
  * Computes the modular inverse of the given big integer a modulo m, which is

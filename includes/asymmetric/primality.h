@@ -4,16 +4,12 @@
 #include "bigint.h"
 
 /**
- * @brief Encode an RSA key (public or private) into PEM format.
+ * @brief Tests whether a big integer is probably prime using the Miller-Rabin algorithm.
  *
- * @param key Pointer to the RSA key structure to encode.
- * @param isPrivate Set to 1 if the key is a private key, 0 for public key.
- * @param useTraditional If set to 1, use traditional PEM format (PKCS#1) for private keys.
- *					   For public keys, this parameter is ignored and PKCS#8 format is always used.
- * @param password Optional password for encrypting the private key. Ignored for public keys.
- * @param cipher Optional cipher to use for encrypting the private key. Ignored for public keys.
+ * @param n      The integer to test for primality.
+ * @param rounds The number of Miller-Rabin rounds to perform.
  *
- * @return A newly allocated string containing the PEM-encoded key, or NULL on failure.
+ * @return Non-zero if the value is probably prime, or 0 if it is composite.
  */
 int			hcIsPrimeMillerRabin(t_bigInt *n, int rounds);
 

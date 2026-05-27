@@ -318,6 +318,7 @@ static int	parsePublicKey(const char *pem, void *key, const t_pkeyDef *def)
 	char		header[128];
 	int			ret = 0;
 
+	ft_bzero(&block, sizeof(block));
 	ft_snprintf(header, sizeof(header), "-----BEGIN %s-----", def->tradPubLabel);
 	if (ft_strstr(pem, header))
 	{
@@ -344,6 +345,8 @@ static int	parsePublicKey(const char *pem, void *key, const t_pkeyDef *def)
 			goto exit;
 		content += consumed; contentLen -= consumed;
 		if (!asn1ParseOid(algoSeq, algoLen, &oid, &oidLen, &consumed))
+			goto exit;
+		if (def->oid.len != oidLen || ft_memcmp(oid, def->oid.data, def->oid.len) != 0)
 			goto exit;
 		algoSeq += consumed; algoLen -= consumed;
 
@@ -399,6 +402,8 @@ static int	parsePrivateKeyInfoDer(const uint8_t *der, size_t derLen, void *key, 
 	content += consumed;
 	contentLen -= consumed;
 	if (!asn1ParseOid(algoSeq, algoLen, &oid, &oidLen, &consumed))
+		return (0);
+	if (def->oid.len != oidLen || ft_memcmp(oid, def->oid.data, def->oid.len) != 0)
 		return (0);
 	algoSeq += consumed;
 	algoLen -= consumed;
@@ -525,7 +530,7 @@ static int	tryParseWithDef(const char *pem, t_pkey *pkey, const t_pkeyDef *def, 
 		{
 			t_pemBlock	block;
 			if (!pemDecode(pem, &block))
-				return (0);
+				{ free(concreteKey); return (0); }
 			ret = parsePrivateKeyInfoDer(block.der, block.derLen, concreteKey, def);
 			pemFreeBlock(&block);
 		}

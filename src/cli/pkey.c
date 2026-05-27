@@ -27,7 +27,7 @@ char	*readPkeyFileContent(const char *fileName)
 	
 	if (fd < 0)
 	{
-		ft_dprintf(STDERR_FILENO, "ft_ssl: rsa: cannot open '%s'\n",
+		ft_dprintf(STDERR_FILENO, "ft_ssl: pkey: cannot open '%s'\n",
 			fileName ? fileName : "stdin");
 		return (NULL);
 	}
@@ -57,7 +57,7 @@ char	*readPkeyFileContent(const char *fileName)
 	return (buf);
 
 mallocError:
-	ft_dprintf(STDERR_FILENO, "ft_ssl: rsa: memory allocation failed\n");
+	ft_dprintf(STDERR_FILENO, "ft_ssl: pkey: memory allocation failed\n");
 	if (fileName)
 		close(fd);
 	return (NULL);
@@ -253,7 +253,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 		if (!passinPass)
 		{
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: error getting input password\n", def->name);
+				"ft_ssl: %s: error getting input password\n", def ? def->name : "pkey");
 			return (1);
 		}
 	}
@@ -275,12 +275,12 @@ int	cmdPkey(int argc, char **argv, char **env)
 		char	*promptPass;
 
 		ft_dprintf(STDERR_FILENO,
-			"ft_ssl: %s: password required for encrypted key\n", def->name);
+			"ft_ssl: %s: password required for encrypted key\n", def ? def->name : "pkey");
 		promptPass = promptPassword("Enter password for encrypted key: ");
 		if (!promptPass)
 		{
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: error getting password from prompt\n", def->name);
+				"ft_ssl: %s: error getting password from prompt\n", def ? def->name : "pkey");
 			free(pem);
 			free(passinPass);
 			return (1);

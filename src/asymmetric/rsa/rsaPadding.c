@@ -6,7 +6,6 @@
 #include "../../../includes/utils/random.h"
 #include "../../../includes/hash/sha256.h"
 #include "../../../includes/hash/md5.h"
-#include "../../../includes/hash/md5.h"
 #include "../../../includes/hajcrypt.h"
 
 #include "../../../includes/asymmetric/rsa.h"
@@ -133,24 +132,61 @@ int	rsaPkcs1v15PadEncrypt(const uint8_t		*input,		size_t	inputLen,
 int	rsaPkcs1v15UnpadEncrypt(const uint8_t	*padded,	size_t	paddedLen,
 							 uint8_t		*output,	size_t	*outputLen)
 {
-	size_t	msg_len;
-	size_t	sep;
+	int		valid;
+	int		errType;  /* 0=ok, 1=len too short, 2=invalid format, 3=no separator */
+	size_t	sepFound;
+	size_t	sepPos;
+	size_t	msgLen;
+	size_t	i;
 
-	if (paddedLen < 11)
-		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: padded length too short\n"), (0));
-	if (padded[0] != 0x00 || padded[1] != 0x02)
-		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: invalid padding format\n"), (0));
-	sep = 2;
-	while (sep < paddedLen && padded[sep] != 0x00)
-		sep++;
-	if (sep == paddedLen || sep == 2)
-		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: 0x00 separator not found or no padding bytes\n"), (0));
-	msg_len = paddedLen - sep - 1;
-	ft_memcpy(output, padded + sep + 1, msg_len);
-	*outputLen = msg_len;
-	return (1);
+	valid = 1;
+	errType = 0;
+
+	errType |= (paddedLen < 11) ? 1 : 0;
+	valid &= !(paddedLen < 11);
+
+	errType |= ((padded[0] != 0x00) || (padded[1] != 0x02)) ? 2 : 0;
+	valid &= (padded[0] == 0x00) && (padded[1] == 0x02);
+
+	sepFound = 0;
+	sepPos = 0;
+	i = 2;
+	while (i < paddedLen)
+	{
+		int	is_sep;
+
+		is_sep = (padded[i] == 0x00) && !sepFound;
+		sepPos = is_sep ? i : sepPos;
+		sepFound = is_sep ? 1 : sepFound;
+		i++;
+	}
+	errType |= (!sepFound || sepPos == 2) ? 3 : 0;
+	valid &= (sepFound && sepPos > 2);
+
+	msgLen = paddedLen - sepPos - 1;
+
+	i = 0;
+	while (i < msgLen)
+	{
+		uint8_t	byte;
+
+		byte = padded[sepPos + 1 + i];
+		output[i] = byte & -(uint8_t)valid;
+		i++;
+	}
+	*outputLen = msgLen;
+
+	if (!valid)
+	{
+		if (errType == 1)
+			HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: padded length too short\n");
+		else if (errType == 2)
+			HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: invalid padding format\n");
+		else if (errType == 3)
+			HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: 0x00 separator not found or no padding bytes\n");
+	}
+	return (valid);
 }
-
 /* =========================================================================
  *                   PKCS#1 v1.5 Signature Padding
  * ========================================================================= */
@@ -196,29 +232,66 @@ int	rsaPkcs1v15UnpadSign(const uint8_t	*padded,	size_t	paddedLen,
 	size_t			headerLen;
 	size_t			expectedDigestLen;
 	const uint8_t	*di;
-	size_t			di_len;
+	size_t			diLen;
 	size_t			sep;
+	int				valid;
+	int				errType; /* 0=ok, 1=len too short, 2=invalid format, 3=separator not found, 4=header mismatch */
+	size_t			i;
 
 	if (!getDigestInfoHeader(expectedAlgo, &header, &headerLen,
 			&expectedDigestLen))
-		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: unsupported digest algorithm OID\n"), (0));
-	if (paddedLen < 11)
-		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: padded length too short\n"), (0));
-	if (padded[0] != 0x00 || padded[1] != 0x01)
-		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: invalid padding format\n"), (0));
+		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: unsupported digest algorithm OID\n"), 0);
+
+	valid = 1;
+	errType = 0;
+
+	errType |= (paddedLen < 11) ? 1 : 0;
+	valid &= !(paddedLen < 11);
+
+	errType |= ((padded[0] != 0x00) || (padded[1] != 0x01)) ? 2 : 0;
+	valid &= (padded[0] == 0x00) && (padded[1] == 0x01);
+
 	sep = 2;
 	while (sep < paddedLen && padded[sep] == 0xFF)
 		sep++;
-	if (sep == paddedLen || padded[sep] != 0x00)
-		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: invalid padding format\n"), (0));
+	errType |= ((sep >= paddedLen) || (padded[sep] != 0x00)) ? 3 : 0;
+	valid &= (sep < paddedLen && padded[sep] == 0x00);
+
 	di = padded + sep + 1;
-	di_len = paddedLen - sep - 1;
-	if (di_len < headerLen + expectedDigestLen
-		|| ft_memcmp(di, header, headerLen) != 0)
-		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: digest info header mismatch\n"), (0));
-	ft_memcpy(digestOut, di + headerLen, expectedDigestLen);
+	diLen = paddedLen - sep - 1;
+
+	i = 0;
+	while (i < headerLen && i < diLen)
+	{
+		valid &= (di[i] == header[i]);
+		i++;
+	}
+	valid &= (diLen >= headerLen + expectedDigestLen);
+	errType |= (!valid && errType == 0) ? 4 : 0;
+
+	i = 0;
+	while (i < expectedDigestLen)
+	{
+		uint8_t	byte;
+
+		byte = di[headerLen + i];
+		digestOut[i] = byte & -(uint8_t)valid;
+		i++;
+	}
 	*digestLen = expectedDigestLen;
-	return (1);
+
+	if (!valid)
+	{
+		if (errType == 1)
+			HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: padded length too short\n");
+		else if (errType == 2)
+			HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: invalid padding format\n");
+		else if (errType == 3)
+			HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: invalid padding format\n");
+		else if (errType == 4)
+			HAJCRYPT_DPRINT("PKCS#1 v1.5 unpadding: digest info header mismatch\n");
+	}
+	return (valid);
 }
 
 /* =========================================================================
@@ -303,11 +376,13 @@ int	rsaOaepUnpadEncrypt(const uint8_t	*padded,	size_t	paddedLen,
 {
 	size_t		k;
 	size_t		hLen;
-	uint8_t		*seed = NULL;
-	uint8_t		*db = NULL;
-	uint8_t		*dbMask = NULL;
-	uint8_t		*seedMask = NULL;
+	uint8_t		*seed;
+	uint8_t		*db;
+	uint8_t		*dbMask;
+	uint8_t		*seedMask;
 	uint8_t		lHash[32];
+	int			valid;
+	int			errType; /* 0=ok, 1=lHash mismatch, 2=separator not found */
 	size_t		msgLen;
 	size_t		i;
 
@@ -321,54 +396,83 @@ int	rsaOaepUnpadEncrypt(const uint8_t	*padded,	size_t	paddedLen,
 	dbMask = malloc(k - hLen - 1);
 	seedMask = malloc(hLen);
 	if (!seed || !db || !dbMask || !seedMask)
-		goto error;
+	{
+		free(seed); free(db); free(dbMask); free(seedMask);
+		return (0);
+	}
 	ft_memcpy(seed, padded + 1, hLen);
 	ft_memcpy(db, padded + 1 + hLen, k - hLen - 1);
 
-	/* seedMask = MGF1(db, dbLen, hLen) */
 	if (!mgf1(db, k - hLen - 1, seedMask, hLen, &g_sha256Hash.oid))
-		{ HAJCRYPT_DPRINT("OAEP unpadding: MGF1 failed\n"); goto error; }
-	/* seed = seed ^ seedMask */
+	{
+		HAJCRYPT_DPRINT("OAEP unpadding: MGF1 failed\n");
+		free(seed); free(db); free(dbMask); free(seedMask);
+		return (0);
+	}
 	for (i = 0; i < hLen; i++)
 		seed[i] ^= seedMask[i];
 
-	/* dbMask = MGF1(seed, hLen, dbLen) */
 	if (!mgf1(seed, hLen, dbMask, k - hLen - 1, &g_sha256Hash.oid))
-		{ HAJCRYPT_DPRINT("OAEP unpadding: MGF1 failed\n"); goto error; }
-	/* DB = db ^ dbMask */
+	{
+		HAJCRYPT_DPRINT("OAEP unpadding: MGF1 failed\n");
+		free(seed); free(db); free(dbMask); free(seedMask);
+		return (0);
+	}
 	for (i = 0; i < (size_t)(k - hLen - 1); i++)
 		db[i] ^= dbMask[i];
 
-	/* Verify lHash' == lHash */
 	sha256Hash((const uint8_t *)"", 0, lHash);
-	if (ft_memcmp(db, lHash, hLen) != 0)
-	{
-		HAJCRYPT_DPRINT("OAEP unpadding: lHash mismatch\n");
-		goto error;
-	}
 
-	/* Find 0x01 separator after zero padding */
+	valid = 1;
+	errType = 0;
+
+	/* Compare hash in constant time */
+	for (i = 0; i < hLen; i++)
+		valid &= (db[i] == lHash[i]);
+	errType |= (!valid && errType == 0) ? 1 : 0;
+
 	{
-		size_t pos = hLen;
-		while (pos < (size_t)(k - hLen - 1) && db[pos] == 0x00)
-			pos++;
-		if (pos >= (size_t)(k - hLen - 1) || db[pos] != 0x01)
+		size_t	pos;
+		int		found;
+
+		found = 0;
+		pos = 0;
+		i = hLen;
+		while (i < (size_t)(k - hLen - 1))
 		{
-			HAJCRYPT_DPRINT("OAEP unpadding: 0x01 separator not found\n");
-			goto error;
+			int	is_sep;
+
+			is_sep = (db[i] == 0x01) && !found;
+			pos = is_sep ? i : pos;
+			found = is_sep ? 1 : found;
+			i++;
 		}
+		valid &= found;
+		errType |= (!found && errType == 0) ? 2 : 0;
 		msgLen = k - hLen - 1 - pos - 1;
-		ft_memcpy(output, db + pos + 1, msgLen);
+
+		i = 0;
+		while (i < msgLen)
+		{
+			uint8_t	byte;
+
+			byte = db[pos + 1 + i];
+			output[i] = byte & -(uint8_t)valid;
+			i++;
+		}
 		*outputLen = msgLen;
 	}
+
 	free(seed); free(db); free(dbMask); free(seedMask);
-	return (1);
-error:
-	free(seed);
-	free(db);
-	free(dbMask);
-	free(seedMask);
-	return (0);
+
+	if (!valid)
+	{
+		if (errType == 1)
+			HAJCRYPT_DPRINT("OAEP unpadding: lHash mismatch\n");
+		else if (errType == 2)
+			HAJCRYPT_DPRINT("OAEP unpadding: 0x01 separator not found\n");
+	}
+	return (valid);
 }
 
 /* =========================================================================

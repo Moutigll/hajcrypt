@@ -1,6 +1,5 @@
 #include <stdlib.h>
 
-#include "../../../hajlib/include/hmemory.h"
 #include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
 #include "../../../includes/asymmetric/pkey.h"
 
@@ -68,24 +67,58 @@ static int	rsaPrivateOp(const uint8_t	*data,	size_t	dataLen,
 {
 	t_bigInt	*c;
 	t_bigInt	*m;
+	t_bigInt	*r;
+	t_bigInt	*rExp;
+	t_bigInt	*blinded;
+	t_bigInt	*prod;
 	size_t		k;
+	size_t		numWords;
+	int			res = 0;
 
+	numWords = key->n->numWords;
 	c = bigIntFromBytes(data, dataLen);
-	m = bigIntNew(key->n->numWords + 1);
-	if (!c || !m)
-	{
-		bigIntFree(c);
-		bigIntFree(m);
-		return (0);
-	}
-	bigIntModExp(m, c, key->d, key->n);
+	m = bigIntNew(numWords + 1);
+	r = bigIntNew(numWords);
+	rExp = bigIntNew(numWords + 1);
+	blinded = bigIntNew(numWords + 1);
+	prod = bigIntNew(numWords * 2 + 2); /* Double size to prevent overflow/truncation */
+
+	if (!c || !m || !r || !rExp || !blinded || !prod)
+		goto exit;
+
+	/* Blinding: Generate random blinding factor r where 1 < r < n. */
+	do {
+		bigIntRandom(r, bigIntBitLength(key->n));
+		bigIntMod(r, r, key->n);
+	} while (bigIntIsZero(r) || bigIntCmp(r, key->n) >= 0);
+
+	/* Compute r^e mod n to prepare blinding factor */
+	bigIntModExp(rExp, r, key->e, key->n);
+
+	/* FIX BUG A: Multiply into double-sized buffer first, then reduce */
+	bigIntMul(prod, c, rExp);
+	bigIntMod(blinded, prod, key->n);
+
+	/* Constant-time exponentiation: m' = c'^d mod n. */
+	if (!bigIntModExpConstTime(m, blinded, key->d, key->n))
+		goto exit;
+
+	/* Unblinding: Compute m = m' * r^(-1) mod n. */
+	bigIntModInverse(r, r, key->n);
+	
+	/* FIX BUG B: Avoid in-place multiplication and prevent buffer truncation */
+	bigIntMul(prod, m, r);
+	bigIntMod(m, prod, key->n);
+
 	k = rsaModulusBytes(key);
 	*outLen = bigIntToBytes(m, out, k);
-	bigIntFree(c);
-	bigIntFree(m);
-	return (1);
-}
+	res = 1;
 
+exit:
+	bigIntFree(c); bigIntFree(m); bigIntFree(r);
+	bigIntFree(rExp); bigIntFree(blinded); bigIntFree(prod);
+	return (res);
+}
 
 
 int	rsaEncrypt(const uint8_t	*input,		size_t	inputLen,
@@ -238,13 +271,25 @@ int	rsaVerify(const uint8_t		*digest,	size_t	digestLen,
 	{
 		uint8_t	recoveredDigest[64];
 		size_t	recoveredLen;
+		uint8_t	diff;
+		size_t	i;
 
 		if (rsaPkcs1v15UnpadSign(padded, paddedLen,
 				recoveredDigest, &recoveredLen, digestAlgo))
 		{
-			if (recoveredLen == digestLen
-				&& ft_memcmp(recoveredDigest, digest, digestLen) == 0)
-				ret = 1;
+			diff = 0;
+			if (recoveredLen == digestLen)
+			{
+				i = 0;
+				while (i < digestLen)
+				{
+					diff |= recoveredDigest[i] ^ digest[i];
+					i++;
+				}
+			}
+			else
+				diff = 1;
+			ret = (diff == 0) ? 1 : 0;
 		}
 	}
 	else if (padding == PKEY_PADDING_PSS)
