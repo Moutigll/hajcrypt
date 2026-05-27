@@ -2,7 +2,7 @@
 
 _ft_ssl_commands()
 {
-	echo "genrsa rsa rsautl pkeyutl \
+	echo "genpkey genrsa gendsa pkey rsa dsa pkeyutl rsautl dsautl \
 md5 sha256 whirlpool blake2b \
 base64 \
 des des-ecb des-cbc des-cfb des-cfb1 des-cfb8 des-ofb des-ctr des-pcbc \
@@ -38,7 +38,7 @@ _ft_ssl_cipher_opts()
 	echo "-p -q -s -k -e -d -i -o -a -v -h"
 }
 
-_ft_ssl_rsa_opts()
+_ft_ssl_key_mgmt_opts()
 {
 	echo "-I --inform \
 -O --outform \
@@ -56,7 +56,7 @@ _ft_ssl_rsa_opts()
 -h --help"
 }
 
-_ft_ssl_rsautl_opts()
+_ft_ssl_utl_opts()
 {
 	echo "-i --in \
 -o --out \
@@ -70,17 +70,14 @@ _ft_ssl_rsautl_opts()
 -g --dgst \
 -S --sigfile \
 -x --hexdump \
+-H --hash \
 -h --help"
 }
 
 _ft_ssl_completion()
 {
-	local cur
-	local prev
-	local cmd
-
+	local cur prev cmd
 	COMPREPLY=()
-
 	cur="${COMP_WORDS[COMP_CWORD]}"
 	prev="${COMP_WORDS[COMP_CWORD-1]}"
 	cmd="${COMP_WORDS[1]}"
@@ -115,7 +112,7 @@ _ft_ssl_completion()
 		base64|des*|des3*|aes*|blowfish*)
 			COMPREPLY=($(compgen -W "$(_ft_ssl_cipher_opts)" -- "$cur"))
 			;;
-		rsa)
+		rsa|dsa)
 			if [[ "$cur" == --* ]]; then
 				COMPREPLY=($(compgen -W "$(
 					for c in $(_ft_ssl_ciphers); do
@@ -123,14 +120,52 @@ _ft_ssl_completion()
 					done
 				)" -- "$cur"))
 			else
-				COMPREPLY=($(compgen -W "$(_ft_ssl_rsa_opts)" -- "$cur"))
+				COMPREPLY=($(compgen -W "$(_ft_ssl_key_mgmt_opts)" -- "$cur"))
 			fi
 			;;
-		rsautl|pkeyutl)
-			COMPREPLY=($(compgen -W "$(_ft_ssl_rsautl_opts)" -- "$cur"))
+		pkey)
+			# pkey [rsa|dsa] [options]
+			if [[ ${COMP_CWORD} -eq 2 ]]; then
+				COMPREPLY=($(compgen -W "rsa dsa" -- "$cur"))
+				return 0
+			fi
+			if [[ "$cur" == --* ]]; then
+				COMPREPLY=($(compgen -W "$(
+					for c in $(_ft_ssl_ciphers); do
+						echo --"$c"
+					done
+				)" -- "$cur"))
+			else
+				COMPREPLY=($(compgen -W "$(_ft_ssl_key_mgmt_opts)" -- "$cur"))
+			fi
 			;;
-		genrsa)
-			COMPREPLY=($(compgen -W "-h --help" -- "$cur"))
+		genrsa|gendsa)
+			COMPREPLY=($(compgen -W "-o --out -p --passout -P --pubout -t --traditional -h --help" -- "$cur"))
+			if [[ "$cur" == --* ]]; then
+				COMPREPLY=($(compgen -W "$(
+					for c in $(_ft_ssl_ciphers); do
+						echo --"$c"
+					done
+				)" -- "$cur"))
+			fi
+			;;
+		genpkey)
+			# genpkey [rsa|dsa] [options]
+			if [[ ${COMP_CWORD} -eq 2 ]]; then
+				COMPREPLY=($(compgen -W "rsa dsa" -- "$cur"))
+				return 0
+			fi
+			COMPREPLY=($(compgen -W "-o --out -p --passout -P --pubout -t --traditional -h --help" -- "$cur"))
+			if [[ "$cur" == --* ]]; then
+				COMPREPLY=($(compgen -W "$(
+					for c in $(_ft_ssl_ciphers); do
+						echo --"$c"
+					done
+				)" -- "$cur"))
+			fi
+			;;
+		rsautl|pkeyutl|dsautl)
+			COMPREPLY=($(compgen -W "$(_ft_ssl_utl_opts)" -- "$cur"))
 			;;
 		*)
 			COMPREPLY=($(compgen -f -- "$cur"))

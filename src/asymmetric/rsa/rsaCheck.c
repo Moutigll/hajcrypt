@@ -1,6 +1,7 @@
-#include "../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
+#include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
+#include "../../../includes/asymmetric/primality.h"
 
-#include "../../includes/rsa/rsa.h"
+#include "../../../includes/asymmetric/rsa.h"
 
 static int checkCRTComponents(const t_rsaKey *key)
 {
@@ -62,11 +63,11 @@ static int checkPrimality(const t_rsaKey *key, int rounds)
 	if (!key->p || !key->q)
 		return (1);
 
-	if (!rsaIsPrimeMillerRabin(key->p, rounds)) {
+	if (!hcIsPrimeMillerRabin(key->p, rounds)) {
 		HAJCRYPT_DPRINT("RSA check failed: p is not prime\n");
 		return (0);
 	}
-	if (!rsaIsPrimeMillerRabin(key->q, rounds)) {
+	if (!hcIsPrimeMillerRabin(key->q, rounds)) {
 		HAJCRYPT_DPRINT("RSA check failed: q is not prime\n");
 		return (0);
 	}
@@ -144,7 +145,10 @@ static int checkFermatDistance(const t_rsaKey *key)
 	if (!diff)
 		return (1);
 
-	bigIntSub(diff, key->p, key->q);
+	if (bigIntCmp(key->p, key->q) >= 0)
+		bigIntSub(diff, key->p, key->q);
+	else
+		bigIntSub(diff, key->q, key->p);
 	bigIntAbs(diff);
 
 	if (bigIntBitLength(diff) < (size_t)minBits) {

@@ -1,8 +1,8 @@
 #include "../../hajlib/include/hmath.h"
-#include "../../hajlib/include/hprintf.h"
-#include "../../hajlib/include/hio.h"
+#include "../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
+#include "../../includes/hajcrypt.h"
 
-#include "../../includes/rsa/rsa.h"
+#include "../../includes/asymmetric/primality.h"
 
 static int isPrimeSmall(const t_bigInt *n)
 {
@@ -32,7 +32,7 @@ static int isPrimeSmall(const t_bigInt *n)
 	return (result);
 }
 
-int rsaIsPrimeMillerRabin(t_bigInt *n, int rounds)
+int hcIsPrimeMillerRabin(t_bigInt *n, int rounds)
 {
 	t_bigInt	*d, *a, *x, *nMinus1, *one, *two;
 	int			s = 0, result = 1;
@@ -105,7 +105,7 @@ end:
 	return (result);
 }
 
-t_bigInt *rsaGeneratePrime(int bits, double certainty)
+t_bigInt *hcGeneratePrime(int bits, double certainty)
 {
 	t_bigInt	*candidate;
 	int			rounds;
@@ -121,15 +121,15 @@ t_bigInt *rsaGeneratePrime(int bits, double certainty)
 	while (1) {
 		bigIntRandom(candidate, bits);
 		
-		if (rsaIsPrimeMillerRabin(candidate, rounds)) {
-			ft_dprintf(STDERR_FILENO, "++++++++++++\n");
+		if (hcIsPrimeMillerRabin(candidate, rounds)) {
+			HAJCRYPT_DPRINT("++++++++++++\n");
 			return (candidate);
 		}
 		
 		if (count % 192 == 0)
-			ft_putchar_fd('\n', STDERR_FILENO);
-		count++;
+			HAJCRYPT_DPRINT("\n");
+		++count;
 		if (count % 3 == 0)
-			ft_dprintf(STDERR_FILENO, ".");
+			HAJCRYPT_DPRINT(".");
 	}
 }

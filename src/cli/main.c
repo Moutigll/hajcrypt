@@ -7,7 +7,7 @@
 
 #include "../../includes/cli/algoHandling.h"
 #include "../../includes/cli/parser.h"
-#include "../../includes/cli/rsa.h"
+#include "../../includes/cli/pkey.h"
 
 
 static int executeSsl(t_sslOptions *opts, int argc, char **argv, char **env)
@@ -58,10 +58,10 @@ static int executeSsl(t_sslOptions *opts, int argc, char **argv, char **env)
 			processFd(STDIN_FILENO, hash, opts, NULL);
 	} else if (opts->cmdType == CMD_CIPHER)
 		return (executeCipher(opts));
-	else if (opts->cmdType == CMD_GENRSA)
-		return (cmdGenrsa(argc, argv, env));
-	else if (opts->cmdType == CMD_RSA)
-		return (cmdRsa(argc, argv, env));
+	else if (opts->cmdType == CMD_GENPKEY)
+		return (cmdGenPkey(argc, argv, env));
+	else if (opts->cmdType == CMD_PKEY)
+		return (cmdPkey(argc, argv, env));
 	else if (opts->cmdType == CMD_PKEYUTL)
 		return (cmdPkeyutl(argc, argv, env));
 	return (0);

@@ -114,6 +114,14 @@ void sha256Final(uint8_t *digest, void *ctx)
 	}
 }
 
+void	sha256Hash(const uint8_t *data, size_t len, uint8_t *digest)
+{
+	t_sha256Ctx ctx;
+	sha256Init(&ctx);
+	sha256Update(&ctx, data, len);
+	sha256Final(digest, &ctx);
+}
+
 const t_hash g_sha256Hash = {
 	.name = "sha256",
 	.oid = OID_DEF("sha256", SHA256_OID),

@@ -53,6 +53,8 @@ void	sha256Update(void *ctx, const uint8_t *data, size_t len);
  */
 void	sha256Final(uint8_t *digest, void *ctx);
 
+void	sha256Hash(const uint8_t *data, size_t len, uint8_t *digest);
+
 void	sha256Transform(uint32_t *state, const uint8_t *data);
 
 void	sha256Transform_arm64(uint32_t *state, const uint8_t *data);

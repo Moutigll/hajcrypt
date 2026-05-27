@@ -9,8 +9,8 @@
 typedef enum e_cmdType {
 	CMD_HASH,
 	CMD_CIPHER,
-	CMD_GENRSA,
-	CMD_RSA,
+	CMD_GENPKEY,
+	CMD_PKEY,
 	CMD_PKEYUTL
 } t_cmdType;
 

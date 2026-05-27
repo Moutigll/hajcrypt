@@ -12,40 +12,59 @@
 #include "../includes/cipher/aes.h"
 #include "../includes/cipher/blowfish.h"
 
+#include "../includes/asymmetric/rsa.h"
+#include "../includes/asymmetric/dsa.h"
+
 #include "../includes/utils/dispatch.h"
 
+/* =========================================================================
+ *                           Hash dispatch table
+ * ========================================================================= */
 const t_hashDispatch g_hashTable[] = {
-	{ ALGO_MD5,		&g_md5Hash },
-	{ ALGO_SHA256,	&g_sha256Hash },
+	{ ALGO_MD5,			&g_md5Hash },
+	{ ALGO_SHA256,		&g_sha256Hash },
 	{ ALGO_WHIRLPOOL,	&g_whirlpoolHash },
-	{ ALGO_BLAKE2B,	&g_blake2bHash },
+	{ ALGO_BLAKE2B,		&g_blake2bHash },
 	{ ALGO_NONE,		NULL }
 };
 
+/* =========================================================================
+ *                   Asymmetric key definition dispatch table
+ * ========================================================================= */
+const t_pkeyDispatch g_pkeyTable[] = {
+	{ PKEY_TYPE_RSA,	&g_rsaPkeyDef },
+	{ PKEY_TYPE_DSA,	&g_dsaPkeyDef },
+	/* Add PKEY_TYPE_EC, PKEY_TYPE_ED25519, … here */
+	{ PKEY_TYPE_UNDEFINED, NULL }
+};
+
+/* =========================================================================
+ *                          Cipher dispatch table
+ * ========================================================================= */
 const t_cipherDispatch g_cipherTable[] = {
 	/* Base64 */
 	{ ALGO_BASE64,	&g_base64Cipher },
 	
 	/* DES family */
-	{ ALGO_DES,		&g_desCipher },
-	{ ALGO_DES_ECB,	&g_desEcbCipher },
-	{ ALGO_DES_CBC,	&g_desCbcCipher },
-	{ ALGO_DES_CFB,	&g_desCfbCipher },
+	{ ALGO_DES,			&g_desCipher },
+	{ ALGO_DES_ECB,		&g_desEcbCipher },
+	{ ALGO_DES_CBC,		&g_desCbcCipher },
+	{ ALGO_DES_CFB,		&g_desCfbCipher },
 	{ ALGO_DES_CFB1,	&g_desCfb1Cipher },
 	{ ALGO_DES_CFB8,	&g_desCfb8Cipher },
-	{ ALGO_DES_OFB,	&g_desOfbCipher },
-	{ ALGO_DES_CTR,	&g_desCtrCipher },
+	{ ALGO_DES_OFB,		&g_desOfbCipher },
+	{ ALGO_DES_CTR,		&g_desCtrCipher },
 	{ ALGO_DES_PCBC,	&g_desPcbcCipher },
 
 	/* Triple DES family */
-	{ ALGO_DES3,			&g_des3Cipher },
-	{ ALGO_DES3_ECB,		&g_des3EcbCipher },
-	{ ALGO_DES3_CBC,		&g_des3CbcCipher },
-	{ ALGO_DES3_CFB,		&g_des3CfbCipher },
-	{ ALGO_DES3_CFB1,		&g_des3Cfb1Cipher },
-	{ ALGO_DES3_CFB8,		&g_des3Cfb8Cipher },
-	{ ALGO_DES3_OFB,		&g_des3OfbCipher },
-	{ ALGO_DES3_CTR,		&g_des3CtrCipher },
+	{ ALGO_DES3,		&g_des3Cipher },
+	{ ALGO_DES3_ECB,	&g_des3EcbCipher },
+	{ ALGO_DES3_CBC,	&g_des3CbcCipher },
+	{ ALGO_DES3_CFB,	&g_des3CfbCipher },
+	{ ALGO_DES3_CFB1,	&g_des3Cfb1Cipher },
+	{ ALGO_DES3_CFB8,	&g_des3Cfb8Cipher },
+	{ ALGO_DES3_OFB,	&g_des3OfbCipher },
+	{ ALGO_DES3_CTR,	&g_des3CtrCipher },
 	{ ALGO_DES3_PCBC,	&g_des3PcbcCipher },
 
 	/* AES-128 family */
@@ -95,82 +114,131 @@ const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_NONE, NULL }
 };
 
+const char *getAlgoName(t_algo algo)
+{
+	const t_hash	*h;
+	const t_cipher	*c;
+
+	h = getHashByAlgo(algo);
+	if (h)
+		return (h->name);
+	c = getCipherByAlgo(algo);
+	if (c)
+		return (c->name);
+	return (NULL);
+}
+
+/* =========================================================================
+ *                          Hash Lookup
+ * ========================================================================= */
+
 const t_hash *getHashByAlgo(t_algo algo)
 {
-	int i;
-
-	i = 0;
-	while (g_hashTable[i].hash)
-	{
+	for (int i = 0; g_hashTable[i].hash != NULL; i++)
 		if (g_hashTable[i].algo == algo)
 			return (g_hashTable[i].hash);
-		i++;
-	}
 	return (NULL);
 }
 
-const t_cipher *getCipherByAlgo(t_algo algo)
-{
-	int i;
-
-	i = 0;
-	while (g_cipherTable[i].cipher)
-	{
-		if (g_cipherTable[i].algo == algo)
-			return (g_cipherTable[i].cipher);
-		i++;
-	}
-	return (NULL);
-}
 
 const t_hash *getHashByName(const char *name)
 {
-	for (size_t i = 0; g_hashTable[i].hash; i++) {
-		if (ft_strcmp(g_hashTable[i].hash->name, name) == 0) {
+	for (int i = 0; g_hashTable[i].hash != NULL; i++)
+		if (ft_strcmp(g_hashTable[i].hash->name, name) == 0)
 			return (g_hashTable[i].hash);
-		}
+	return (NULL);
+}
+
+const t_hash *getHashByOid(const uint8_t *oid, size_t oidLen)
+{
+	for (int i = 0; g_hashTable[i].hash != NULL; i++)
+	{
+		const t_hash *h = g_hashTable[i].hash;
+		if (h->oid.len == oidLen &&
+			ft_memcmp(h->oid.data, oid, oidLen) == 0)
+			return (h);
 	}
+	return (NULL);
+}
+
+/* =========================================================================
+ *                          Cipher Lookup
+ * ========================================================================= */
+
+const t_cipher *getCipherByAlgo(t_algo algo)
+{
+	for (int i = 0; g_cipherTable[i].cipher != NULL; i++)
+		if (g_cipherTable[i].algo == algo)
+			return (g_cipherTable[i].cipher);
 	return (NULL);
 }
 
 const t_cipher *getCipherByName(const char *name)
 {
-	for (size_t i = 0; g_cipherTable[i].cipher; i++) {
-		if (ft_strcmp(g_cipherTable[i].cipher->name, name) == 0) {
+	for (int i = 0; g_cipherTable[i].cipher != NULL; i++)
+		if (ft_strcmp(g_cipherTable[i].cipher->name, name) == 0)
 			return (g_cipherTable[i].cipher);
-		}
-	}
-	return (NULL);
-}
-
-const char *getAlgoName(t_algo algo)
-{
-	for (size_t i = 0; g_hashTable[i].hash; i++)
-	{
-		if (g_hashTable[i].algo == algo)
-			return (g_hashTable[i].hash->name);
-	}
-
-	for (size_t i = 0; g_cipherTable[i].cipher; i++)
-	{
-		if (g_cipherTable[i].algo == algo)
-			return (g_cipherTable[i].cipher->name);
-	}
-
 	return (NULL);
 }
 
 const t_cipher *getCipherByOid(const uint8_t *oid, size_t oidLen)
 {
-	for (size_t i = 0; g_cipherTable[i].cipher; i++) {
-		if (g_cipherTable[i].cipher->oid.len == oidLen &&
-			ft_memcmp(g_cipherTable[i].cipher->oid.data, oid, oidLen) == 0) {
-			return (g_cipherTable[i].cipher);
-		}
-		if (g_cipherTable[i].cipher->oiwOid.len == oidLen &&
-			ft_memcmp(g_cipherTable[i].cipher->oiwOid.data, oid, oidLen) == 0) {
-			return (g_cipherTable[i].cipher);
-		}
+	for (int i = 0; g_cipherTable[i].cipher != NULL; i++)
+	{
+		const t_cipher *c = g_cipherTable[i].cipher;
+		if (c->oid.len == oidLen &&
+			ft_memcmp(c->oid.data, oid, oidLen) == 0)
+			return (c);
+		if (c->oiwOid.len == oidLen &&
+			ft_memcmp(c->oiwOid.data, oid, oidLen) == 0)
+			return (c);
+	}
+	return (NULL);
+}
+
+/* =========================================================================
+ *              Asymmetric key definition lookup (new)
+ * ========================================================================= */
+
+const t_pkeyDef *getPkeyDefByType(t_pkeyType type)
+{
+	for (int i = 0; g_pkeyTable[i].def != NULL; i++)
+		if (g_pkeyTable[i].type == type)
+			return (g_pkeyTable[i].def);
+	return (NULL);
+}
+
+const t_pkeyDef *getPkeyDefByOid(const uint8_t *oid, size_t oidLen)
+{
+	for (int i = 0; g_pkeyTable[i].def != NULL; i++)
+	{
+		const t_pkeyDef *def = g_pkeyTable[i].def;
+		if (def->oid.len == oidLen &&
+			ft_memcmp(def->oid.data, oid, oidLen) == 0)
+			return (def);
+	}
+	return (NULL);
+}
+
+const t_pkeyDef *getPkeyDefByName(const char *name)
+{
+	for (int i = 0; g_pkeyTable[i].def != NULL; i++)
+		if (ft_strcmp(g_pkeyTable[i].def->name, name) == 0)
+			return (g_pkeyTable[i].def);
+	return (NULL);
+}
+
+const t_pkeyDef *getPkeyDefByLabel(const char *label, int isPrivate)
+{
+	for (int i = 0; g_pkeyTable[i].def != NULL; i++)
+	{
+		const t_pkeyDef *def = g_pkeyTable[i].def;
+		if (isPrivate && def->tradPrivLabel &&
+			ft_strcmp(def->tradPrivLabel, label) == 0)
+			return (def);
+		if (!isPrivate && def->tradPubLabel &&
+			ft_strcmp(def->tradPubLabel, label) == 0)
+			return (def);
 	}
 	return (NULL);
 }

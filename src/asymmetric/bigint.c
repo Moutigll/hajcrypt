@@ -1,8 +1,10 @@
-#include "../../includes/rsa/bigint.h"
 #include "../../hajlib/include/hmemory.h"
 #include "../../hajlib/include/hstring.h"
 #include "../../includes/utils/random.h"
 #include "../../includes/utils/utils.h"
+#include "../../includes/x509/asn1.h"
+
+#include "../../includes/asymmetric/bigint.h"
 
 /**
  * @brief Shifts a big integer left by a specified number of bits.
@@ -786,6 +788,85 @@ t_bigInt *bigIntModExp(t_bigInt *result, const t_bigInt *base, const t_bigInt *e
 	return (result);
 }
 
+static void	bigIntSelect(t_bigInt *dest, const t_bigInt *a, const t_bigInt *b, int bit)
+{
+	uint64_t	mask;
+	size_t		i;
+
+	mask = -(uint64_t)(bit & 1);
+	i = 0;
+	while (i < dest->numWords)
+	{
+		dest->words[i] = (a->words[i] & ~mask) | (b->words[i] & mask);
+		i++;
+	}
+}
+
+t_bigInt	*bigIntModExpConstTime(t_bigInt *result, const t_bigInt *base, const t_bigInt *exp, const t_bigInt *mod)
+{
+	size_t		n;
+	uint64_t	m0Prime;
+	t_bigInt	*R2, *R2Mod, *baseMod, *baseBar;
+	t_bigInt	*x0, *x1, *one, *tmp, *t0, *t1;
+	size_t		bit_len, i;
+
+	if (bigIntIsZero(mod)) return (NULL);
+	if (mod->used == 1 && mod->words[0] == 1) {
+		bigIntZero(result);
+		return (result);
+	}
+	n = mod->used;
+	m0Prime = montgomeryM0Prime(mod->words[0]);
+
+	R2 = bigIntNew(n * 2 + 1);
+	R2Mod = bigIntNew(n + 1);
+	if (!R2 || !R2Mod) { bigIntFree(R2); bigIntFree(R2Mod); return (NULL); }
+	bigIntSetBit(R2, n * 128);
+	bigIntMod(R2Mod, R2, mod);
+	bigIntFree(R2);
+
+	baseMod = bigIntNew(n + 1);
+	if (bigIntCmp(base, mod) >= 0) bigIntMod(baseMod, base, mod);
+	else bigIntCopy(baseMod, base);
+
+	baseBar = bigIntNew(mod->numWords + 1);
+	x0 = bigIntNew(mod->numWords + 1);
+	x1 = bigIntNew(mod->numWords + 1);
+	one = bigIntFromUint64(1);
+	tmp = bigIntNew(mod->numWords + 1);
+	t0 = bigIntNew(mod->numWords + 1);
+	t1 = bigIntNew(mod->numWords + 1);
+	if (!baseBar || !x0 || !x1 || !one || !tmp || !t0 || !t1) {
+		result = NULL; goto exit;
+	}
+
+	bigIntMontMul(baseBar, baseMod, R2Mod, mod, m0Prime);
+	bigIntMontMul(x0, one, R2Mod, mod, m0Prime);
+	bigIntMontMul(x1, one, R2Mod, mod, m0Prime);
+	bigIntMontMul(tmp, x0, baseBar, mod, m0Prime);
+	bigIntCopy(x1, tmp);
+
+	bit_len = bigIntBitLength(exp);
+	i = bit_len;
+	while (i-- > 0) {
+		int	bit = bigIntGetBit(exp, i);
+
+		bigIntMontMul(t0, x0, x0, mod, m0Prime);	/* t0 = x0^2 */
+		bigIntMontMul(t1, x1, x1, mod, m0Prime);	/* t1 = x1^2 */
+		bigIntMontMul(tmp, x0, x1, mod, m0Prime);	/* prod = x0 * x1 */
+
+		bigIntSelect(x0, t0, tmp, bit);
+		bigIntSelect(x1, tmp, t1, bit);
+	}
+
+	bigIntMontMul(result, x0, one, mod, m0Prime);
+
+exit:
+	bigIntFree(R2Mod); bigIntFree(baseMod); bigIntFree(baseBar);
+	bigIntFree(x0); bigIntFree(x1); bigIntFree(one); bigIntFree(tmp);
+	bigIntFree(t0); bigIntFree(t1);
+	return (result);
+}
 
 t_bigInt *bigIntModInverse(t_bigInt *result, const t_bigInt *a, const t_bigInt *m)
 {
@@ -1133,4 +1214,17 @@ int	bigIntSqrtNewton(t_bigInt *result, const t_bigInt *n)
 	bigIntFree(temp);
 	
 	return (1);
+}
+
+uint8_t	*bigIntToDerInteger(const t_bigInt *n, size_t *outLen)
+{
+	size_t	len = (bigIntBitLength(n) + 7) / 8;
+
+	if (len == 0) len = 1;
+	uint8_t *data = malloc(len);
+	if (!data) return (NULL);
+	bigIntToBytes(n, data, len);
+	uint8_t *der = asn1EncodeInteger(data, len, outLen);
+	free(data);
+	return (der);
 }

@@ -267,6 +267,21 @@ t_bigInt	*bigIntMulMod(t_bigInt *result, const t_bigInt *a, const t_bigInt *b, c
 t_bigInt	*bigIntModExp(t_bigInt *result, const t_bigInt *base, const t_bigInt *exp, const t_bigInt *mod);
 
 /**
+ * @brief Computes the modular exponentiation of a big integer with constant-time implementation.
+ * 
+ * Raises the base big integer to the power of the exponent big integer,
+ * reduces the result modulo a third big integer, and stores the final result
+ * in the provided result structure.
+ * 
+ * @param result Pointer to the t_bigInt structure where the final result will be stored.
+ * @param base Pointer to the t_bigInt structure representing the base value.
+ * @param exp Pointer to the t_bigInt structure representing the exponent value.
+ * @param mod Pointer to the t_bigInt structure representing the modulus for reduction.
+ * @return A pointer to result if the operation is successful, or NULL if an error occurs (e.g., modulus by zero).
+ */
+t_bigInt	*bigIntModExpConstTime(t_bigInt *result, const t_bigInt *base, const t_bigInt *exp, const t_bigInt *mod);
+
+/**
  * @brief Computes the modular inverse of a big integer.
  * 
  * Computes the modular inverse of the given big integer a modulo m, which is
@@ -428,5 +443,19 @@ int		bigIntAbs(t_bigInt *n);
  * @return 1 if successful, or 0 if an error occurs.
  */
 int		bigIntSqrtNewton(t_bigInt *result, const t_bigInt *n);
+
+/**
+ * Convert a big integer to a DER-encoded ASN.1 INTEGER.
+ *
+ * This function computes the minimum byte length required to represent
+ * the given big integer, serializes it to a big-endian byte array, and
+ * then wraps it using ASN.1 DER INTEGER encoding.
+ *
+ * @param n       Pointer to the big integer to encode.
+ * @param outLen  Output pointer that receives the length of the DER buffer.
+ * @return        Newly allocated DER-encoded buffer on success, or NULL
+ *                on allocation failure.
+ */
+uint8_t	*bigIntToDerInteger(const t_bigInt *n, size_t *outLen);
 
 #endif

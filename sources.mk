@@ -35,13 +35,19 @@ LIB_SRC = \
 	$(SRC_DIR)/kdf/pbkdf2.c \
 	$(SRC_DIR)/kdf/bcrypt.c \
 	$(SRC_DIR)/kdf/argon2.c \
-	$(SRC_DIR)/rsa/key.c \
-	$(SRC_DIR)/rsa/keyCheck.c \
-	$(SRC_DIR)/rsa/cryptSign.c \
-	$(SRC_DIR)/rsa/x509.c \
-	$(SRC_DIR)/rsa/pkcs1Padding.c \
-	$(SRC_DIR)/rsa/primality.c \
-	$(SRC_DIR)/rsa/bigint.c \
+	$(SRC_DIR)/asymmetric/bigint.c \
+	$(SRC_DIR)/asymmetric/primality.c \
+	$(SRC_DIR)/asymmetric/pem.c \
+	$(SRC_DIR)/asymmetric/pkey.c \
+	$(SRC_DIR)/asymmetric/rsa/rsaPadding.c \
+	$(SRC_DIR)/asymmetric/rsa/cryptSign.c \
+	$(SRC_DIR)/asymmetric/rsa/rsaCheck.c \
+	$(SRC_DIR)/asymmetric/rsa/rsaPem.c \
+	$(SRC_DIR)/asymmetric/rsa/rsaKey.c \
+	$(SRC_DIR)/asymmetric/dsa/dsaCheck.c \
+	$(SRC_DIR)/asymmetric/dsa/cryptSign.c \
+	$(SRC_DIR)/asymmetric/dsa/dsaPem.c \
+	$(SRC_DIR)/asymmetric/dsa/dsaKey.c \
 	$(SRC_DIR)/hash/common/padding.c \
 	$(SRC_DIR)/hash/common/endian.c \
 	$(SRC_DIR)/hash/md5/md5.c \
@@ -104,7 +110,8 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/cipherIo.c \
 	$(SRC_DIR)/cli/prompt.c \
 	$(SRC_DIR)/cli/password.c \
-	$(SRC_DIR)/cli/rsa.c \
+	$(SRC_DIR)/cli/pkey.c \
+	$(SRC_DIR)/cli/pkeygen.c \
 	$(SRC_DIR)/cli/pkeyutl.c
 
 TEST_SRC = \
