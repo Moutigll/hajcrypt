@@ -401,6 +401,8 @@ int bcryptVerify(const char *password, const char *hash)
 	int			diff;
 
 	if (!password || !hash) return (-1);
+	if (ft_strlen(hash) != 60)
+		return (-1);
 	if (hash[0] != '$' || hash[1] != '2' || hash[2] != 'b' || hash[3] != '$')
 		return (-1);
 	if (hash[4] < '0' || hash[4] > '9' || hash[5] < '0' || hash[5] > '9')
