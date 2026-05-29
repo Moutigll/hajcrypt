@@ -25,6 +25,19 @@ static inline uint32_t rotateLeft(uint32_t x, uint32_t n)
 	return (x << n) | (x >> (32 - n));
 }
 
+#if defined(__aarch64__) && defined(__ARM_FEATURE_CRYPTO)
+
+#include <arm_neon.h>
+
+static inline uint32x4_t neonRol(uint32x4_t v, const int n)
+{
+	int32x4_t shift_left  = vdupq_n_s32(n);
+	int32x4_t shift_right = vdupq_n_s32(n - 32);
+	return vorrq_u32(vshlq_u32(v, shift_left), vshlq_u32(v, shift_right));
+}
+
+#endif /* NEON */
+
 /**
  * @brief Performs a circular right rotation (ROR) on a 32-bit integer.
  *
@@ -68,6 +81,19 @@ static inline void store32(void *dst, uint32_t w) {
 	*p++ = (uint8_t)w;
 	w >>= 8;
 	*p++ = (uint8_t)w;
+#endif
+}
+
+static inline uint32_t load32(const uint8_t *src) {
+#if defined(NATIVE_LITTLE_ENDIAN)
+	uint32_t w;
+	ft_memcpy(&w, src, sizeof w);
+	return w;
+#else
+	return ((uint32_t)src[0]) |
+	       ((uint32_t)src[1] << 8) |
+	       ((uint32_t)src[2] << 16) |
+	       ((uint32_t)src[3] << 24);
 #endif
 }
 

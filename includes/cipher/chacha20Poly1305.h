@@ -1,10 +1,11 @@
 #ifndef HAJCRYPT_CHACHA20_POLY1305_H
 #define HAJCRYPT_CHACHA20_POLY1305_H
 
-#include <stddef.h>
-#include <stdint.h>
-
 #include "cipher.h"
+
+#if defined(__aarch64__) && defined(__ARM_FEATURE_CRYPTO)
+# define CHACHA_USE_NEON
+#endif
 
 /* ChaCha20 constants */
 #define CHACHA20_BLOCK_SIZE		64	/* ChaCha20 block size in bytes */
@@ -135,6 +136,13 @@ void	chacha20GenerateKeystream(t_chacha20Ctx *ctx, uint8_t *keystream, size_t le
  */
 void	chacha20Crypt(t_chacha20Ctx *ctx, const uint8_t *input, uint8_t *output, size_t len);
 
+/**
+ * @brief Clear the context of ChaCha20 by zeroing sensitive data.
+ * 
+ * @param ctx Pointer to ChaCha20 context
+ */
+void	chacha20Free(void *vctx);
+
 /* ---------- Core Poly1305 operations ---------- */
 
 /**
@@ -190,7 +198,6 @@ int	 chacha20Poly1305Init(void				*ctx,
 						  const uint8_t		*key,
 						  size_t			keyLen,
 						  const uint8_t		*nonce,
-						  size_t			nonceLen,
 						  t_cipherDirection	dir);
 
 /**
@@ -310,6 +317,6 @@ int	 chacha20Poly1305Open(const uint8_t		key[CHACHA20_KEY_SIZE],
  * Implements the t_cipher interface for ChaCha20-Poly1305 AEAD mode.
  * This is the primary interface for TLS 1.3 and other protocols.
  */
-extern const t_cipher	g_chacha20Poly1305Cipher;
+extern const t_cipher	g_chacha20Cipher;
 
 #endif /* HAJCRYPT_CHACHA20_POLY1305_H */
