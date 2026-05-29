@@ -98,7 +98,8 @@ LIB_SRC = \
 	$(SRC_DIR)/cipher/aes/gcm.c \
 	$(SRC_DIR)/cipher/aes/pcbc.c \
 	$(SRC_DIR)/cipher/aes/transform_arm64.c \
-	$(SRC_DIR)/cipher/aes/transform_x86.c
+	$(SRC_DIR)/cipher/aes/transform_x86.c \
+	$(SRC_DIR)/cipher/chachaPoly/chacha20.c
 
 LIB_ASM_ARM_SRC = \
 	$(SRC_DIR)/hash/sha256/transform_arm64.s
@@ -130,7 +131,8 @@ TEST_SRC = \
 	tests/src/pbkdf2.test.c \
 	tests/src/argon2.test.c \
 	tests/src/bcrypt.test.c \
-	tests/src/bigint.test.c
+	tests/src/bigint.test.c \
+	tests/src/chacha20.test.c
 
 CONST_OBJ = $(patsubst $(CONST_DIR)/%.c, $(BUILD_DIR)/consts/%.o, $(CONST_SRC))
 LIB_SRC_OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(LIB_SRC))

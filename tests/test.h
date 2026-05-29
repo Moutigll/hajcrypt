@@ -138,4 +138,9 @@ int testBigIntMul(void);
 int testBigIntDivMod(void);
 int testModularArithmetic(void);
 
+/* ChaCha20 tests */
+int testChacha20Keystream(void);
+int testChacha20Encrypt(void);
+int testChacha20Roundtrip(void);
+
 #endif /* HAJCRYPT_TEST_H */

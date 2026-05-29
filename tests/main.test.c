@@ -67,6 +67,9 @@ static testEntry_t all_tests[] = {
 	{"BigInt multiplication", testBigIntMul},
 	{"BigInt division and modulus", testBigIntDivMod},
 	{"BigInt modular arithmetic", testModularArithmetic},
+	{"ChaCha20 keystream", testChacha20Keystream},
+	{"ChaCha20 encrypt", testChacha20Encrypt},
+	{"ChaCha20 roundtrip", testChacha20Roundtrip},
 	{NULL, NULL}
 };
 

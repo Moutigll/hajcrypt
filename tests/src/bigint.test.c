@@ -1,4 +1,4 @@
-#include "../../includes/rsa/bigint.h"
+#include "../../includes/asymmetric/bigint.h"
 
 #include "../test.h"
 
@@ -1080,9 +1080,6 @@ int	testBigIntDivMod(void)
 	g_passedTests += passed;
 	return (passed == total);
 }
-
-#include "../../includes/rsa/bigint.h"
-#include "../test.h"
 
 /**
  * Test all modular arithmetic functions with known values.
