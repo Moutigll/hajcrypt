@@ -110,7 +110,7 @@ int	rsaPkcs1v15PadEncrypt(const uint8_t		*input,		size_t	inputLen,
 	if (paddedLen < k )
 		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 padding: padded length too short\n"), (0));
 	if (k < 11)
-	return (HAJCRYPT_DPRINT("PKCS#1 v1.5 padding: key size too small (need at least 88 bits)\n"), (0));
+		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 padding: key size too small (need at least 88 bits)\n"), (0));
 	if (inputLen > k - 11)
 		return (HAJCRYPT_DPRINT("PKCS#1 v1.5 padding: input too long for key size\n"), (0));
 	padded[0] = 0x00;
