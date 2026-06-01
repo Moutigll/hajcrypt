@@ -166,17 +166,17 @@ static void	chacha20BlockNeon(uint32_t state[16], uint8_t keystream[CHACHA20_BLO
 
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 	/* Big-endian: swap bytes within each 32-bit word to get little-endian output */
-	v0 = vrev32q_u8(vreinterpretq_u8_u32(v0));
-	v1 = vrev32q_u8(vreinterpretq_u8_u32(v1));
-	v2 = vrev32q_u8(vreinterpretq_u8_u32(v2));
-	v3 = vrev32q_u8(vreinterpretq_u8_u32(v3));
+	v0 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(v0)));
+	v1 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(v1)));
+	v2 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(v2)));
+	v3 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(v3)));
 #endif
 
 	/* Store directly as 32-bit words (little-endian format) */
-	vst1q_u32((uint32_t *)(keystream + 0),  v0);
-	vst1q_u32((uint32_t *)(keystream + 16), v1);
-	vst1q_u32((uint32_t *)(keystream + 32), v2);
-	vst1q_u32((uint32_t *)(keystream + 48), v3);
+	vst1q_u8(keystream + 0,  vreinterpretq_u8_u32(v0));
+	vst1q_u8(keystream + 16, vreinterpretq_u8_u32(v1));
+	vst1q_u8(keystream + 32, vreinterpretq_u8_u32(v2));
+	vst1q_u8(keystream + 48, vreinterpretq_u8_u32(v3));
 
 	/* Increment block counter */
 	state[12]++;

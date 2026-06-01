@@ -228,15 +228,14 @@ void	chacha20Poly1305UpdateAAD(void *ctx, const uint8_t *aad, size_t aadLen);
 void	chacha20Poly1305Update(void *ctx, const uint8_t *in, size_t inLen, uint8_t *out, size_t *outLen);
 
 /**
- * @brief Finalizes ChaCha20-Poly1305 operation and outputs authentication tag.
+ * @brief Finalizes ChaCha20-Poly1305: pads buffered AAD/data, updates the length block, and computes ctx->tag.
  * 
- * For encryption: computes the authentication tag over AAD and ciphertext,
- * and outputs it. The tag should be appended to the ciphertext.
- * For decryption: computes the expected tag and compares it with the provided tag.
+ * For both directions: computes the authentication tag over AAD and ciphertext.
+ * Use chacha20Poly1305VerifyTag() to compare against a provided tag during decryption.
  * 
  * @param ctx Pointer to ChaCha20-Poly1305 context
- * @param out Output buffer for authentication tag (encryption) or NULL (decryption)
- * @param outLen Number of bytes written to output (always 16 if tag output)
+ * @param out @param out Output buffer for any remaining (partial-block) data (may be NULL if no buffered data remains)
+ * @param outLen Number of bytes written to out (0..15). The computed tag is available in ctx->tag after this call.
  */
 void	chacha20Poly1305Final(void *ctx, uint8_t *out, size_t *outLen);
 
@@ -311,10 +310,9 @@ int	 chacha20Poly1305Open(const uint8_t		key[CHACHA20_KEY_SIZE],
 /* ---------- Global cipher structures for dispatch table ---------- */
 
 /**
- * @brief ChaCha20-Poly1305 AEAD cipher structure for dispatch table.
+ * @brief ChaCha20 stream cipher structure for the dispatch table.
  * 
- * Implements the t_cipher interface for ChaCha20-Poly1305 AEAD mode.
- * This is the primary interface for TLS 1.3 and other protocols.
+ * Implements the t_cipher interface in CIPHER_MODE_STREAM.
  */
 extern const t_cipher	g_chacha20Cipher;
 

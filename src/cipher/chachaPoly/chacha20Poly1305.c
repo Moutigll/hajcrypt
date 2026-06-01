@@ -167,9 +167,11 @@ void	chacha20Poly1305Final(void *vctx, uint8_t *out, size_t *outLen)
 	uint8_t				 lenBlock[CHACHA20_POLY1305_BLOCK_SIZE];
 	size_t				  localOutLen = 0;
 
-	if (!ctx || !out || !outLen)
+	if (!ctx || !outLen)
+		return ;
+	if (!out && ctx->dataBufferLen > 0)
 	{
-		if (outLen) *outLen = 0;
+		*outLen = 0;
 		return ;
 	}
 

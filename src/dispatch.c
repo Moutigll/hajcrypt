@@ -112,7 +112,7 @@ const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_BLOWFISH_CTR,		&g_blowfishCtrCipher },
 	{ ALGO_BLOWFISH_PCBC,	&g_blowfishPcbcCipher },
 
-	/* ChaCha20-Poly1305 AEAD */
+	/* ChaCha20 stream cipher */
 	{ ALGO_CHACHA20,			&g_chacha20Cipher },
 
 	{ ALGO_NONE, NULL }
