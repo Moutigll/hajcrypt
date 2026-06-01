@@ -18,7 +18,8 @@
 #define POLY1305_TAG_SIZE	16	/* Poly1305 authentication tag size in bytes */
 
 /* ChaCha20-Poly1305 AEAD constants */
-#define CHACHA20_POLY1305_TAG_SIZE	16  /* AEAD authentication tag size */
+#define CHACHA20_POLY1305_TAG_SIZE		16  /* AEAD authentication tag size */
+#define CHACHA20_POLY1305_BLOCK_SIZE	16  /* Block size for AAD and data processing in Poly1305 */
 
 /* ChaCha20 block matrix indices */
 #define CHACHA20_CONSTANT_0	0x61707865	/* "expa" - constant for ChaCha20 state */
@@ -51,7 +52,7 @@ typedef struct s_chacha20Ctx
  */
 typedef struct s_poly1305Ctx
 {
-	uint32_t	r[4];		/* r value (clamped) in 130-bit representation */
+	uint32_t	r[5];		/* r value (clamped) in 130-bit representation */
 	uint32_t	s[4];		/* s value (key part) */
 	uint32_t	h[5];		/* Current hash value (130 bits) */
 	uint8_t		buffer[16];	/* Input buffer for partial blocks */
@@ -65,21 +66,19 @@ typedef struct s_poly1305Ctx
  * Maintains state for ChaCha20-Poly1305 authenticated encryption/decryption
  * as specified in RFC 7539 for TLS 1.3 and other protocols.
  */
-typedef struct s_chacha20Poly1305Ctx
-{
-	t_cipherDirection	dir;								/* Encryption or decryption mode */
-	uint32_t			chachaState[16];					/* ChaCha20 state (4x4 matrix) */
-	uint32_t			counter;							/* Current block counter */
-	uint8_t				polyKey[32];						/* Poly1305 key derived from ChaCha20 */
-	t_poly1305Ctx		polyCtx;							/* Poly1305 context for authentication */
-	uint8_t				aadBuffer[16];						/* Buffer for partial AAD */
-	size_t				aadBufferLen;						/* Length of AAD buffer */
-	uint8_t				dataBuffer[16];						/* Buffer for partial data */
-	size_t				dataBufferLen;						/* Length of data buffer */
-	uint64_t			aadTotalLen;						/* Total length of AAD processed */
-	uint64_t			dataTotalLen;						/* Total length of data processed */
-	uint8_t				tag[CHACHA20_POLY1305_TAG_SIZE];	/* Authentication tag */
-	int					tagValid;							/* Flag indicating if tag is valid (decryption) */
+typedef struct s_chacha20Poly1305Ctx {
+	t_cipherDirection	dir;
+	t_chacha20Ctx		chachaCtx;
+	t_poly1305Ctx		polyCtx;
+	uint8_t				polyKey[POLY1305_KEY_SIZE];
+	uint8_t				aadBuffer[CHACHA20_POLY1305_BLOCK_SIZE];
+	size_t				aadBufferLen;
+	uint8_t				dataBuffer[CHACHA20_POLY1305_BLOCK_SIZE];
+	size_t				dataBufferLen;
+	uint64_t			aadTotalLen;
+	uint64_t			dataTotalLen;
+	uint8_t				tag[CHACHA20_POLY1305_TAG_SIZE];
+	int					tagValid;
 } t_chacha20Poly1305Ctx;
 
 /* ---------- Core ChaCha20 operations ---------- */

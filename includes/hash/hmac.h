@@ -51,8 +51,8 @@ typedef struct s_hashAlgo
 typedef struct s_hmacCtx
 {
 	const t_hashAlgo *algo;
-	uint8_t		  innerCtx[HASH_MAX_CTX_SIZE];
-	uint8_t		  outerCtx[HASH_MAX_CTX_SIZE];
+	uint8_t		  innerCtx[HASH_MAX_CTX_SIZE] __attribute__((aligned(16)));
+	uint8_t		  outerCtx[HASH_MAX_CTX_SIZE] __attribute__((aligned(16)));
 }   t_hmacCtx;
 
 
