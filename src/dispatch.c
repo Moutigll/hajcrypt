@@ -11,6 +11,7 @@
 #include "../includes/cipher/des3.h"
 #include "../includes/cipher/aes.h"
 #include "../includes/cipher/blowfish.h"
+#include "../includes/cipher/chacha20Poly1305.h"
 
 #include "../includes/asymmetric/rsa.h"
 #include "../includes/asymmetric/dsa.h"
@@ -50,21 +51,21 @@ const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_DES_ECB,		&g_desEcbCipher },
 	{ ALGO_DES_CBC,		&g_desCbcCipher },
 	{ ALGO_DES_CFB,		&g_desCfbCipher },
-	{ ALGO_DES_CFB1,	&g_desCfb1Cipher },
-	{ ALGO_DES_CFB8,	&g_desCfb8Cipher },
+	{ ALGO_DES_CFB1,		&g_desCfb1Cipher },
+	{ ALGO_DES_CFB8,		&g_desCfb8Cipher },
 	{ ALGO_DES_OFB,		&g_desOfbCipher },
 	{ ALGO_DES_CTR,		&g_desCtrCipher },
-	{ ALGO_DES_PCBC,	&g_desPcbcCipher },
+	{ ALGO_DES_PCBC,		&g_desPcbcCipher },
 
 	/* Triple DES family */
-	{ ALGO_DES3,		&g_des3Cipher },
-	{ ALGO_DES3_ECB,	&g_des3EcbCipher },
-	{ ALGO_DES3_CBC,	&g_des3CbcCipher },
-	{ ALGO_DES3_CFB,	&g_des3CfbCipher },
+	{ ALGO_DES3,			&g_des3Cipher },
+	{ ALGO_DES3_ECB,		&g_des3EcbCipher },
+	{ ALGO_DES3_CBC,		&g_des3CbcCipher },
+	{ ALGO_DES3_CFB,		&g_des3CfbCipher },
 	{ ALGO_DES3_CFB1,	&g_des3Cfb1Cipher },
 	{ ALGO_DES3_CFB8,	&g_des3Cfb8Cipher },
-	{ ALGO_DES3_OFB,	&g_des3OfbCipher },
-	{ ALGO_DES3_CTR,	&g_des3CtrCipher },
+	{ ALGO_DES3_OFB,		&g_des3OfbCipher },
+	{ ALGO_DES3_CTR,		&g_des3CtrCipher },
 	{ ALGO_DES3_PCBC,	&g_des3PcbcCipher },
 
 	/* AES-128 family */
@@ -101,15 +102,18 @@ const t_cipherDispatch g_cipherTable[] = {
 	{ ALGO_AES_256_PCBC,	&g_aes256PcbcCipher },
 
 	/* Blowfish family */
-	{ ALGO_BLOWFISH,		&g_blowfishCipher },
-	{ ALGO_BLOWFISH_ECB,	&g_blowfishEcbCipher },
-	{ ALGO_BLOWFISH_CBC,	&g_blowfishCbcCipher },
-	{ ALGO_BLOWFISH_CFB,	&g_blowfishCfbCipher },
+	{ ALGO_BLOWFISH,			&g_blowfishCipher },
+	{ ALGO_BLOWFISH_ECB,		&g_blowfishEcbCipher },
+	{ ALGO_BLOWFISH_CBC,		&g_blowfishCbcCipher },
+	{ ALGO_BLOWFISH_CFB,		&g_blowfishCfbCipher },
 	{ ALGO_BLOWFISH_CFB1,	&g_blowfishCfb1Cipher },
 	{ ALGO_BLOWFISH_CFB8,	&g_blowfishCfb8Cipher },
-	{ ALGO_BLOWFISH_OFB,	&g_blowfishOfbCipher },
-	{ ALGO_BLOWFISH_CTR,	&g_blowfishCtrCipher },
+	{ ALGO_BLOWFISH_OFB,		&g_blowfishOfbCipher },
+	{ ALGO_BLOWFISH_CTR,		&g_blowfishCtrCipher },
 	{ ALGO_BLOWFISH_PCBC,	&g_blowfishPcbcCipher },
+
+	/* ChaCha20 stream cipher */
+	{ ALGO_CHACHA20,			&g_chacha20Cipher },
 
 	{ ALGO_NONE, NULL }
 };

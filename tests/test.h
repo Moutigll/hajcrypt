@@ -138,4 +138,19 @@ int testBigIntMul(void);
 int testBigIntDivMod(void);
 int testModularArithmetic(void);
 
+/* ChaCha20 and ChaCha20-Poly1305 tests */
+int testChacha20Keystream(void);
+int testChacha20Encrypt(void);
+int testChacha20Roundtrip(void);
+
+int testPoly1305RFCVectors(void);
+int testChaCha20Poly1305RFCVectors(void);
+int testChaCha20Poly1305Empty(void);
+int testChaCha20Poly1305Incremental(void);
+int testChaCha20Poly1305BadTag(void);
+int testChaCha20Poly1305TamperedCiphertext(void);
+int testChaCha20Poly1305TamperedAAD(void);
+int testChaCha20Poly1305DifferentNonce(void);
+int testChaCha20Poly1305PartialBlocks(void);
+
 #endif /* HAJCRYPT_TEST_H */

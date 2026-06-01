@@ -52,7 +52,9 @@ typedef enum e_cipherMode
 	CIPHER_MODE_CTR,		/* Counter */
 	CIPHER_MODE_PCBC,		/* Propagating Cipher Block Chaining */
 	CIPHER_MODE_GCM,		/* Galois/Counter Mode */
+	CIPHER_MODE_STREAM,		/* Stream cipher mode (e.g., ChaCha20) */
 	CIPHER_MODE_CCM,		/* Counter with CBC-MAC */
+	CIPHER_MODE_AEAD,		/* Authenticated Encryption with Associated Data */
 	CIPHER_MODE_MAX
 }	t_cipherMode;
 

@@ -71,6 +71,7 @@ typedef enum e_algo
 	ALGO_BLOWFISH_OFB,
 	ALGO_BLOWFISH_CTR,
 	ALGO_BLOWFISH_PCBC,
+	ALGO_CHACHA20,
 }	t_algo;
 
 typedef struct s_hashDispatch

@@ -67,6 +67,18 @@ static testEntry_t all_tests[] = {
 	{"BigInt multiplication", testBigIntMul},
 	{"BigInt division and modulus", testBigIntDivMod},
 	{"BigInt modular arithmetic", testModularArithmetic},
+	{"ChaCha20 keystream", testChacha20Keystream},
+	{"ChaCha20 encrypt", testChacha20Encrypt},
+	{"ChaCha20 roundtrip", testChacha20Roundtrip},
+	{"Poly1305 RFC vectors", testPoly1305RFCVectors},
+	{"ChaCha20-Poly1305 RFC vectors", testChaCha20Poly1305RFCVectors},
+	{"ChaCha20-Poly1305 empty inputs", testChaCha20Poly1305Empty},
+	{"ChaCha20-Poly1305 incremental", testChaCha20Poly1305Incremental},
+	{"ChaCha20-Poly1305 bad tag", testChaCha20Poly1305BadTag},
+	{"ChaCha20-Poly1305 tampered ciphertext", testChaCha20Poly1305TamperedCiphertext},
+	{"ChaCha20-Poly1305 tampered AAD", testChaCha20Poly1305TamperedAAD},
+	{"ChaCha20-Poly1305 different nonces", testChaCha20Poly1305DifferentNonce},
+	{"ChaCha20-Poly1305 partial blocks", testChaCha20Poly1305PartialBlocks},
 	{NULL, NULL}
 };
 

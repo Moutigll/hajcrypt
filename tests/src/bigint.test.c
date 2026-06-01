@@ -1,4 +1,4 @@
-#include "../../includes/rsa/bigint.h"
+#include "../../includes/asymmetric/bigint.h"
 
 #include "../test.h"
 
@@ -511,19 +511,17 @@ int	testBigIntMul(void)
 		t_bigInt *a = bigIntFromUint64(small[i].a);
 		t_bigInt *b = bigIntFromUint64(small[i].b);
 		t_bigInt *res = bigIntNew(3);
-		t_bigInt *exp = small[i].need_two_words ?
-			bigIntFromHex(small[i].expected_hi ? "10000000000000000" : NULL, 2) : NULL;
-
-		if (!small[i].need_two_words) {
-			exp = bigIntFromUint64(small[i].expected_lo);
-		} else {
+		t_bigInt *exp = NULL;
+		
+		if (small[i].need_two_words) {
 			exp = bigIntNew(2);
 			if (exp) {
 				exp->words[0] = small[i].expected_lo;
 				exp->words[1] = small[i].expected_hi;
 				exp->used = (small[i].expected_hi != 0) ? 2 : (small[i].expected_lo != 0);
 			}
-		}
+		} else
+			exp = bigIntFromUint64(small[i].expected_lo);
 
 		if (a && b && res && exp &&
 			bigIntMul(res, a, b) &&
@@ -626,8 +624,8 @@ int	testBigIntMul(void)
 		bigIntFree(a); bigIntFree(b); bigIntFree(res); bigIntFree(exp);
 	}
 	{
-		t_bigInt *a = bigIntFromHex("FFFFFFFFFFFFFFFF", 1); /* 64 bits */
-		t_bigInt *b = bigIntFromHex("FFFFFFFFFFFFFFFF", 1); /* 64 bits */
+		t_bigInt *a = bigIntFromHex("FFFFFFFFFFFFFFFF", 1);
+		t_bigInt *b = bigIntFromHex("FFFFFFFFFFFFFFFF", 1);
 		t_bigInt *res = bigIntNew(1); /* capacité : 1 mot, besoin de 2 words minimum */
 
 		if (a && b && res && bigIntMul(res, a, b) == NULL) {
@@ -659,35 +657,37 @@ int	testBigIntMul(void)
 		t_bigInt *a = bigIntFromUint64(1000);
 		t_bigInt *b = bigIntFromUint64(2000);
 		t_bigInt *res = bigIntNew(3);
+		t_bigInt *expected = bigIntFromUint64(2000000);
 
-		if (a && b && res &&
+		if (a && b && res && expected &&
 			bigIntCopy(res, a) &&
 			bigIntMul(res, res, b) &&
-			bigIntCmp(res, bigIntFromUint64(2000000)) == 0)
+			bigIntCmp(res, expected) == 0)
 		{
 			passed++;
 			printSuccess("aliasing res == a");
 		} else
 			printFailure("aliasing res == a");
 		total++;
-		bigIntFree(a); bigIntFree(b); bigIntFree(res);
+		bigIntFree(a); bigIntFree(b); bigIntFree(res); bigIntFree(expected);
 	}
 	{
 		t_bigInt *a = bigIntFromUint64(1000);
 		t_bigInt *b = bigIntFromUint64(2000);
 		t_bigInt *res = bigIntNew(3);
+		t_bigInt *expected = bigIntFromUint64(2000000);
 
-		if (a && b && res &&
+		if (a && b && res && expected &&
 			bigIntCopy(res, b) &&
 			bigIntMul(res, a, res) &&
-			bigIntCmp(res, bigIntFromUint64(2000000)) == 0)
+			bigIntCmp(res, expected) == 0)
 		{
 			passed++;
 			printSuccess("aliasing res == b");
 		} else 
 			printFailure("aliasing res == b");
 		total++;
-		bigIntFree(a); bigIntFree(b); bigIntFree(res);
+		bigIntFree(a); bigIntFree(b); bigIntFree(res); bigIntFree(expected);
 	}
 	{
 		t_bigInt *a = bigIntFromHex("DEADBEEFCAFEBABE1234567890ABCDEF", 3);
@@ -1081,9 +1081,6 @@ int	testBigIntDivMod(void)
 	return (passed == total);
 }
 
-#include "../../includes/rsa/bigint.h"
-#include "../test.h"
-
 /**
  * Test all modular arithmetic functions with known values.
  * No reference implementations, only pre‑computed expected results.
@@ -1102,7 +1099,7 @@ int testModularArithmetic(void)
 		} vectors[] = {
 			{0, 5, 7, 0},
 			{1, 1, 100, 1},
-			{5, 3, 7, 1},          /* 15 mod 7 = 1 */
+			{5, 3, 7, 1},	/* 15 mod 7 = 1 */
 			{100, 200, 999, 20000 % 999},
 			{0xFFFFFFFFFFFFFFFFULL, 1, 0xFFFFFFFFFFFFFFFFULL, 0},
 			{0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0},
@@ -1162,13 +1159,13 @@ int testModularArithmetic(void)
 			uint64_t base, exp, mod;
 			uint64_t expected;
 		} vectors[] = {
-			{0, 0, 100, 1},   /* 0^0 mod m = 1 */
+			{0, 0, 100, 1},		/* 0^0 mod m = 1 */
 			{0, 5, 100, 0},
 			{1, 0, 100, 1},
-			{2, 10, 100, 24}, /* 2^10 = 1024, 1024 mod 100 = 24 */
-			{3, 5, 7, 5},     /* 3^5 = 243, 243 mod 7 = 5 */
-			{7, 3, 13, 5},    /* 7^3 = 343, 343 mod 13 = 5 */
-			{5, 7, 23, 17},   /* 5^7 = 78125, 78125 mod 23 = 17 */
+			{2, 10, 100, 24},	/* 2^10 = 1024, 1024 mod 100 = 24 */
+			{3, 5, 7, 5},		/* 3^5 = 243, 243 mod 7 = 5 */
+			{7, 3, 13, 5},		/* 7^3 = 343, 343 mod 13 = 5 */
+			{5, 7, 23, 17},		/* 5^7 = 78125, 78125 mod 23 = 17 */
 		};
 		for (size_t i = 0; i < sizeof(vectors)/sizeof(vectors[0]); i++) {
 			t_bigInt *base = bigIntFromUint64(vectors[i].base);
@@ -1211,12 +1208,12 @@ int testModularArithmetic(void)
 			uint64_t expected;  /* 0 means "no inverse" */
 		} vectors[] = {
 			{1, 7, 1},
-			{2, 5, 3},      /* 2*3=6 ≡ 1 mod5 */
-			{3, 7, 5},      /* 3*5=15 ≡ 1 mod7 */
-			{4, 9, 7},      /* 4*7=28 ≡ 1 mod9 */
-			{5, 12, 5},     /* 5*5=25 ≡ 1 mod12 */
-			{6, 9, 0},      /* gcd(6,9)=3 ≠ 1 -> no inverse */
-			{0, 7, 0},      /* zero has no inverse */
+			{2, 5, 3},	/* 2*3=6 ≡ 1 mod5 */
+			{3, 7, 5},	/* 3*5=15 ≡ 1 mod7 */
+			{4, 9, 7},	/* 4*7=28 ≡ 1 mod9 */
+			{5, 12, 5},	/* 5*5=25 ≡ 1 mod12 */
+			{6, 9, 0},	/* gcd(6,9)=3 ≠ 1 -> no inverse */
+			{0, 7, 0},	/* zero has no inverse */
 		};
 		for (size_t i = 0; i < sizeof(vectors)/sizeof(vectors[0]); i++) {
 			t_bigInt *a = bigIntFromUint64(vectors[i].a);

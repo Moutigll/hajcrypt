@@ -401,6 +401,8 @@ int bcryptVerify(const char *password, const char *hash)
 	int			diff;
 
 	if (!password || !hash) return (-1);
+	if (ft_strlen(hash) != BCRYPT_STRING_LEN)
+		return (-1);
 	if (hash[0] != '$' || hash[1] != '2' || hash[2] != 'b' || hash[3] != '$')
 		return (-1);
 	if (hash[4] < '0' || hash[4] > '9' || hash[5] < '0' || hash[5] > '9')
@@ -422,7 +424,7 @@ int bcryptVerify(const char *password, const char *hash)
 		return (-1);
 
 	diff = 0;
-	for (i = 0; i < 60; i++)
+	for (i = 0; i < BCRYPT_STRING_LEN; i++)
 		diff |= (uint8_t)newHash[i] ^ (uint8_t)hash[i];
 
 	return (diff == 0 ? 0 : -1);
