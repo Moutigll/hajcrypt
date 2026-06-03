@@ -92,7 +92,28 @@ void	hmacFinal(t_hmacCtx *ctx, uint8_t *digest);
 
 /* ------------------ Convenience HMAC functions for specific algorithms ------------------ */
 
-/** * @brief Initializes an HMAC context for SHA-256 using the provided key.
+/**
+ * @brief Initializes an HMAC context for SHA-1 using the provided key.
+ *
+ * @param ctx Pointer to the HMAC context structure to initialize.
+ * @param key Pointer to the key bytes used for HMAC computation.
+ * @param keyLen Length of the key in bytes.
+ * @return void
+ */
+void	sha1HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
+
+/**
+ * @brief Initializes an HMAC context for SHA-224 using the provided key.
+ *
+ * @param ctx Pointer to the HMAC context structure to initialize.
+ * @param key Pointer to the key bytes used for HMAC computation.
+ * @param keyLen Length of the key in bytes.
+ * @return void
+ */
+void	sha224HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
+
+/**
+ * @brief Initializes an HMAC context for SHA-256 using the provided key.
  *
  * @param ctx Pointer to the HMAC context structure to initialize.
  * @param key Pointer to the key bytes used for HMAC computation.
@@ -102,7 +123,52 @@ void	hmacFinal(t_hmacCtx *ctx, uint8_t *digest);
  */
 void	sha256HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
 
-/** * @brief Initializes an HMAC context for MD5 using the provided key.
+/**
+ * @brief Initializes an HMAC context for SHA-384 using the provided key.
+ *
+ * @param ctx Pointer to the HMAC context structure to initialize.
+ * @param key Pointer to the key bytes used for HMAC computation.
+ * @param keyLen Length of the key in bytes.
+ *
+ * @return void
+ */
+void	sha384HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
+
+/**
+ * @brief Initializes an HMAC context for SHA-512 using the provided key.
+ *
+ * @param ctx Pointer to the HMAC context structure to initialize.
+ * @param key Pointer to the key bytes used for HMAC computation.
+ * @param keyLen Length of the key in bytes.
+ *
+ * @return void
+ */
+void	sha512HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
+
+/**
+ * @brief Initializes an HMAC context for SHA-512/224 using the provided key.
+ *
+ * @param ctx Pointer to the HMAC context structure to initialize.
+ * @param key Pointer to the key bytes used for HMAC computation.
+ * @param keyLen Length of the key in bytes.
+ *
+ * @return void
+ */
+void	sha512_224HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
+
+/**
+ * @brief Initializes an HMAC context for SHA-512/256 using the provided key.
+ *
+ * @param ctx Pointer to the HMAC context structure to initialize.
+ * @param key Pointer to the key bytes used for HMAC computation.
+ * @param keyLen Length of the key in bytes.
+ *
+ * @return void
+ */
+void	sha512_256HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
+
+/**
+ * @brief Initializes an HMAC context for MD5 using the provided key.
  *
  * @param ctx Pointer to the HMAC context structure to initialize.
  * @param key Pointer to the key bytes used for HMAC computation.
@@ -112,7 +178,8 @@ void	sha256HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
  */
 void	md5HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
 
-/** * @brief Initializes an HMAC context for Whirlpool using the provided key.
+/**
+ * @brief Initializes an HMAC context for Whirlpool using the provided key.
  *
  * @param ctx Pointer to the HMAC context structure to initialize.
  * @param key Pointer to the key bytes used for HMAC computation.
