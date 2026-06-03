@@ -8,7 +8,7 @@
 
 const static t_header headers[] = {
 	{ "md5", generateMd5Header },
-	{ "sha256", generateSha256Header },
+	{ "sha", generateShaHeader },
 	{ "whirlpool", generateWhirlpoolHeader },
 	{ "base64", generateBase64Header },
 	{ "des", generateDesHeader },

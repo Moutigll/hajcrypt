@@ -1,6 +1,8 @@
 #ifndef HAJCRYPT_SHA_COMMON_H
 #define HAJCRYPT_SHA_COMMON_H
 
+#include <stdint.h>
+
 /* --------------- Common sizes --------------- */
 
 #define SHA1_BLOCK_SIZE		64
@@ -59,5 +61,7 @@
 #define SHA512_SIGMA1(x)	(ROTR64(x, 14) ^ ROTR64(x, 18) ^ ROTR64(x, 41))
 #define SHA512_sigma0(x)	(ROTR64(x, 1) ^ ROTR64(x, 8) ^ ((x) >> 7))
 #define SHA512_sigma1(x)	(ROTR64(x, 19) ^ ROTR64(x, 61) ^ ((x) >> 6))
+
+void sha512Transform(uint64_t state[8], const uint8_t block[128]);
 
 #endif /* HAJCRYPT_SHA_COMMON_H */

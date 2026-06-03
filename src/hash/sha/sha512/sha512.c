@@ -21,7 +21,7 @@
 #define SHA_USE_ARM64			0
 #define SHA_LOAD_BE(ptr)		load64Be(ptr)
 #define SHA_STORE_BE(ptr, val)	store64Be(ptr, val)
-#define SHA_PAD_PARAMS			{ .blockSize = SHA512_BLOCK_SIZE, .isLittleEndian = 0, .lengthFieldSize = 8 }
+#define SHA_PAD_PARAMS			{ .blockSize = SHA512_BLOCK_SIZE, .isLittleEndian = 0, .lengthFieldSize = 16 }
 
 #define SHA_WORD_COMPRESS		uint64_t
 #define SHA_ROUNDS				80

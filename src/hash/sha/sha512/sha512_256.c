@@ -17,11 +17,11 @@
 #define SHA_H5					SHA512_256_H5
 #define SHA_H6					SHA512_256_H6
 #define SHA_H7					SHA512_256_H7
-#define SHA_TRANSFORM			sha512_256Transform
+#define SHA_TRANSFORM			sha512Transform
 #define SHA_USE_ARM64			0
 #define SHA_LOAD_BE(ptr)		load64Be(ptr)
 #define SHA_STORE_BE(ptr, val)	store64Be(ptr, val)
-#define SHA_PAD_PARAMS			{ .blockSize = SHA512_256_BLOCK_SIZE, .isLittleEndian = 0, .lengthFieldSize = 8 }
+#define SHA_PAD_PARAMS			{ .blockSize = SHA512_256_BLOCK_SIZE, .isLittleEndian = 0, .lengthFieldSize = 16 }
 
 #define SHA_WORD_COMPRESS		uint64_t
 #define SHA_ROUNDS				80
@@ -35,5 +35,4 @@
 #define SHA_LOAD_BE_COMPRESS	load64Be
 #define SHA_STORE_BE_COMPRESS   store64Be
 
-#include "../shaTransformTemplate.h"
 #include "../shaImplTemplate.h"

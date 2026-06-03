@@ -1,5 +1,6 @@
 #include "../../../includes/hajcrypt.h"
 #include "../../../includes/hash/hash.h"
+#include "../../../includes/utils/bitopts.h"
 
 #if !defined(SHA_NAME) || !defined(SHA_CTX) || !defined(SHA_OID) || \
 	!defined(SHA_DEPRECATED) || !defined(SHA_DIGEST_SIZE) || \
@@ -123,10 +124,17 @@ void HC_CONCAT(SHA_NAME, Final)(uint8_t *digest, void *ctx)
 		SHA_SELECT_TRANSFORM(sctx->state, padded + offset);
 	}
 
-	size_t words_to_write = SHA_DIGEST_SIZE / sizeof(SHA_WORD);
-	for (size_t i = 0; i < words_to_write; i++)
+	size_t wordsToWrite = SHA_DIGEST_SIZE / sizeof(SHA_WORD);
+	size_t bytesRemain = SHA_DIGEST_SIZE % sizeof(SHA_WORD);
+	for (size_t i = 0; i < wordsToWrite; i++)
 	{
 		SHA_STORE_BE(digest + i * sizeof(SHA_WORD), sctx->state[i]);
+	}
+	if (bytesRemain > 0)
+	{
+		uint8_t tmp[sizeof(SHA_WORD)];
+		SHA_STORE_BE(tmp, sctx->state[wordsToWrite]);
+		ft_memcpy(digest + wordsToWrite * sizeof(SHA_WORD), tmp, bytesRemain);
 	}
 }
 

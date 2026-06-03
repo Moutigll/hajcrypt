@@ -4,6 +4,9 @@
 #include "../hash.h"
 #include "shaCommon.h"
 
+#define SHA256_DIGEST_INFO_HEADER_LEN 19
+#define SHA256_DIGEST_LEN 32
+
 /**
  * @brief SHA‑256 context structure
  *
