@@ -14,6 +14,12 @@
  * 
  * @var s_hash::name
  *     Pointer to the null-terminated name of the hash algorithm (e.g., "SHA256")
+ *
+ * @var s_hash::oid
+ *     Object Identifier (OID) for the hash algorithm, used in X.509 and other standards to uniquely identify the algorithm
+ *
+ * @var s_hash::deprecated
+ *     Flag indicating whether the algorithm is considered weak or deprecated (1 for deprecated, 0 for secure)
  * 
  * @var s_hash::init
  *     Function pointer to initialize the hash context.
@@ -46,9 +52,11 @@ typedef struct s_hash
 {
 	char		*name;
 	t_algoId	oid;
+	int			deprecated;	/* 1 if the algorithm is considered weak/deprecated, 0 otherwise */
 	void		(*init)(void *ctx);
 	void		(*update)(void *ctx, const uint8_t *data, size_t len);
 	void		(*final)(uint8_t *digest, void *ctx);
+	void		(*hash)(const uint8_t *data, size_t len, uint8_t *digest);
 	void		(*hmacInit)(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
 	size_t		ctxSize;
 	size_t		digestSize;

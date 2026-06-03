@@ -55,6 +55,15 @@ void	md5Update(void *ctx, const uint8_t *data, size_t len);
  */
 void	md5Final(uint8_t *digest, void *ctx);
 
+/**
+ * @brief Perfoms a md5 Hash of the input data in one step (initialization, update, finalization).
+ * This is a convenience function for hashing data that is available all at once, without needing to manage the context manually.
+ * @param data - pointer to input data to hash
+ * @param len - length of the input data in bytes
+ * @param digest - pointer to a buffer (at least 16 bytes) where the final MD5 digest will be stored
+ */
+void	md5Hash(const uint8_t *data, size_t len, uint8_t *digest);
+
 /* Internal function to perform the MD5 transformation on a single 512-bit block.
  * This function is called by md5Update when a full block of data is ready to be processed.
  * It takes the current state (A, B, C, D) and the 512-bit block of input data, and updates the state according to the MD5 algorithm.

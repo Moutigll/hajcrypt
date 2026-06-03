@@ -99,10 +99,36 @@ static void	printUsage(void)
 	
 	ft_printf("\nMessage Digest commands:\n");
 	i = 0;
+	prevRoot[0] = '\0';
 	while (g_hashTable[i].hash)
 	{
-		ft_printf("\t%s\n", g_hashTable[i].hash->name);
-		i++;
+		const char	*name;
+		size_t		k;
+
+		name = g_hashTable[i].hash->name;
+		currRoot[0] = name[0];
+		currRoot[1] = name[1];
+		currRoot[2] = '\0';
+
+		/* saut de ligne entre différentes racines (md5 -> sha1 -> sha256 -> etc.) */
+		if (prevRoot[0] != '\0' && ft_strcmp(prevRoot, currRoot) != 0)
+			ft_printf("\n");
+
+		ft_strlcpy(prevRoot, currRoot, sizeof(prevRoot));
+
+		/* regrouper les hash qui commencent par les mêmes deux lettres */
+		ft_printf(g_hashTable[i].hash->deprecated ? P_ORANGE " %s" P_RESET : " %s", name);
+
+		k = i + 1;
+		while (g_hashTable[k].hash &&
+		       g_hashTable[k].hash->name[0] == currRoot[0] &&
+		       g_hashTable[k].hash->name[1] == currRoot[1])
+		{
+			ft_printf(g_hashTable[k].hash->deprecated ? P_ORANGE ", %s" P_RESET : ", %s", g_hashTable[k].hash->name);
+			k++;
+		}
+		ft_printf("\n");
+		i = k;
 	}
 	
 	ft_printf("\nCipher commands:\n");
@@ -126,14 +152,13 @@ static void	printUsage(void)
 
 		if (!hasDash(name))
 		{
-			ft_printf("\t%s", name);
+			ft_printf(g_cipherTable[i].cipher->deprecated ? P_ORANGE "\t%s" P_RESET : "\t%s" , g_cipherTable[i].cipher->name);
 
 			k = i + 1;
 			while (g_cipherTable[k].cipher &&
 				isSameExactFamily(name, g_cipherTable[k].cipher->name))
 			{
-				ft_printf(",\t%s",
-					g_cipherTable[k].cipher->name);
+				ft_printf(g_cipherTable[i].cipher->deprecated ? P_ORANGE ",\t%s" P_RESET : ",\t%s" , g_cipherTable[k].cipher->name);
 				k++;
 			}
 			ft_printf("\n");
@@ -141,7 +166,7 @@ static void	printUsage(void)
 		}
 		else
 		{
-			ft_printf("\t%s\n", name);
+			ft_printf(g_cipherTable[i].cipher->deprecated ? P_ORANGE "\t%s\n" P_RESET : "\t%s\n" , name);
 			i++;
 		}
 	}
@@ -270,12 +295,12 @@ static int listCmd(int argc, char **argv)
 	else if (ft_strcmp(argv[2], "hashes") == 0)
 	{
 		for (int i = 0; g_hashTable[i].hash; i++)
-			ft_printf("%s\n", g_hashTable[i].hash->name);
+			ft_printf(g_hashTable[i].hash->deprecated ? P_ORANGE "%s\n" P_RESET : P_GREEN "%s\n" P_RESET, g_hashTable[i].hash->name);
 	}
 	else if (ft_strcmp(argv[2], "ciphers") == 0)
 	{
 		for (int i = 0; g_cipherTable[i].cipher; i++)
-			ft_printf("%s\n", g_cipherTable[i].cipher->name);
+			ft_printf(g_cipherTable[i].cipher->deprecated ? P_ORANGE "%s\n" P_RESET : P_GREEN "%s\n" P_RESET, g_cipherTable[i].cipher->name);
 	}
 	else
 	{

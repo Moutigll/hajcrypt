@@ -70,6 +70,7 @@ void des3OfbFree(void *vctx)
 
 const t_cipher g_des3OfbCipher = {
 	.name			= "des3-ofb",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_OFB,
 	.oid			= OID_DEF("DES3-OFB", DES_EDE3_OFB_NIST_OID),
 	.oiwOid			= OIW_DEF("DES3-OFB", DES_EDE3_OFB_OIW_OID),

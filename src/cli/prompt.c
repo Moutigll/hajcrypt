@@ -3,7 +3,7 @@
 #include "../../includes/utils/random.h"
 #include "../../includes/utils/utils.h"
 
-#include "../../includes/hash/sha256.h"
+#include "../../includes/hash/sha/sha256.h"
 #include "../../includes/kdf/bytesToKey.h"
 #include "../../includes/kdf/pbkdf2.h"
 #include "../../includes/kdf/bcrypt.h"

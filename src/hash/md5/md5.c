@@ -90,12 +90,23 @@ void md5Final(uint8_t *digest, void *ctx)
 	}
 }
 
+void md5Hash(const uint8_t *data, size_t len, uint8_t *digest)
+{
+	t_md5Ctx ctx;
+
+	md5Init(&ctx);
+	md5Update(&ctx, data, len);
+	md5Final(digest, &ctx);
+}
+
 const t_hash g_md5Hash = {
 	.name = "md5",
 	.oid = OID_DEF("md5", MD5_OID),
+	.deprecated = 1,
 	.init = md5Init,
 	.update = md5Update,
 	.final = md5Final,
+	.hash = md5Hash,
 	.hmacInit = md5HmacInit,
 	.ctxSize = sizeof(t_md5Ctx),
 	.digestSize = 16

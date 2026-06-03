@@ -2,7 +2,7 @@
 #include "../../hajlib/include/hprintf.h"
 #include "../../hajlib/include/hstring.h"
 #include "../../includes/cipher/base64.h"
-#include "../../includes/hash/sha256.h"
+#include "../../includes/hash/sha/sha256.h"
 #include "../../includes/utils/random.h"
 #include "../../includes/x509/asn1.h"
 #include "../../includes/kdf/pbkdf2.h"

@@ -75,6 +75,9 @@ typedef enum e_cipherDirection
  * @member name
  *     Pointer to the cipher's name (e.g., "AES", "DES").
  *
+ * @member deprecated
+ *     Flag indicating if the cipher is considered weak or deprecated (1 for deprecated, 0 for secure).
+ *
  * @member mode
  *     The cipher mode of operation (e.g., ECB, CBC, CTR).
  *
@@ -139,6 +142,7 @@ typedef struct s_cipher
 {
 	/* Identification */
 	char			*name;
+	int				deprecated;	/* 1 if the cipher is considered weak/deprecated, 0 otherwise */
 	t_cipherMode	mode;
 	t_algoId		oid;		/* Optional OID for PKCS#8 compatibility */
 	t_algoId		oiwOid;		/* Optional OIW OID for legacy compatibility */

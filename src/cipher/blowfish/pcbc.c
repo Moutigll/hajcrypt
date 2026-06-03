@@ -63,6 +63,7 @@ void	blowfishPcbcFree(void *vctx)
 
 const t_cipher	g_blowfishPcbcCipher = {
 	.name			= "blowfish-pcbc",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_PCBC,
 	.oid			= OID_DEF("BLOWFISH-PCBC", BLOWFISH_PCBC_OID),
 	.oiwOid			= OID_NONE,

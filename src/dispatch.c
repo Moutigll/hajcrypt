@@ -2,7 +2,7 @@
 #include "../hajlib/include/hstring.h"
 
 #include "../includes/hash/md5.h"
-#include "../includes/hash/sha256.h"
+#include "../includes/hash/sha.h" /* IWYU pragma: keep */
 #include "../includes/hash/whirlpool.h"
 #include "../includes/hash/blake2b.h"
 
@@ -23,10 +23,20 @@
  * ========================================================================= */
 const t_hashDispatch g_hashTable[] = {
 	{ ALGO_MD5,			&g_md5Hash },
+	{ ALGO_SHA1,			&g_sha1Hash },
+	{ ALGO_SHA224,		&g_sha224Hash },
 	{ ALGO_SHA256,		&g_sha256Hash },
-	{ ALGO_WHIRLPOOL,	&g_whirlpoolHash },
+	{ ALGO_SHA384,		&g_sha384Hash },
+	{ ALGO_SHA512,		&g_sha512Hash },
+	{ ALGO_SHA512_224,	&g_sha512_224Hash },
+	{ ALGO_SHA512_256,	&g_sha512_256Hash },
 	{ ALGO_BLAKE2B,		&g_blake2bHash },
-	{ ALGO_NONE,		NULL }
+	{ ALGO_BLAKE2B_160,	&g_blake2b160Hash },
+	{ ALGO_BLAKE2B_256,	&g_blake2b256Hash },
+	{ ALGO_BLAKE2B_384,	&g_blake2b384Hash },
+	{ ALGO_BLAKE2B_512,	&g_blake2b512Hash },
+	{ ALGO_WHIRLPOOL,	&g_whirlpoolHash },
+	{ ALGO_NONE,			NULL }
 };
 
 /* =========================================================================

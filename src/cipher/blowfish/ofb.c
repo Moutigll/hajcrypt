@@ -61,6 +61,7 @@ void	blowfishOfbFree(void *vctx)
 
 const t_cipher	g_blowfishOfbCipher = {
 	.name			= "blowfish-ofb",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_OFB,
 	.oid			= OID_DEF("BLOWFISH-OFB", BLOWFISH_OFB_OID),
 	.oiwOid			= OID_NONE,

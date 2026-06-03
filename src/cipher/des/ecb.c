@@ -67,6 +67,7 @@ void desEcbFree(void *vctx)
 
 const t_cipher g_desEcbCipher = {
 	.name			= "des-ecb",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_ECB,
 	.oid			= OID_DEF("DES-ECB", DES_ECB_NIST_OID),
 	.oiwOid			= OIW_DEF("DES-ECB", DES_ECB_OIW_OID),

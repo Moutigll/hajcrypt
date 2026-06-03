@@ -53,6 +53,15 @@ void whirlpoolUpdate(void *ctx, const uint8_t *data, size_t len);
 void whirlpoolFinal(uint8_t *digest, void *ctx);
 
 /**
+ * @brief Perfoms a Whirlpool Hash of the input data in one step (initialization, update, finalization).
+ * This is a convenience function for hashing data that is available all at once, without needing to manage the context manually.
+ * @param data - pointer to input data to hash
+ * @param len - length of the input data in bytes
+ * @param digest - pointer to a buffer (at least 64 bytes) where the final Whirlpool digest will be stored
+ */
+ void whirlpoolHash(const uint8_t *data, size_t len, uint8_t *digest);
+
+/**
  * @brief Performs a single Whirlpool transformation on a 512-bit state using a 512-bit block.
  * This function is used internally by the Whirlpool implementation to process input data blocks.
  * @param state - pointer to the 512-bit (8 × 64-bit) state array to be transformed

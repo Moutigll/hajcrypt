@@ -293,6 +293,7 @@ void	chacha20Free(void *vctx)
 
 const t_cipher	g_chacha20Cipher = {
 	.name			= "chacha20",
+	.deprecated		= 0,
 	.mode			= CIPHER_MODE_STREAM,
 	.oid			= OID_NONE,
 	.oiwOid			= OID_NONE,

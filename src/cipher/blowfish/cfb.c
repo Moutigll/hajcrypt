@@ -93,6 +93,7 @@ void	blowfishCfbFree(void *vctx)
 
 const t_cipher	g_blowfishCfbCipher = {
 	.name			= "blowfish-cfb",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_CFB,
 	.oid			= OID_DEF("BLOWFISH-CFB", BLOWFISH_CFB_OID),
 	.oiwOid			= OID_NONE,
@@ -112,6 +113,7 @@ const t_cipher	g_blowfishCfbCipher = {
 
 const t_cipher	g_blowfishCfb8Cipher = {
 	.name			= "blowfish-cfb8",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_CFB8,
 	.oid			= OID_NONE,
 	.oiwOid			= OID_NONE,
@@ -131,6 +133,7 @@ const t_cipher	g_blowfishCfb8Cipher = {
 
 const t_cipher	g_blowfishCfb1Cipher = {
 	.name			= "blowfish-cfb1",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_CFB1,
 	.oid			= OID_NONE,
 	.oiwOid			= OID_NONE,

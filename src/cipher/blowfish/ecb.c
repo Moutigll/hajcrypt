@@ -72,6 +72,7 @@ void	blowfishEcbFree(void *vctx)
 
 const t_cipher	g_blowfishEcbCipher = {
 	.name			= "blowfish-ecb",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_ECB,
 	.oid			= OID_DEF("BLOWFISH-ECB", BLOWFISH_ECB_OID),
 	.oiwOid			= OID_NONE,
