@@ -58,6 +58,7 @@ void aesCfbFree(void *vctx)
 	secureZeroMemory(ctx->roundKeys, sizeof(ctx->roundKeys));
 	secureZeroMemory(ctx->cfbCtx.iv, sizeof(ctx->cfbCtx.iv));
 	secureZeroMemory(ctx->cfbCtx.shiftRegister, sizeof(ctx->cfbCtx.shiftRegister));
+	secureZeroMemory(ctx->cfbCtx.inputBuf, sizeof(ctx->cfbCtx.inputBuf));
 }
 
 void aesCfbUpdate(void *vctx, const uint8_t *in, size_t inLen, uint8_t *out, size_t *outLen)

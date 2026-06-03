@@ -31,7 +31,7 @@ COMPLETION_SRC_BASH	:= src/ft_ssl.bash
 COMPLETION_SRC_ZSH	:= src/ft_ssl.zsh
 
 # User directories
-HOME_BIN						:= $(HOME)/.local/bin
+HOME_BIN					:= $(HOME)/.local/bin
 BASH_COMPLETION_USER_DIR	:= $(HOME)/.local/share/bash-completion/completions
 ZSH_COMPLETION_USER_DIR		:= $(HOME)/.local/share/zsh/site-functions
 
@@ -73,11 +73,11 @@ $(HLIB_LIBA):
 # ---- Generate constants ----
 $(BUILD_DIR)/consts/%.o: $(CONST_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(BASE_FLAGS) $(OPT_FLAGS) $(INCLUDES) -c $< -o $@
 
 $(CONST_EXEC): $(HLIB_LIBA) $(CONST_OBJ)
 	@echo -e "$(GREEN)Linking genConst executable...$(RESET)"
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(CONST_OBJ) $(HLIB_LIBA)
+	$(CC) $(BASE_FLAGS) $(OPT_FLAGS) $(INCLUDES) -o $@ $(CONST_OBJ) $(HLIB_LIBA)
 	@echo -e "$(GREEN)Executable $@ generated.$(RESET)"
 
 $(CONST_HEADERS): $(CONST_EXEC)

@@ -17,9 +17,14 @@ void secureZeroMemory(void *ptr, size_t len)
 	if (ptr == NULL || len == 0)
 		return;
 
-#ifdef __linux__
+#if defined(__GLIBC__) && (__GLIBC__ >= 2 && __GLIBC_MINOR__ >= 25)
+	/* glibc 2.25+ has explicit_bzero */
 	explicit_bzero(ptr, len);
+#elif defined(__has_builtin) && __has_builtin(__builtin_memset)
+	/* Clang/GCC builtin that won't be optimized away */
+	__builtin_memset(ptr, 0, len);
 #else
+	/* Fallback implementation */
 	volatile uint8_t *p = (volatile uint8_t *)ptr;
 	while (len--) {
 		*p++ = 0;
@@ -45,4 +50,3 @@ void secureFree(void *ptr, size_t len)
 	/* Free the memory */
 	free(ptr);
 }
-
