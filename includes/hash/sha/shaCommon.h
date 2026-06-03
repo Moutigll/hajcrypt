@@ -64,4 +64,6 @@
 
 void sha512Transform(uint64_t state[8], const uint8_t block[128]);
 
+void	sha256TransformArm64(uint32_t *state, const uint8_t *data);
+
 #endif /* HAJCRYPT_SHA_COMMON_H */

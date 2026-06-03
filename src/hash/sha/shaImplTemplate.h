@@ -28,7 +28,7 @@
 
 #if defined(__aarch64__) && SHA_USE_ARM64
 	#define SHA_SELECT_TRANSFORM(state, block) \
-		CONCAT(SHA_NAME, TransformARM64)(state, block)
+		SHA_TRANSFORM_ARM64(state, block)
 #else
 	#define SHA_SELECT_TRANSFORM(state, block) \
 		SHA_TRANSFORM(state, block)

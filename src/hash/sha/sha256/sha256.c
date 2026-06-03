@@ -24,7 +24,8 @@ const uint8_t g_sha256DigestInfoHeader[] = {
 #define SHA_H6					SHA256_H6
 #define SHA_H7					SHA256_H7
 #define SHA_TRANSFORM			sha256Transform
-#define SHA_USE_ARM64			0
+#define SHA_USE_ARM64			1
+#define SHA_TRANSFORM_ARM64		sha256TransformArm64
 #define SHA_LOAD_BE(ptr)		load32Be(ptr)
 #define SHA_STORE_BE(ptr, val)	store32Be(ptr, val)
 #define SHA_PAD_PARAMS			{ .blockSize = SHA256_BLOCK_SIZE, .isLittleEndian = 0, .lengthFieldSize = 8 }
