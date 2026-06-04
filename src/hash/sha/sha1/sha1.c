@@ -1,5 +1,8 @@
 #include "../../../../includes/hash/sha/sha1.h"
 #include "../../../../includes/consts/sha.h"
+
+#ifndef __aarch64__
+
 #include "../../../../includes/utils/bitopts.h"
 
 static void sha1Transform(uint32_t state[5], const uint8_t block[64])
@@ -50,6 +53,8 @@ static void sha1Transform(uint32_t state[5], const uint8_t block[64])
 	state[4] += e;
 }
 
+#endif
+
 #define SHA_NAME				sha1
 #define SHA_CTX					t_sha1Ctx
 #define SHA_OID					SHA1_OID
@@ -65,7 +70,9 @@ static void sha1Transform(uint32_t state[5], const uint8_t block[64])
 #define SHA_H4					SHA1_H4
 
 #define SHA_TRANSFORM			sha1Transform
-#define SHA_USE_ARM64			0
+#define SHA_USE_ARM64			1
+#define SHA_TRANSFORM_ARM64		sha1TransformArm64
+#define SHA_LOAD_BE(ptr)		load32Be(ptr)
 #define SHA_STORE_BE(ptr, val)	store32Be(ptr, val)
 #define SHA_PAD_PARAMS			{ .blockSize = SHA1_BLOCK_SIZE, .isLittleEndian = 0, .lengthFieldSize = 8 }
 

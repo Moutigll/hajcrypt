@@ -109,6 +109,7 @@ LIB_SRC = \
 	$(SRC_DIR)/cipher/chachaPoly/chacha20Poly1305.c
 
 LIB_ASM_ARM_SRC = \
+	$(SRC_DIR)/hash/sha/sha1/transformArm64.s \
 	$(SRC_DIR)/hash/sha/sha256/transformArm64.s
 
 CLI_SRC = \
