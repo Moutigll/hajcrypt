@@ -6,7 +6,7 @@
 
 #include "../../includes/hash/hmac.h"
 
-void	hmacInit(t_hmacCtx			*ctx,
+void	hmacInit(t_hmacCtx		*ctx,
 			  const t_hashAlgo	*algo,
 			  const uint8_t		*key,
 			  size_t			keyLen)
@@ -15,7 +15,6 @@ void	hmacInit(t_hmacCtx			*ctx,
 	size_t	i;
 
 	ctx->algo = algo;
-
 	ft_bzero(k0, algo->blockSize);
 
 	if (keyLen > algo->blockSize)
@@ -27,7 +26,7 @@ void	hmacInit(t_hmacCtx			*ctx,
 	else
 		ft_memcpy(k0, key, keyLen);
 
-	/* Prepare inner context */
+	/* inner key: k0 XOR 0x36 */
 	i = 0;
 	while (i < algo->blockSize)
 	{
@@ -38,7 +37,7 @@ void	hmacInit(t_hmacCtx			*ctx,
 	algo->hashInit(ctx->innerCtx);
 	algo->hashUpdate(ctx->innerCtx, k0, algo->blockSize);
 
-	/* Prepare outer context */
+	/* outer key: k0 XOR 0x5c (undo 0x36, then XOR 0x5c) */
 	i = 0;
 	while (i < algo->blockSize)
 	{
@@ -52,17 +51,29 @@ void	hmacInit(t_hmacCtx			*ctx,
 
 void	hmacFinal(t_hmacCtx *ctx, uint8_t *digest)
 {
-	uint8_t tmp[ctx->algo->digestSize];
+	uint8_t	tmp[ctx->algo->digestSize];
 
 	ctx->algo->hashFinal(tmp, ctx->innerCtx);
-
-	ctx->algo->hashUpdate(ctx->outerCtx, tmp,
-						  ctx->algo->digestSize);
-
+	ctx->algo->hashUpdate(ctx->outerCtx, tmp, ctx->algo->digestSize);
 	ctx->algo->hashFinal(digest, ctx->outerCtx);
 }
 
-static const t_hashAlgo	g_sha1Algo = {
+void	hmac(const t_hashAlgo	*algo,
+			 const uint8_t		*key,	size_t	keyLen,
+			 const uint8_t		*data,	size_t	dataLen,
+			 uint8_t			*out)
+{
+	t_hmacCtx	ctx;
+
+	hmacInit(&ctx, algo, key, keyLen);
+	ctx.algo->hashUpdate(ctx.innerCtx, data, dataLen);
+	hmacFinal(&ctx, out);
+}
+
+
+/* ------------------------ hash algorithm descriptors ------------------------ */
+
+const t_hashAlgo	g_sha1Algo = {
 	.hashInit = sha1Init,
 	.hashUpdate = sha1Update,
 	.hashFinal = sha1Final,
@@ -71,7 +82,7 @@ static const t_hashAlgo	g_sha1Algo = {
 	.ctxSize = sizeof(t_sha1Ctx)
 };
 
-static const t_hashAlgo	g_sha224Algo = {
+const t_hashAlgo	g_sha224Algo = {
 	.hashInit = sha224Init,
 	.hashUpdate = sha224Update,
 	.hashFinal = sha224Final,
@@ -80,7 +91,7 @@ static const t_hashAlgo	g_sha224Algo = {
 	.ctxSize = sizeof(t_sha224Ctx)
 };
 
-static const t_hashAlgo	g_sha256Algo = {
+const t_hashAlgo	g_sha256Algo = {
 	.hashInit = sha256Init,
 	.hashUpdate = sha256Update,
 	.hashFinal = sha256Final,
@@ -89,7 +100,7 @@ static const t_hashAlgo	g_sha256Algo = {
 	.ctxSize = sizeof(t_sha256Ctx)
 };
 
-static const t_hashAlgo	g_sha384Algo = {
+const t_hashAlgo	g_sha384Algo = {
 	.hashInit = sha384Init,
 	.hashUpdate = sha384Update,
 	.hashFinal = sha384Final,
@@ -98,7 +109,7 @@ static const t_hashAlgo	g_sha384Algo = {
 	.ctxSize = sizeof(t_sha384Ctx)
 };
 
-static const t_hashAlgo	g_sha512Algo = {
+const t_hashAlgo	g_sha512Algo = {
 	.hashInit = sha512Init,
 	.hashUpdate = sha512Update,
 	.hashFinal = sha512Final,
@@ -107,7 +118,7 @@ static const t_hashAlgo	g_sha512Algo = {
 	.ctxSize = sizeof(t_sha512Ctx)
 };
 
-static const t_hashAlgo	g_sha512_224Algo = {
+const t_hashAlgo	g_sha512_224Algo = {
 	.hashInit = sha512_224Init,
 	.hashUpdate = sha512_224Update,
 	.hashFinal = sha512_224Final,
@@ -116,7 +127,7 @@ static const t_hashAlgo	g_sha512_224Algo = {
 	.ctxSize = sizeof(t_sha512_224Ctx)
 };
 
-static const t_hashAlgo	g_sha512_256Algo = {
+const t_hashAlgo	g_sha512_256Algo = {
 	.hashInit = sha512_256Init,
 	.hashUpdate = sha512_256Update,
 	.hashFinal = sha512_256Final,
@@ -125,7 +136,7 @@ static const t_hashAlgo	g_sha512_256Algo = {
 	.ctxSize = sizeof(t_sha512_256Ctx)
 };
 
-static const t_hashAlgo	g_md5Algo = {
+const t_hashAlgo	g_md5Algo = {
 	.hashInit = md5Init,
 	.hashUpdate = md5Update,
 	.hashFinal = md5Final,
@@ -134,7 +145,7 @@ static const t_hashAlgo	g_md5Algo = {
 	.ctxSize = sizeof(t_md5Ctx)
 };
 
-static const t_hashAlgo	g_whirlpoolAlgo = {
+const t_hashAlgo	g_whirlpoolAlgo = {
 	.hashInit = whirlpoolInit,
 	.hashUpdate = whirlpoolUpdate,
 	.hashFinal = whirlpoolFinal,
@@ -144,7 +155,7 @@ static const t_hashAlgo	g_whirlpoolAlgo = {
 };
 
 
-/* ------------------------ public API ------------------------ */
+/* ------------------------ per-algorithm wrappers ------------------------ */
 
 void	sha1HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen)
 {

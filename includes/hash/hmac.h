@@ -66,6 +66,8 @@ typedef struct s_hmacCtx
  *
  * @return void
  *
+ * @note To update you can simply do ```ctx->algo->hashUpdate(ctx->innerCtx, data, dataLen)```
+ *
  * @note The context must be allocated before calling this function.
  * @note The key and algorithm pointers must remain valid for the lifetime
  *			of the context or until it is reinitialized.
@@ -89,6 +91,22 @@ void	hmacInit(t_hmacCtx			*ctx,
  * @see hmacInit, hmacUpdate
  */
 void	hmacFinal(t_hmacCtx *ctx, uint8_t *digest);
+
+/**
+ * @brief Performs an HMAC computation in a single step using the specified algorithm, key, and data.
+ *
+ * @param algo Pointer to the hash algorithm to use for HMAC operations.
+ * @param key Pointer to the key bytes used for HMAC computation.
+ * @param keyLen Length of the key in bytes.
+ * @param data Pointer to the input data to be authenticated.
+ * @param dataLen Length of the input data in bytes.
+ * @param out Pointer to a buffer where the computed HMAC digest will be stored.
+ * @return void
+ */
+void	hmac(const t_hashAlgo	*algo,
+			 const uint8_t		*key,	size_t	keyLen,
+			 const uint8_t		*data,	size_t	dataLen,
+			 uint8_t			*out);
 
 /* ------------------ Convenience HMAC functions for specific algorithms ------------------ */
 
@@ -188,5 +206,15 @@ void	md5HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
  * @return void
  */
 void	whirlpoolHmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
+
+extern const t_hashAlgo	g_sha1Algo;
+extern const t_hashAlgo	g_sha224Algo;
+extern const t_hashAlgo	g_sha256Algo;
+extern const t_hashAlgo	g_sha384Algo;
+extern const t_hashAlgo	g_sha512Algo;
+extern const t_hashAlgo	g_sha512_224Algo;
+extern const t_hashAlgo	g_sha512_256Algo;
+extern const t_hashAlgo	g_md5Algo;
+extern const t_hashAlgo	g_whirlpoolAlgo;
 
 #endif /* HAJCRYPT_HMAC_H */
