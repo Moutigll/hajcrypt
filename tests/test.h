@@ -54,9 +54,13 @@ int testMd5Basic(void);
 int testMd5Update(void);
 int testMd5Large(void);
 
-int testSha256Basic(void);
-int testSha256Update(void);
-int testSha256Large(void);
+int testSha1(void);
+int testSha224(void);
+int testSha256(void);
+int testSha384(void);
+int testSha512(void);
+int testSha512_224(void);
+int testSha512_256(void);
 
 int testWhirlpoolBasic(void);
 int testWhirlpoolUpdate(void);

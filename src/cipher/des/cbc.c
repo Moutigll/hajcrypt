@@ -79,6 +79,7 @@ void desCbcFinal(void *vctx, uint8_t *out, size_t *outLen)
 
 const t_cipher g_desCbcCipher = {
 	.name		= "des-cbc",
+	.deprecated	= 1,
 	.mode		= CIPHER_MODE_CBC,
 	.oid		= OID_DEF("DES-CBC", DES_CBC_NIST_OID),
 	.oiwOid		= OIW_DEF("DES-CBC", DES_CBC_OIW_OID),
@@ -102,6 +103,7 @@ const t_cipher g_desCbcCipher = {
 
 const t_cipher g_desCipher = {
 	.name			= "des",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_CBC,
 	.isEncoder		= 1,
 	.oid			= OID_DEF("DES-CBC", DES_CBC_NIST_OID),

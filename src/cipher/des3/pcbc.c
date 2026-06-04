@@ -76,6 +76,7 @@ void des3PcbcFree(void *vctx)
 
 const t_cipher g_des3PcbcCipher = {
 	.name			= "des3-pcbc",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_PCBC,
 	.oid			= OID_NONE,
 	.oiwOid			= OID_NONE,

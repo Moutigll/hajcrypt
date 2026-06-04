@@ -65,7 +65,7 @@ int testBlake2bUnkeyed(void) {
 		size_t		len = blake2bUnkeyedVectors[i].input_len;
 		const char	*expected_hex = blake2bUnkeyedVectors[i].expected;
 
-		blake2b((const uint8_t *)input, len, digest, 64);
+		blake2bHash((const uint8_t *)input, len, digest, 64);
 		total++;
 		if (compareHex(expected_hex, digest, 64)) {
 			passed++;

@@ -74,6 +74,7 @@ void aesPcbcFree(void *vctx)
 
 #define AES_PCBC_CIPHER(nameStr, size, oidDef) {	\
 	.name			= nameStr,				\
+	.deprecated		= 0,					\
 	.mode			= CIPHER_MODE_PCBC,		\
 	.oid			= oidDef,				\
 	.oiwOid			= OID_NONE,				\

@@ -91,12 +91,23 @@ void whirlpoolFinal(uint8_t *digest, void *ctx)
 	}
 }
 
+void whirlpoolHash(const uint8_t *data, size_t len, uint8_t *digest)
+{
+	t_whirlpoolCtx ctx;
+
+	whirlpoolInit(&ctx);
+	whirlpoolUpdate(&ctx, data, len);
+	whirlpoolFinal(digest, &ctx);
+}
+
 const t_hash g_whirlpoolHash = {
 	.name = "whirlpool",
 	.oid = OID_DEF("whirlpool", WHIRLPOOL_OID),
+	.deprecated = 0,
 	.init = whirlpoolInit,
 	.update = whirlpoolUpdate,
 	.final = whirlpoolFinal,
+	.hash = whirlpoolHash,
 	.hmacInit = whirlpoolHmacInit,
 	.ctxSize = sizeof(t_whirlpoolCtx),
 	.digestSize = 64

@@ -62,6 +62,7 @@ void	blowfishCtrFree(void *vctx)
 
 const t_cipher	g_blowfishCtrCipher = {
 	.name			= "blowfish-ctr",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_CTR,
 	.oid			= OID_DEF("BLOWFISH-CTR", BLOWFISH_CTR_OID),
 	.oiwOid			= OID_NONE,

@@ -25,9 +25,9 @@ k256:
 .word 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208
 .word 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 
-.globl sha256Transform_arm64
-.type sha256Transform_arm64, @function
-sha256Transform_arm64:
+.globl sha256TransformArm64
+.type sha256TransformArm64, @function
+sha256TransformArm64:
 	// Save frame pointer and link register
 	stp x29, x30, [sp, #-16]!
 	mov x29, sp
@@ -289,4 +289,4 @@ sha256Transform_arm64:
 	ldp x29, x30, [sp], #16
 	ret
 
-.size sha256Transform_arm64, .-sha256Transform_arm64
+.size sha256TransformArm64, .-sha256TransformArm64

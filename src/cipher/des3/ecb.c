@@ -124,6 +124,7 @@ void des3EcbFree(void *vctx)
 
 const t_cipher g_des3EcbCipher = {
 	.name			= "des3-ecb",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_ECB,
 	.oid			= OID_DEF("DES3-ECB", DES_EDE3_ECB_NIST_OID),
 	.oiwOid			= OIW_DEF("DES3-ECB", DES_EDE3_ECB_OIW_OID),

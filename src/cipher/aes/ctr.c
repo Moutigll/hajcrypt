@@ -73,6 +73,7 @@ void	aesCtrFinal(void *vctx, uint8_t *out, size_t *outLen)
 
 #define AES_CTR_CIPHER(nameStr, size, oidDef) {		\
 	.name			= nameStr,				\
+	.deprecated		= 0,					\
 	.mode			= CIPHER_MODE_CTR,		\
 	.oid			= oidDef,				\
 	.oiwOid			= OID_NONE,				\

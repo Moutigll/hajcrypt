@@ -1,7 +1,7 @@
 #include "../../hajlib/include/hmemory.h"
 
 #include "../../includes/hash/md5.h"
-#include "../../includes/hash/sha256.h"
+#include "../../includes/hash/sha.h" /* IWYU pragma: keep */
 #include "../../includes/hash/whirlpool.h"
 
 #include "../../includes/hash/hmac.h"
@@ -62,6 +62,24 @@ void	hmacFinal(t_hmacCtx *ctx, uint8_t *digest)
 	ctx->algo->hashFinal(digest, ctx->outerCtx);
 }
 
+static const t_hashAlgo	g_sha1Algo = {
+	.hashInit = sha1Init,
+	.hashUpdate = sha1Update,
+	.hashFinal = sha1Final,
+	.blockSize = 64,
+	.digestSize = 20,
+	.ctxSize = sizeof(t_sha1Ctx)
+};
+
+static const t_hashAlgo	g_sha224Algo = {
+	.hashInit = sha224Init,
+	.hashUpdate = sha224Update,
+	.hashFinal = sha224Final,
+	.blockSize = 64,
+	.digestSize = 28,
+	.ctxSize = sizeof(t_sha224Ctx)
+};
+
 static const t_hashAlgo	g_sha256Algo = {
 	.hashInit = sha256Init,
 	.hashUpdate = sha256Update,
@@ -69,6 +87,42 @@ static const t_hashAlgo	g_sha256Algo = {
 	.blockSize = 64,
 	.digestSize = 32,
 	.ctxSize = sizeof(t_sha256Ctx)
+};
+
+static const t_hashAlgo	g_sha384Algo = {
+	.hashInit = sha384Init,
+	.hashUpdate = sha384Update,
+	.hashFinal = sha384Final,
+	.blockSize = 128,
+	.digestSize = 48,
+	.ctxSize = sizeof(t_sha384Ctx)
+};
+
+static const t_hashAlgo	g_sha512Algo = {
+	.hashInit = sha512Init,
+	.hashUpdate = sha512Update,
+	.hashFinal = sha512Final,
+	.blockSize = 64,
+	.digestSize = 64,
+	.ctxSize = sizeof(t_sha512Ctx)
+};
+
+static const t_hashAlgo	g_sha512_224Algo = {
+	.hashInit = sha512_224Init,
+	.hashUpdate = sha512_224Update,
+	.hashFinal = sha512_224Final,
+	.blockSize = 128,
+	.digestSize = 28,
+	.ctxSize = sizeof(t_sha512_224Ctx)
+};
+
+static const t_hashAlgo	g_sha512_256Algo = {
+	.hashInit = sha512_256Init,
+	.hashUpdate = sha512_256Update,
+	.hashFinal = sha512_256Final,
+	.blockSize = 128,
+	.digestSize = 32,
+	.ctxSize = sizeof(t_sha512_256Ctx)
 };
 
 static const t_hashAlgo	g_md5Algo = {
@@ -92,9 +146,39 @@ static const t_hashAlgo	g_whirlpoolAlgo = {
 
 /* ------------------------ public API ------------------------ */
 
+void	sha1HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen)
+{
+	hmacInit(ctx, &g_sha1Algo, key, keyLen);
+}
+
+void	sha224HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen)
+{
+	hmacInit(ctx, &g_sha224Algo, key, keyLen);
+}
+
 void	sha256HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen)
 {
 	hmacInit(ctx, &g_sha256Algo, key, keyLen);
+}
+
+void	sha384HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen)
+{
+	hmacInit(ctx, &g_sha384Algo, key, keyLen);
+}
+
+void	sha512HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen)
+{
+	hmacInit(ctx, &g_sha512Algo, key, keyLen);
+}
+
+void	sha512_224HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen)
+{
+	hmacInit(ctx, &g_sha512_224Algo, key, keyLen);
+}
+
+void	sha512_256HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen)
+{
+	hmacInit(ctx, &g_sha512_256Algo, key, keyLen);
 }
 
 void	md5HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen)

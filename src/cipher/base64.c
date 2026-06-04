@@ -177,22 +177,23 @@ int base64Unpad(uint8_t *block, size_t *len, size_t blockSize)
 }
 
 const t_cipher g_base64Cipher = {
-	.name = "base64",
-	.mode = CIPHER_MODE_NONE,
-	.isEncoder = 1,
+	.name		= "base64",
+	.deprecated	= 0,
+	.mode		= CIPHER_MODE_NONE,
+	.isEncoder	= 1,
 	
-	.blockSize = 1,
-	.keySize = 0,
-	.ivSize = 0,
-	.ctxSize = sizeof(t_base64Ctx),
+	.blockSize	= 1,
+	.keySize	= 0,
+	.ivSize		= 0,
+	.ctxSize	= sizeof(t_base64Ctx),
 	
-	.init = base64Init,
-	.update = base64Update,
-	.final = base64Final,
-	.free = base64Free,
+	.init	= base64Init,
+	.update	= base64Update,
+	.final	= base64Final,
+	.free	= base64Free,
 	
-	.pad = base64Pad,
-	.unpad = base64Unpad,
+	.pad	= base64Pad,
+	.unpad	= base64Unpad,
 	
-	.supportsWrap = 1
+	.supportsWrap	= 1
 };

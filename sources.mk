@@ -4,7 +4,7 @@ CONST_HDR_DIR	= includes/consts
 
 CONST_HEADERS = \
 	$(CONST_HDR_DIR)/md5.h \
-	$(CONST_HDR_DIR)/sha256.h \
+	$(CONST_HDR_DIR)/sha.h \
 	$(CONST_HDR_DIR)/whirlpool.h \
 	$(CONST_HDR_DIR)/base64.h \
 	$(CONST_HDR_DIR)/des.h \
@@ -14,7 +14,7 @@ CONST_HEADERS = \
 CONST_SRC = \
 	$(CONST_DIR)/main.const.c \
 	$(CONST_DIR)/md5.const.c \
-	$(CONST_DIR)/sha256.const.c \
+	$(CONST_DIR)/sha.const.c \
 	$(CONST_DIR)/whirlpool.const.c \
 	$(CONST_DIR)/base64.const.c \
 	$(CONST_DIR)/des.const.c \
@@ -53,8 +53,15 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/common/endian.c \
 	$(SRC_DIR)/hash/md5/md5.c \
 	$(SRC_DIR)/hash/md5/transform.c \
-	$(SRC_DIR)/hash/sha256/sha256.c \
-	$(SRC_DIR)/hash/sha256/transform.c \
+	$(SRC_DIR)/hash/sha/sha1/sha1.c \
+	$(SRC_DIR)/hash/sha/sha256/transform.c \
+	$(SRC_DIR)/hash/sha/sha256/sha224.c \
+	$(SRC_DIR)/hash/sha/sha256/sha256.c \
+	$(SRC_DIR)/hash/sha/sha512/transform.c \
+	$(SRC_DIR)/hash/sha/sha512/sha384.c \
+	$(SRC_DIR)/hash/sha/sha512/sha512.c \
+	$(SRC_DIR)/hash/sha/sha512/sha512_224.c \
+	$(SRC_DIR)/hash/sha/sha512/sha512_256.c \
 	$(SRC_DIR)/hash/whirlpool/whirlpool.c \
 	$(SRC_DIR)/hash/whirlpool/transform.c \
 	$(SRC_DIR)/hash/whirlpool/transform.opt.c \
@@ -104,7 +111,8 @@ LIB_SRC = \
 	$(SRC_DIR)/cipher/chachaPoly/chacha20Poly1305.c
 
 LIB_ASM_ARM_SRC = \
-	$(SRC_DIR)/hash/sha256/transform_arm64.s
+	$(SRC_DIR)/hash/sha/sha1/transformArm64.s \
+	$(SRC_DIR)/hash/sha/sha256/transformArm64.s
 
 CLI_SRC = \
 	$(SRC_DIR)/cli/main.c \
@@ -122,7 +130,7 @@ TEST_SRC = \
 	tests/main.test.c \
 	tests/utils.test.c \
 	tests/src/md5.test.c \
-	tests/src/sha256.test.c \
+	tests/src/sha.test.c \
 	tests/src/whirlpool.test.c \
 	tests/src/aes128.test.c \
 	tests/src/des.test.c \

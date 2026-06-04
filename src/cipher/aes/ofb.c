@@ -71,6 +71,7 @@ void	aesOfbFinal(void *vctx, uint8_t *out, size_t *outLen)
 
 #define AES_OFB_CIPHER(nameStr, size, oidDef) {		\
 	.name			= nameStr,				\
+	.deprecated		= 0,					\
 	.mode			= CIPHER_MODE_OFB,		\
 	.oid			= oidDef,				\
 	.oiwOid			= OID_NONE,				\

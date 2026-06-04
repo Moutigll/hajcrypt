@@ -151,6 +151,7 @@ void	aesEcbFinal(void *vctx, uint8_t *out, size_t *outLen)
 
 #define AES_ECB_CIPHER(nameStr, key_size, oidDef) { \
 	.name			= nameStr,				\
+	.deprecated		= 0,					\
 	.mode			= CIPHER_MODE_ECB,		\
 	.oid			= oidDef,				\
 	.oiwOid			= OID_NONE,				\

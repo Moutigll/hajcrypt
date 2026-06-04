@@ -91,6 +91,7 @@ void aesCfb1Final(void *vctx, uint8_t *out, size_t *outBits)
 
 #define AES_CFB_CIPHER(nameStr, size, oidDef) { \
 	.name			= nameStr,			\
+	.deprecated		= 0,				\
 	.mode			= CIPHER_MODE_CFB,	\
 	.oid			= oidDef,			\
 	.oiwOid			= OID_NONE,			\
@@ -110,6 +111,7 @@ void aesCfb1Final(void *vctx, uint8_t *out, size_t *outBits)
 
 #define AES_CFB8_CIPHER(nameStr, size) { \
 	.name			= nameStr,			\
+	.deprecated		= 0,				\
 	.mode			= CIPHER_MODE_CFB8,	\
 	.oid			= OID_NONE,			\
 	.oiwOid			= OID_NONE,			\
@@ -129,6 +131,7 @@ void aesCfb1Final(void *vctx, uint8_t *out, size_t *outBits)
 
 #define AES_CFB1_CIPHER(nameStr, size) { \
 	.name			= nameStr,			\
+	.deprecated		= 0,				\
 	.mode			= CIPHER_MODE_CFB1,	\
 	.oid			= OID_NONE,			\
 	.oiwOid			= OID_NONE,			\

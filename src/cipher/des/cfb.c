@@ -104,6 +104,7 @@ void desCfb1Final(void *vctx, uint8_t *out, size_t *outBits)
 
 const t_cipher g_desCfbCipher = {
 	.name		= "des-cfb",
+	.deprecated	= 1,
 	.mode		= CIPHER_MODE_CFB,
 	.oid		= OID_DEF("DES-CFB", DES_CFB_NIST_OID),
 	.oiwOid		= OIW_DEF("DES-CFB", DES_CFB_OIW_OID),
@@ -127,6 +128,7 @@ const t_cipher g_desCfbCipher = {
 
 const t_cipher g_desCfb8Cipher = {
 	.name		= "des-cfb8",
+	.deprecated	= 1,
 	.mode		= CIPHER_MODE_CFB8,
 	.oid		= OID_NONE,
 	.oiwOid		= OID_NONE,
@@ -150,6 +152,7 @@ const t_cipher g_desCfb8Cipher = {
 
 const t_cipher g_desCfb1Cipher = {
 	.name			= "des-cfb1",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_CFB1,
 	.oid			= OID_NONE,
 	.oiwOid			= OID_NONE,

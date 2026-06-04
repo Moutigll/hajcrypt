@@ -74,6 +74,7 @@ void des3CbcFree(void *vctx)
 
 const t_cipher g_des3CbcCipher = {
 	.name			= "des3-cbc",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_CBC,
 	.oid			= OID_DEF("DES3-CBC", DES_EDE3_CBC_NIST_OID),
 	.oiwOid			= OIW_DEF("DES3-CBC", DES_EDE3_CBC_OIW_OID),
@@ -93,6 +94,7 @@ const t_cipher g_des3CbcCipher = {
 
 const t_cipher g_des3Cipher = {
 	.name			= "des3",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_CBC,
 	.oid			= OID_DEF("DES3-CBC", DES_EDE3_CBC_NIST_OID),
 	.oiwOid			= OIW_DEF("DES3-CBC", DES_EDE3_CBC_OIW_OID),

@@ -4,7 +4,7 @@
 #include "../../../hajlib/include/hmemory.h"
 #include "../../../includes/utils/dispatch.h"
 #include "../../../includes/utils/random.h"
-#include "../../../includes/hash/sha256.h"
+#include "../../../includes/hash/sha/sha256.h"
 #include "../../../includes/hash/md5.h"
 #include "../../../includes/hajcrypt.h"
 

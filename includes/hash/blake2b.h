@@ -98,7 +98,7 @@ void	blake2bFinal(uint8_t *digest, void *ctx);
  * @param digest Output buffer
  * @param digestlen Desired output length
  */
-void	blake2b(const uint8_t *data, size_t datalen, uint8_t *digest, size_t digestlen);
+void	blake2bHash(const uint8_t *data, size_t datalen, uint8_t *digest, size_t digestlen);
 
 /**
  * @brief One-shot Blake2b MAC

@@ -65,6 +65,7 @@ void	blowfishCbcFree(void *vctx)
 
 const t_cipher	g_blowfishCbcCipher = {
 	.name			= "blowfish-cbc",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_CBC,
 	.oid			= OID_DEF("BLOWFISH-CBC", BLOWFISH_CBC_OID),
 	.oiwOid			= OID_NONE,
@@ -84,6 +85,7 @@ const t_cipher	g_blowfishCbcCipher = {
 
 const t_cipher	g_blowfishCipher = {
 	.name			= "blowfish",
+	.deprecated		= 1,
 	.mode			= CIPHER_MODE_CBC,
 	.oid			= OID_DEF("BLOWFISH-CBC", BLOWFISH_CBC_OID),
 	.oiwOid			= OID_NONE,

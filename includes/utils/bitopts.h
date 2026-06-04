@@ -97,6 +97,31 @@ static inline uint32_t load32(const uint8_t *src) {
 #endif
 }
 
+static inline void store32Be(void *dst, uint32_t w) {
+#if defined(NATIVE_BIG_ENDIAN)
+	ft_memcpy(dst, &w, sizeof w);
+#else
+	uint8_t *p = (uint8_t *)dst;
+	*p++ = (uint8_t)(w >> 24);
+	*p++ = (uint8_t)(w >> 16);
+	*p++ = (uint8_t)(w >> 8);
+	*p++ = (uint8_t)w;
+#endif
+}
+
+static inline uint32_t load32Be(const uint8_t *src) {
+#if defined(NATIVE_BIG_ENDIAN)
+	uint32_t w;
+	ft_memcpy(&w, src, sizeof w);
+	return (w);
+#else
+	return ((uint32_t)src[0] << 24) |
+	       ((uint32_t)src[1] << 16) |
+	       ((uint32_t)src[2] << 8) |
+	       ((uint32_t)src[3]);
+#endif
+}
+
 /* Store a 64-bit integer in little-endian format */
 static inline void store64(void *dst, uint64_t w) {
 #if defined(NATIVE_LITTLE_ENDIAN)
@@ -119,6 +144,33 @@ static inline void store64(void *dst, uint64_t w) {
 	w >>= 8;
 	*p++ = (uint8_t)w;
 #endif
+}
+
+/* Load a 64-bit integer in big-endian format */
+static inline uint64_t load64Be(const uint8_t *src)
+{
+	return ((uint64_t)src[0] << 56) |
+		   ((uint64_t)src[1] << 48) |
+		   ((uint64_t)src[2] << 40) |
+		   ((uint64_t)src[3] << 32) |
+		   ((uint64_t)src[4] << 24) |
+		   ((uint64_t)src[5] << 16) |
+		   ((uint64_t)src[6] << 8)  |
+		   ((uint64_t)src[7]);
+}
+
+/* Store a 64-bit integer in big-endian format */
+static inline void store64Be(void *dst, uint64_t w)
+{
+	uint8_t *p = (uint8_t *)dst;
+	p[0] = (w >> 56) & 0xFF;
+	p[1] = (w >> 48) & 0xFF;
+	p[2] = (w >> 40) & 0xFF;
+	p[3] = (w >> 32) & 0xFF;
+	p[4] = (w >> 24) & 0xFF;
+	p[5] = (w >> 16) & 0xFF;
+	p[6] = (w >> 8)  & 0xFF;
+	p[7] = w & 0xFF;
 }
 
 #endif /* HAJCRYPT_BITOPTS_H */

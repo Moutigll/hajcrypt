@@ -1,7 +1,3 @@
-// cipher_io.c - Fonctions d'entrée/sortie pour les ciphers
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <fcntl.h>
 
 #include "../../hajlib/include/hprintf.h"
@@ -10,7 +6,7 @@
 #include "../../includes/cli/password.h"
 #include "../../includes/utils/random.h"
 #include "../../includes/kdf/bytesToKey.h"
-#include "../../includes/hash/sha256.h"
+#include "../../includes/hash/sha/sha256.h"
 
 #include "../../includes/cli/algoHandling.h"
 

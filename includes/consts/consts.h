@@ -39,11 +39,11 @@ int isPrime(int n);
 int generateMd5Header(int fd);
 
 /**
- * @brief Generate the SHA-256 header file with initial state constants and prime-based constants.
+ * @brief Generate the SHA header file with initial state constants and prime-based constants.
  * @param fd - file descriptor to write the generated header content to
  * @return 0 on success, 1 on failure (e.g. write error)
  */
-int generateSha256Header(int fd);
+int generateShaHeader(int fd);
 
 /**
  * @brief Generate the Whirlpool header file with initial state constants and prime-based constants.
