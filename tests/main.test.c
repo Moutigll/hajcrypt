@@ -83,6 +83,11 @@ static testEntry_t all_tests[] = {
 	{"ChaCha20-Poly1305 tampered AAD", testChaCha20Poly1305TamperedAAD},
 	{"ChaCha20-Poly1305 different nonces", testChaCha20Poly1305DifferentNonce},
 	{"ChaCha20-Poly1305 partial blocks", testChaCha20Poly1305PartialBlocks},
+	{"FFDHE getGroupParams", testFfdheGetGroupParams},
+	{"FFDHE generateKeypair", testFfdheGenerateKeypair},
+	{"FFDHE getPublicBytes", testFfdheGetPublicBytes},
+	{"FFDHE exchange", testFfdheExchange},
+	{"FFDHE free zeroing", testFfdheFreeZeroing},
 	{NULL, NULL}
 };
 
