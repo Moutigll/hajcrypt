@@ -39,6 +39,7 @@ typedef struct
 #define AES128_CFB_OID	{ AES_OID_PREFIX, 0x04 }
 #define AES128_CTR_OID	{ AES_OID_PREFIX, 0x08 }
 #define AES128_PCBC_OID	{ AES_OID_PREFIX, 0x09 }
+#define AES128_GCM_OID	{ AES_OID_PREFIX, 0x0E }
 
 /* AES-192 */
 #define AES192_ECB_OID	{ AES_OID_PREFIX, 0x15 }
@@ -47,6 +48,7 @@ typedef struct
 #define AES192_CFB_OID	{ AES_OID_PREFIX, 0x18 }
 #define AES192_CTR_OID	{ AES_OID_PREFIX, 0x1C }
 #define AES192_PCBC_OID	{ AES_OID_PREFIX, 0x1D }
+#define AES192_GCM_OID	{ AES_OID_PREFIX, 0x1E }
 
 /* AES-256 */
 #define AES256_ECB_OID	{ AES_OID_PREFIX, 0x29 }
@@ -55,6 +57,7 @@ typedef struct
 #define AES256_CFB_OID	{ AES_OID_PREFIX, 0x2C }
 #define AES256_CTR_OID	{ AES_OID_PREFIX, 0x30 }
 #define AES256_PCBC_OID	{ AES_OID_PREFIX, 0x31 }
+#define AES256_GCM_OID	{ AES_OID_PREFIX, 0x32 }
 
 /* ==================================================================
  * DES OIDs (NIST + OIW)
