@@ -281,6 +281,30 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 	return (1);
 }
 
+static void printHashEntry(const t_hash *hash, int useColors) {
+    if (!useColors) {
+        ft_printf("%s\n", hash->name);
+        return;
+    }
+    
+    if (hash->deprecated)
+        ft_printf(P_ORANGE "%s\n" P_RESET, hash->name);
+    else
+        ft_printf(P_GREEN "%s\n" P_RESET, hash->name);
+}
+
+static void printCipherEntry(const t_cipher *cipher, int useColors) {
+    if (!useColors) {
+        ft_printf("%s\n", cipher->name);
+        return;
+    }
+    
+    if (cipher->deprecated)
+        ft_printf(P_ORANGE "%s\n" P_RESET, cipher->name);
+    else
+        ft_printf(P_GREEN "%s\n" P_RESET, cipher->name);
+}
+
 static int listCmd(int argc, char **argv)
 {
 	if (argc < 3)
@@ -288,6 +312,7 @@ static int listCmd(int argc, char **argv)
 		ft_dprintf(STDERR_FILENO, "ft_ssl: list: missing argument\n");
 		return (1);
 	}
+	int useColor = isatty(STDOUT_FILENO);
 	if (ft_strcmp(argv[2], "commands") == 0)
 	{
 		ft_printf("genpkey\ngenrsa\ngendsa\npkey\nrsa\ndsa\npkeyutl\nrsautl\ndsautl\n");
@@ -295,12 +320,12 @@ static int listCmd(int argc, char **argv)
 	else if (ft_strcmp(argv[2], "hashes") == 0)
 	{
 		for (int i = 0; g_hashTable[i].hash; i++)
-			ft_printf(g_hashTable[i].hash->deprecated ? P_ORANGE "%s\n" P_RESET : P_GREEN "%s\n" P_RESET, g_hashTable[i].hash->name);
+			printHashEntry(g_hashTable[i].hash, useColor);
 	}
 	else if (ft_strcmp(argv[2], "ciphers") == 0)
 	{
 		for (int i = 0; g_cipherTable[i].cipher; i++)
-			ft_printf(g_cipherTable[i].cipher->deprecated ? P_ORANGE "%s\n" P_RESET : P_GREEN "%s\n" P_RESET, g_cipherTable[i].cipher->name);
+			printCipherEntry(g_cipherTable[i].cipher, useColor);
 	}
 	else
 	{

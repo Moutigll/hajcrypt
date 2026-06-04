@@ -35,5 +35,4 @@
 #define SHA_LOAD_BE_COMPRESS	load64Be
 #define SHA_STORE_BE_COMPRESS   store64Be
 
-#include "../shaTransformTemplate.h"
 #include "../shaImplTemplate.h"

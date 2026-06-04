@@ -1,6 +1,12 @@
 #include "../../../../includes/hash/sha/sha224.h"
 #include "../../../../includes/consts/sha.h"
 
+#if defined(__aarch64__) && (defined(__ARM_FEATURE_CRYPTO) || defined(__ARM_FEATURE_SHA2))
+	#define SHA_USE_ARM64 1
+#else
+	#define SHA_USE_ARM64 0
+#endif
+
 #define SHA_NAME				sha224
 #define SHA_CTX					t_sha224Ctx
 #define SHA_OID					SHA224_OID
@@ -17,8 +23,7 @@
 #define SHA_H5					SHA224_H5
 #define SHA_H6					SHA224_H6
 #define SHA_H7					SHA224_H7
-#define SHA_TRANSFORM			sha224Transform
-#define SHA_USE_ARM64			1
+#define SHA_TRANSFORM			sha256Transform
 #define SHA_TRANSFORM_ARM64		sha256TransformArm64
 #define SHA_LOAD_BE(ptr)		load32Be(ptr)
 #define SHA_STORE_BE(ptr, val)	store32Be(ptr, val)
@@ -36,5 +41,4 @@
 #define SHA_LOAD_BE_COMPRESS	load32Be
 #define SHA_STORE_BE_COMPRESS   store32Be
 
-#include "../shaTransformTemplate.h"
 #include "../shaImplTemplate.h"

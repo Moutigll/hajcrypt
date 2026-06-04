@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define ROR64(x, n) (((x) >> (n)) | ((x) << (64 - (n))))
+
 /* --------------- Common sizes --------------- */
 
 #define SHA1_BLOCK_SIZE		64
@@ -62,6 +64,7 @@
 #define SHA512_sigma0(x)	(ROTR64(x, 1) ^ ROTR64(x, 8) ^ ((x) >> 7))
 #define SHA512_sigma1(x)	(ROTR64(x, 19) ^ ROTR64(x, 61) ^ ((x) >> 6))
 
+void sha256Transform(uint32_t state[8], const uint8_t block[64]);
 void sha512Transform(uint64_t state[8], const uint8_t block[128]);
 
 void	sha1TransformArm64(uint32_t state[5], const uint8_t block[64]);

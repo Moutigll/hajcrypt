@@ -56,7 +56,7 @@ void	md5Update(void *ctx, const uint8_t *data, size_t len);
 void	md5Final(uint8_t *digest, void *ctx);
 
 /**
- * @brief Perfoms a md5 Hash of the input data in one step (initialization, update, finalization).
+ * @brief Performs a md5 Hash of the input data in one step (initialization, update, finalization).
  * This is a convenience function for hashing data that is available all at once, without needing to manage the context manually.
  * @param data - pointer to input data to hash
  * @param len - length of the input data in bytes

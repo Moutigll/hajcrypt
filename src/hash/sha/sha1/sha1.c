@@ -1,7 +1,10 @@
 #include "../../../../includes/hash/sha/sha1.h"
 #include "../../../../includes/consts/sha.h"
 
-#ifndef __aarch64__
+#if defined(__aarch64__) && (defined(__ARM_FEATURE_CRYPTO) || defined(__ARM_FEATURE_SHA1))
+	#define SHA_USE_ARM64 1
+#else
+	#define SHA_USE_ARM64 0
 
 #include "../../../../includes/utils/bitopts.h"
 
@@ -70,7 +73,6 @@ static void sha1Transform(uint32_t state[5], const uint8_t block[64])
 #define SHA_H4					SHA1_H4
 
 #define SHA_TRANSFORM			sha1Transform
-#define SHA_USE_ARM64			1
 #define SHA_TRANSFORM_ARM64		sha1TransformArm64
 #define SHA_LOAD_BE(ptr)		load32Be(ptr)
 #define SHA_STORE_BE(ptr, val)	store32Be(ptr, val)

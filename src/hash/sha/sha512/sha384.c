@@ -17,7 +17,7 @@
 #define SHA_H5					SHA384_H5
 #define SHA_H6					SHA384_H6
 #define SHA_H7					SHA384_H7
-#define SHA_TRANSFORM			sha384Transform
+#define SHA_TRANSFORM			sha512Transform
 #define SHA_USE_ARM64			0
 #define SHA_LOAD_BE(ptr)		load64Be(ptr)
 #define SHA_STORE_BE(ptr, val)	store64Be(ptr, val)
@@ -35,5 +35,4 @@
 #define SHA_LOAD_BE_COMPRESS	load64Be
 #define SHA_STORE_BE_COMPRESS   store64Be
 
-#include "../shaTransformTemplate.h"
 #include "../shaImplTemplate.h"

@@ -54,8 +54,10 @@ LIB_SRC = \
 	$(SRC_DIR)/hash/md5/md5.c \
 	$(SRC_DIR)/hash/md5/transform.c \
 	$(SRC_DIR)/hash/sha/sha1/sha1.c \
+	$(SRC_DIR)/hash/sha/sha256/transform.c \
 	$(SRC_DIR)/hash/sha/sha256/sha224.c \
 	$(SRC_DIR)/hash/sha/sha256/sha256.c \
+	$(SRC_DIR)/hash/sha/sha512/transform.c \
 	$(SRC_DIR)/hash/sha/sha512/sha384.c \
 	$(SRC_DIR)/hash/sha/sha512/sha512.c \
 	$(SRC_DIR)/hash/sha/sha512/sha512_224.c \

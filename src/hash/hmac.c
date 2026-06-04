@@ -3,7 +3,6 @@
 #include "../../includes/hash/md5.h"
 #include "../../includes/hash/sha.h" /* IWYU pragma: keep */
 #include "../../includes/hash/whirlpool.h"
-#include <fcntl.h>
 
 #include "../../includes/hash/hmac.h"
 

@@ -110,7 +110,7 @@ void HC_CONCAT(SHA_NAME, Update)(void *ctx, const uint8_t *data, size_t len)
 void HC_CONCAT(SHA_NAME, Final)(uint8_t *digest, void *ctx)
 {
 	SHA_CTX		*sctx = (SHA_CTX *)ctx;
-	uint8_t		padded[128];
+	uint8_t		padded[SHA_BLOCK_SIZE * 2];
 	size_t		paddedLen;
 	size_t		offset;
 
