@@ -88,6 +88,10 @@ static testEntry_t all_tests[] = {
 	{"FFDHE getPublicBytes", testFfdheGetPublicBytes},
 	{"FFDHE exchange", testFfdheExchange},
 	{"FFDHE free zeroing", testFfdheFreeZeroing},
+	{"ECDHE generateKeypair", testEcdhGenerateKeypair},
+	{"ECDHE getPublicBytes", testEcdhGetPublicBytes},
+	{"ECDHE exchangeGroup", testEcdhExchangeGroup},
+	{"ECDHE free zeroing", testEcdhFreeZeroing},
 	{NULL, NULL}
 };
 
