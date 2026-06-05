@@ -8,8 +8,6 @@
  * @brief Key exchange algorithm types
  *
  * This enumeration lists the supported key exchange algorithms for TLS.
- * FFDHE (Finite Field Diffie-Hellman Ephemeral) is currently implemented.
- * ECDH (Elliptic Curve Diffie-Hellman) may be added in future versions.
  */
 typedef enum e_kexType {
 	KEX_TYPE_FFDHE,	/* Finite Field Diffie‑Hellman Ephemeral */
