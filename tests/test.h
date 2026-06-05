@@ -157,4 +157,17 @@ int testChaCha20Poly1305TamperedAAD(void);
 int testChaCha20Poly1305DifferentNonce(void);
 int testChaCha20Poly1305PartialBlocks(void);
 
+/* FFDHE tests */
+int testFfdheGetGroupParams(void);
+int testFfdheGenerateKeypair(void);
+int testFfdheGetPublicBytes(void);
+int testFfdheExchange(void);
+int testFfdheFreeZeroing(void);
+
+/* ECDHE tests */
+int testEcdhGenerateKeypair(void);
+int testEcdhGetPublicBytes(void);
+int testEcdhExchangeGroup(void);
+int testEcdhFreeZeroing(void);
+
 #endif /* HAJCRYPT_TEST_H */

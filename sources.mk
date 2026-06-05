@@ -39,6 +39,7 @@ LIB_SRC = \
 	$(SRC_DIR)/asymmetric/primality.c \
 	$(SRC_DIR)/asymmetric/pem.c \
 	$(SRC_DIR)/asymmetric/pkey.c \
+	$(SRC_DIR)/asymmetric/kex.c \
 	$(SRC_DIR)/asymmetric/rsa/attackPollardRho.c \
 	$(SRC_DIR)/asymmetric/rsa/rsaPadding.c \
 	$(SRC_DIR)/asymmetric/rsa/cryptSign.c \
@@ -49,6 +50,11 @@ LIB_SRC = \
 	$(SRC_DIR)/asymmetric/dsa/cryptSign.c \
 	$(SRC_DIR)/asymmetric/dsa/dsaPem.c \
 	$(SRC_DIR)/asymmetric/dsa/dsaKey.c \
+	$(SRC_DIR)/asymmetric/ffdhe/ffdhe.c \
+	$(SRC_DIR)/asymmetric/ffdhe/groups.c \
+	$(SRC_DIR)/asymmetric/ecdhe/ecdhe.c \
+	$(SRC_DIR)/asymmetric/ecdhe/weierstrass.c \
+	$(SRC_DIR)/asymmetric/ecdhe/montgomery.c \
 	$(SRC_DIR)/hash/common/padding.c \
 	$(SRC_DIR)/hash/common/endian.c \
 	$(SRC_DIR)/hash/md5/md5.c \
@@ -143,7 +149,9 @@ TEST_SRC = \
 	tests/src/bcrypt.test.c \
 	tests/src/bigint.test.c \
 	tests/src/chacha20.test.c \
-	tests/src/chacha20Poly1305.test.c
+	tests/src/chacha20Poly1305.test.c \
+	tests/src/ffdhe.test.c \
+	tests/src/ecdhe.test.c
 
 CONST_OBJ = $(patsubst $(CONST_DIR)/%.c, $(BUILD_DIR)/consts/%.o, $(CONST_SRC))
 LIB_SRC_OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(LIB_SRC))
