@@ -92,6 +92,9 @@ static testEntry_t all_tests[] = {
 	{"ECDHE getPublicBytes", testEcdhGetPublicBytes},
 	{"ECDHE exchangeGroup", testEcdhExchangeGroup},
 	{"ECDHE free zeroing", testEcdhFreeZeroing},
+	{"ECDSA generate keypair", testEcdsaGenerateKeypair},
+	{"ECDSA sign and verify", testEcdsaSignAndVerify},
+	{"ECDSA roundtrip", testEcdsaRoundtrip},
 	{NULL, NULL}
 };
 

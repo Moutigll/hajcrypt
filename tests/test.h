@@ -170,4 +170,9 @@ int testEcdhGetPublicBytes(void);
 int testEcdhExchangeGroup(void);
 int testEcdhFreeZeroing(void);
 
+/* ECDSA tests */
+int testEcdsaGenerateKeypair(void);
+int testEcdsaSignAndVerify(void);
+int testEcdsaRoundtrip(void);
+
 #endif /* HAJCRYPT_TEST_H */

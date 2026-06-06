@@ -49,6 +49,7 @@ LIB_SRC = \
 	$(SRC_DIR)/asymmetric/dsa/dsaCheck.c \
 	$(SRC_DIR)/asymmetric/dsa/cryptSign.c \
 	$(SRC_DIR)/asymmetric/dsa/dsaPem.c \
+	$(SRC_DIR)/asymmetric/dsa/ecdsa.c \
 	$(SRC_DIR)/asymmetric/dsa/dsaKey.c \
 	$(SRC_DIR)/asymmetric/ffdhe/ffdhe.c \
 	$(SRC_DIR)/asymmetric/ffdhe/groups.c \
@@ -151,7 +152,8 @@ TEST_SRC = \
 	tests/src/chacha20.test.c \
 	tests/src/chacha20Poly1305.test.c \
 	tests/src/ffdhe.test.c \
-	tests/src/ecdhe.test.c
+	tests/src/ecdhe.test.c \
+	tests/src/ecdsa.test.c
 
 CONST_OBJ = $(patsubst $(CONST_DIR)/%.c, $(BUILD_DIR)/consts/%.o, $(CONST_SRC))
 LIB_SRC_OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(LIB_SRC))
