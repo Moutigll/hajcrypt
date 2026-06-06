@@ -321,3 +321,16 @@ void ecdhFree(t_ecdhCtx *ctx)
 	bigIntFree(ctx->shared);
 	secureZeroMemory(ctx, sizeof(t_ecdhCtx));
 }
+
+const t_weierstrassParams *ecdhGetCurveParams(int curveId)
+{
+    initAllWeierstrass();
+    
+    if (curveId == ECDH_GROUP_SECP256R1 ||
+        curveId == ECDH_GROUP_SECP384R1 ||
+        curveId == ECDH_GROUP_SECP521R1) {
+        if (g_weier[curveId].p)
+            return (&g_weier[curveId]);
+    }
+    return (NULL);
+}

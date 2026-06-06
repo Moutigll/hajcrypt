@@ -13,6 +13,7 @@ typedef enum t_pkeyType
 	PKEY_TYPE_UNDEFINED = 0,
 	PKEY_TYPE_RSA,
 	PKEY_TYPE_DSA,
+	PKEY_TYPE_ECDSA,
 	PKEY_TYPE_MAX,
 }	t_pkeyType;
 

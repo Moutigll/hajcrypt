@@ -224,7 +224,6 @@ void hmacDrbgUpdate(t_hmacDrbg *drbg, const uint8_t *data, size_t dataLen)
 {
 	uint8_t		*input;
 	size_t		inputLen;
-	t_hmacCtx	hmacCtx;
 
 	/* K = HMAC(K, V || 0x00 || data) */
 	inputLen = drbg->hashLen + 1 + dataLen;
@@ -237,27 +236,17 @@ void hmacDrbgUpdate(t_hmacDrbg *drbg, const uint8_t *data, size_t dataLen)
 	if (data && dataLen)
 		ft_memcpy(input + drbg->hashLen + 1, data, dataLen);
 
-	hmacInit(&hmacCtx, drbg->hash, drbg->K, drbg->hashLen);
-	hmacCtx.algo->hashUpdate(hmacCtx.innerCtx, input, inputLen);
-	hmacFinal(&hmacCtx, drbg->K);
+	hmacDrbgHmac(drbg, drbg->K, input, inputLen, drbg->K);
 
 	/* V = HMAC(K, V) */
-	hmacInit(&hmacCtx, drbg->hash, drbg->K, drbg->hashLen);
-	hmacCtx.algo->hashUpdate(hmacCtx.innerCtx, drbg->V, drbg->hashLen);
-	hmacFinal(&hmacCtx, drbg->V);
+	hmacDrbgHmac(drbg, drbg->K, drbg->V, drbg->hashLen, drbg->V);
 
 	/* If data is provided, repeat with 0x01 */
 	if (data && dataLen) {
+		ft_memcpy(input, drbg->V, drbg->hashLen);
 		input[drbg->hashLen] = 0x01;
-		/* input already contains V || 0x01 || data, reuse it */
-
-		hmacInit(&hmacCtx, drbg->hash, drbg->K, drbg->hashLen);
-		hmacCtx.algo->hashUpdate(hmacCtx.innerCtx, input, inputLen);
-		hmacFinal(&hmacCtx, drbg->K);
-
-		hmacInit(&hmacCtx, drbg->hash, drbg->K, drbg->hashLen);
-		hmacCtx.algo->hashUpdate(hmacCtx.innerCtx, drbg->V, drbg->hashLen);
-		hmacFinal(&hmacCtx, drbg->V);
+		hmacDrbgHmac(drbg, drbg->K, input, inputLen, drbg->K);
+		hmacDrbgHmac(drbg, drbg->K, drbg->V, drbg->hashLen, drbg->V);
 	}
 
 	secureZeroMemory(input, inputLen);

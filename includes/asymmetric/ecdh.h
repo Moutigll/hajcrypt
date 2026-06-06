@@ -180,6 +180,19 @@ void	ecdhFree(t_ecdhCtx *ctx);
  */
 
 /**
+ * @brief Retrieves the Weierstrass curve parameters for a given curve ID
+ *
+ * This function returns a pointer to the structure containing the domain
+ * parameters for the specified Weierstrass curve. It is used internally
+ * to access the parameters when performing operations on SECP256r1,
+ * SECP384r1, and SECP521r1 curves.
+ *
+ * @param curveId	Curve identifier (ECDH_GROUP_SECP256R1, etc.)
+ * @return			Pointer to the curve parameters, or NULL if unknown curve
+ */
+const t_weierstrassParams *ecdhGetCurveParams(int curveId);
+
+/**
  * @brief Scalar multiplication on a Weierstrass curve
  *
  * Computes Q = k * P (mod p) on the curve y^2 = x^3 + a*x + b.
