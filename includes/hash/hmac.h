@@ -217,4 +217,94 @@ extern const t_hashAlgo	g_sha512_256Algo;
 extern const t_hashAlgo	g_md5Algo;
 extern const t_hashAlgo	g_whirlpoolAlgo;
 
+
+
+/* --------------- HMAC_DRBG ---------------  */
+
+
+
+# define HMAC_DRBG_MAX_OUTPUT		64
+# define HMAC_DRBG_MAX_REQUEST		65536	/* Max bytes per generate call (2^16) */
+# define HMAC_DRBG_RESEED_INTERVAL	10000	/* Reseed after this many generate calls */
+
+/**
+ * @brief HMAC_DRBG context structure
+ *
+ * This structure holds the state for a deterministic random bit generator
+ * based on HMAC as defined in NIST SP 800-90A Rev. 1.
+ */
+typedef struct s_hmacDrbg
+{
+	uint8_t				K[64];			/* Key of length hashLen */
+	uint8_t				V[64];			/* Value of length hashLen */
+	const t_hashAlgo	*hash;			/* Hash algorithm for HMAC */
+	size_t				hashLen;		/* Length of hash output in bytes */
+	uint64_t			reseedCounter;	/* Number of generate calls since last reseed */
+}	t_hmacDrbg;
+
+/**
+ * @brief Update the DRBG internal state (HMAC_DRBG_Update)
+ *
+ * This function updates the internal state (K, V) using the provided data.
+ * It follows the specification: K = HMAC(K, V || 0x00 || data) followed
+ * by V = HMAC(K, V), and optionally repeated with 0x01 if data is not NULL.
+ *
+ * @param drbg		DRBG context
+ * @param data		Additional data to mix into the state (may be NULL)
+ * @param dataLen	Length of the data in bytes
+ */
+void	hmacDrbgUpdate(t_hmacDrbg *drbg, const uint8_t *data, size_t dataLen);
+
+/**
+ * @brief Reseed the DRBG (HMAC_DRBG_Reseed)
+ *
+ * This function reseeds the DRBG with fresh entropy and optional
+ * additional input. The entropy must come from a trusted source
+ * and meet the security strength requirements.
+ *
+ * @param drbg			DRBG context
+ * @param entropy		Fresh entropy input
+ * @param entropyLen	Length of entropy in bytes
+ * @param additional	Additional input (may be NULL)
+ * @param additionalLen	Length of additional input in bytes
+ */
+void	hmacDrbgReseed(t_hmacDrbg	*drbg,
+					  const uint8_t	*entropy,		size_t	entropyLen,
+					  const uint8_t	*additional,	size_t	additionalLen);
+
+/**
+ * @brief Generate pseudorandom output (HMAC_DRBG_Generate)
+ *
+ * This function produces a requested number of pseudorandom bytes.
+ * Returns 0 if outLen exceeds HMAC_DRBG_MAX_REQUEST or if reseed
+ * is required (caller must reseed first).
+ *
+ * @param drbg		DRBG context
+ * @param out		Output buffer for random bytes
+ * @param outLen	Number of bytes to generate
+ * @return			1 on success, 0 on error
+ */
+int	hmacDrbgGenerate(t_hmacDrbg *drbg, uint8_t *out, size_t outLen);
+
+/**
+ * @brief Initialise the DRBG (HMAC_DRBG_Instantiate)
+ *
+ * This function initialises a new HMAC_DRBG instance with entropy,
+ * a nonce, and optional personalisation string.
+ *
+ * @param drbg		DRBG context to initialise
+ * @param hash		Hash algorithm for HMAC
+ * @param entropy	Entropy input (must be at least security_strength bits)
+ * @param entropyLen	Length of entropy in bytes
+ * @param nonce		Nonce (at least 1/2 security_strength bits)
+ * @param nonceLen	Length of nonce in bytes
+ * @param personal	Personalisation string (may be NULL)
+ * @param personalLen	Length of personalisation string in bytes
+ * @return			1 on success, 0 on error
+ */
+int	hmacDrbgInit(t_hmacDrbg		*drbg,		const t_hashAlgo	*hash,
+				 const uint8_t	*entropy,	size_t				entropyLen,
+				 const uint8_t	*nonce,		size_t				nonceLen,
+				 const uint8_t	*personal,	size_t				personalLen);
+
 #endif /* HAJCRYPT_HMAC_H */
