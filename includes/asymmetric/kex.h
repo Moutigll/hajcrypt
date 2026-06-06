@@ -24,6 +24,7 @@ typedef enum e_kexType {
  */
 typedef struct s_kexCtx {
 	t_kexType		type;
+	int				groupId;	/* For FFDHE: prime size (2048, 3072, 4096); for ECDH: curve NID */
 	void			*internal;	/* Pointer to t_ffdheCtx or t_ecdhCtx */
 }	t_kexCtx;
 

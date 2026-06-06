@@ -31,6 +31,7 @@ LIB_SRC = \
 	$(SRC_DIR)/x509/pemEncode.c \
 	$(SRC_DIR)/x509/pemCipher.c \
 	$(SRC_DIR)/kdf/kdf.c \
+	$(SRC_DIR)/kdf/hkdf.c \
 	$(SRC_DIR)/kdf/bytesToKey.c \
 	$(SRC_DIR)/kdf/pbkdf2.c \
 	$(SRC_DIR)/kdf/bcrypt.c \
