@@ -1,8 +1,8 @@
 #ifndef HAJCRYPT_KEX_H
 # define HAJCRYPT_KEX_H
 
-# include <stdint.h>
-# include <stddef.h>
+# include "ffdhe.h"
+# include "ecdh.h"
 
 /**
  * @brief Key exchange algorithm types
