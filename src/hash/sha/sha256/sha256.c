@@ -1,4 +1,5 @@
 #include "../../../../includes/hash/sha/sha256.h"
+#include "../../../../includes/hash/hmac.h" /* IWYU pragma: keep */
 #include "../../../../includes/consts/sha.h"
 
 const uint8_t g_sha256DigestInfoHeader[] = {

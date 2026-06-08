@@ -2,6 +2,7 @@
 
 #include "../../hajlib/include/hmemory.h"
 #include "../../includes/kdf/pbkdf2.h"
+#include "../../includes/hash/hmac.h"
 
 #define PBKDF2_MAX_DIGEST 64
 

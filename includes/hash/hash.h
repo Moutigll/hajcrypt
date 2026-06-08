@@ -2,7 +2,9 @@
 #define HAJCRYPT_HASH_H
 
 #include "../x509/oid.h"
-#include "hmac.h"
+
+/* Forward declaration of HMAC context structure */
+typedef struct s_hmacCtx	t_hmacCtx;
 
 /**
  * @struct s_hash
@@ -52,14 +54,15 @@ typedef struct s_hash
 {
 	char		*name;
 	t_algoId	oid;
+	size_t		digestSize;
+	size_t		blockSize;
+	size_t		ctxSize;
 	int			deprecated;	/* 1 if the algorithm is considered weak/deprecated, 0 otherwise */
 	void		(*init)(void *ctx);
 	void		(*update)(void *ctx, const uint8_t *data, size_t len);
 	void		(*final)(uint8_t *digest, void *ctx);
 	void		(*hash)(const uint8_t *data, size_t len, uint8_t *digest);
-	void		(*hmacInit)(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
-	size_t		ctxSize;
-	size_t		digestSize;
+	void		(*hmacInit)(t_hmacCtx *hmacCtx, const uint8_t *key, size_t keyLen);
 }	t_hash;
 
 

@@ -1,4 +1,5 @@
 #include "../../../hajlib/include/hmemory.h"
+#include "../../../includes/hash/hmac.h"
 #include "../../../includes/hash/hash.h"
 
 #include "../../../includes/hash/whirlpool.h"
@@ -103,12 +104,13 @@ void whirlpoolHash(const uint8_t *data, size_t len, uint8_t *digest)
 const t_hash g_whirlpoolHash = {
 	.name = "whirlpool",
 	.oid = OID_DEF("whirlpool", WHIRLPOOL_OID),
+	.ctxSize = sizeof(t_whirlpoolCtx),
+	.digestSize = 64,
+	.blockSize = 64,
 	.deprecated = 0,
 	.init = whirlpoolInit,
 	.update = whirlpoolUpdate,
 	.final = whirlpoolFinal,
 	.hash = whirlpoolHash,
-	.hmacInit = whirlpoolHmacInit,
-	.ctxSize = sizeof(t_whirlpoolCtx),
-	.digestSize = 64
+	.hmacInit = whirlpoolHmacInit
 };

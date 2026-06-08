@@ -3,6 +3,7 @@
 #include "../../../hajlib/include/hmemory.h"
 #include "../../../includes/consts/md5.h"
 #include "../../../includes/hash/hash.h"
+#include "../../../includes/hash/hmac.h"
 
 #include "../../../includes/hash/md5.h"
 
@@ -102,14 +103,15 @@ void md5Hash(const uint8_t *data, size_t len, uint8_t *digest)
 const t_hash g_md5Hash = {
 	.name = "md5",
 	.oid = OID_DEF("md5", MD5_OID),
+	.ctxSize = sizeof(t_md5Ctx),
+	.digestSize = 16,  /* 128-bit output */
+	.blockSize = 64,   /* 512-bit blocks */
 	.deprecated = 1,
 	.init = md5Init,
 	.update = md5Update,
 	.final = md5Final,
 	.hash = md5Hash,
-	.hmacInit = md5HmacInit,
-	.ctxSize = sizeof(t_md5Ctx),
-	.digestSize = 16
+	.hmacInit = md5HmacInit
 };
 
 const uint8_t g_md5DigestInfoHeader[] = {

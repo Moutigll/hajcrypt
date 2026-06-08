@@ -1,4 +1,5 @@
 #include "../../../../includes/hash/sha/sha1.h"
+#include "../../../../includes/hash/hmac.h" /* IWYU pragma: keep */
 #include "../../../../includes/consts/sha.h"
 
 #if defined(__aarch64__) && (defined(__ARM_FEATURE_CRYPTO) || defined(__ARM_FEATURE_SHA1))

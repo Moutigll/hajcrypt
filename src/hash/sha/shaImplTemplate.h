@@ -152,12 +152,13 @@ void HC_CONCAT(SHA_NAME, Hash)(const uint8_t *data, size_t len, uint8_t *digest)
 const t_hash HC_CONCAT3(g_, SHA_NAME, Hash) = {
 	.name = HC_STRINGIFY(SHA_NAME),
 	.oid = OID_DEF(HC_STRINGIFY(SHA_NAME), SHA_OID),
+	.ctxSize = sizeof(SHA_CTX),
+	.digestSize = SHA_DIGEST_SIZE,
+	.blockSize = SHA_BLOCK_SIZE,
 	.deprecated = SHA_DEPRECATED,
 	.init = HC_CONCAT(SHA_NAME, Init),
 	.update = HC_CONCAT(SHA_NAME, Update),
 	.final = HC_CONCAT(SHA_NAME, Final),
 	.hash = HC_CONCAT(SHA_NAME, Hash),
-	.hmacInit = HC_CONCAT(SHA_NAME, HmacInit),
-	.ctxSize = sizeof(SHA_CTX),
-	.digestSize = SHA_DIGEST_SIZE
+	.hmacInit = HC_CONCAT(SHA_NAME, HmacInit)
 };
