@@ -73,9 +73,16 @@ void encServerAuthz(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	BTLS_DEBUG("Encoding server_authz: not implemented");
 }
 
-void encCertType(uint8_t *out, size_t *pos, uint16_t extType, const uint8_t *types, size_t numTypes)
+void encCertType(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer)
 {
-	if (numTypes && types) putExt(out, pos, extType, types, numTypes);
+	t_tlsCertType types = isServer ? e->clientCertType : e->serverCertType;
+	if (!types.numTypes || !types.types) return;
+	size_t dlen = 1 + types.numTypes;
+	wU16(out, *pos, isServer ? TLS_EXT_CLIENT_CERTIFICATE_TYPE : TLS_EXT_SERVER_CERTIFICATE_TYPE);
+	wU16(out, *pos + 2, (uint16_t)dlen);
+	wU8 (out, *pos + 4, (uint8_t)types.numTypes);
+	wBytes(out, *pos + 5, types.types, types.numTypes);
+	*pos += 4 + dlen;
 }
 
 void encSupportedGroups(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
