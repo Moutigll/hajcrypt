@@ -262,64 +262,69 @@ void blake2bLong(uint8_t *out, size_t outLen, const uint8_t *in, size_t inLen)
 const t_hash g_blake2bHash = {
 	.name = "blake2b",
 	.oid = OID_DEF("blake2b", BLAKE2B_512_OID),
+	.digestSize = 64,   /* Default 512-bit output */
+	.ctxSize = sizeof(t_blake2bCtx),
+	.blockSize = BLAKE2B_BLOCK_SIZE,
 	.deprecated = 0,
 	.init = blake2bInit,
 	.update = blake2bUpdate,
 	.final = blake2bFinal,
 	.hash = blake2b512,
-	.hmacInit = NULL,  /* Blake2b has built-in keyed mode */
-	.ctxSize = sizeof(t_blake2bCtx),
-	.digestSize = 64   /* Default 512-bit output */
+	.hmacInit = NULL  /* Blake2b has built-in keyed mode */
 };
 
 const t_hash g_blake2b160Hash = {
 	.name = "blake2b-160",
 	.oid = OID_DEF("blake2b", BLAKE2B_160_OID),
+	.ctxSize = sizeof(t_blake2bCtx),
+	.digestSize = 20,   /* 160-bit output */
+	.blockSize = BLAKE2B_BLOCK_SIZE,
 	.deprecated = 0,
 	.init = blake2bInit160,
 	.update = blake2bUpdate,
 	.final = blake2bFinal,
 	.hash = blake2b160,
-	.hmacInit = NULL,  /* Blake2b has built-in keyed mode */
-	.ctxSize = sizeof(t_blake2bCtx),
-	.digestSize = 20   /* 160-bit output */
+	.hmacInit = NULL  /* Blake2b has built-in keyed mode */
 };
 
 const t_hash g_blake2b256Hash = {
 	.name = "blake2b-256",
 	.oid = OID_DEF("blake2b", BLAKE2B_256_OID),
+	.ctxSize = sizeof(t_blake2bCtx),
+	.digestSize = 32,   /* 256-bit output */
+	.blockSize = BLAKE2B_BLOCK_SIZE,
 	.deprecated = 0,
 	.init = blake2bInit256,
 	.update = blake2bUpdate,
 	.final = blake2bFinal,
 	.hash = blake2b256,
-	.hmacInit = NULL,  /* Blake2b has built-in keyed mode */
-	.ctxSize = sizeof(t_blake2bCtx),
-	.digestSize = 32   /* 256-bit output */
+	.hmacInit = NULL  /* Blake2b has built-in keyed mode */
 };
 
 const t_hash g_blake2b384Hash = {
 	.name = "blake2b-384",
 	.oid = OID_DEF("blake2b", BLAKE2B_384_OID),
+	.ctxSize = sizeof(t_blake2bCtx),
+	.digestSize = 48,   /* 384-bit output */
+	.blockSize = BLAKE2B_BLOCK_SIZE,
 	.deprecated = 0,
 	.init = blake2bInit384,
 	.update = blake2bUpdate,
 	.final = blake2bFinal,
 	.hash = blake2b384,
-	.hmacInit = NULL,  /* Blake2b has built-in keyed mode */
-	.ctxSize = sizeof(t_blake2bCtx),
-	.digestSize = 48   /* 384-bit output */
+	.hmacInit = NULL  /* Blake2b has built-in keyed mode */
 };
 
 const t_hash g_blake2b512Hash = {
 	.name = "blake2b-512",
 	.oid = OID_DEF("blake2b", BLAKE2B_512_OID),
+	.ctxSize = sizeof(t_blake2bCtx),
+	.digestSize = 64,   /* 512-bit output */
+	.blockSize = BLAKE2B_BLOCK_SIZE,
 	.deprecated = 0,
 	.init = blake2bInit512,
 	.update = blake2bUpdate,
 	.final = blake2bFinal,
 	.hash = blake2b512,
-	.hmacInit = NULL,  /* Blake2b has built-in keyed mode */
-	.ctxSize = sizeof(t_blake2bCtx),
-	.digestSize = 64   /* 512-bit output */
+	.hmacInit = NULL  /* Blake2b has built-in keyed mode */
 };

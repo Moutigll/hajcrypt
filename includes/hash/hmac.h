@@ -1,58 +1,30 @@
 #ifndef HAJCRYPT_HMAC_H
 #define HAJCRYPT_HMAC_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include "md5.h"
+#include "sha.h"
+#include "whirlpool.h"
 
-#define HASH_MAX_CTX_SIZE 256
-
-/**
- * @struct s_hashAlgo
- * @brief Structure defining the interface and metadata for a hash algorithm
- *
- * This structure encapsulates the function pointers and configuration parameters
- * needed to implement a generic hash algorithm. It allows for abstraction over
- * different hash algorithms (SHA-256, MD5, etc.) through a common interface.
- *
- * @member hashInit
- *		Function pointer to initialize the hash context.
- *		@param ctx Pointer to the hash algorithm context structure
- *
- * @member hashUpdate
- *		Function pointer to update the hash with input data.
- *		@param ctx Pointer to the hash algorithm context structure
- *		@param data Pointer to the input data to hash
- *		@param len Number of bytes to process from data
- *
- * @member hashFinal
- *		Function pointer to finalize the hash and retrieve the digest.
- *		@param digest Pointer to buffer where the final hash digest will be written
- *		@param ctx Pointer to the hash algorithm context structure
- *
- * @member blockSize
- *		The block size (in bytes) of the hash algorithm's internal processing unit
- *
- * @member digestSize
- *		The output digest size (in bytes) produced by the hash algorithm
- *
- * @member ctxSize
- *		The size (in bytes) of the context structure required by the algorithm
- */
-typedef struct s_hashAlgo
+typedef union u_hashMaxCtx
 {
-	void	(*hashInit)(void *ctx);
-	void	(*hashUpdate)(void *ctx, const uint8_t *data, size_t len);
-	void	(*hashFinal)(uint8_t *digest, void *ctx);
-	size_t	blockSize;
-	size_t	digestSize;
-	size_t	ctxSize;
-}	t_hashAlgo;
+	t_md5Ctx		md5;
+	t_sha1Ctx		sha1;
+	t_sha224Ctx		sha224;
+	t_sha256Ctx		sha256;
+	t_sha384Ctx		sha384;
+	t_sha512Ctx		sha512;
+	t_sha512_224Ctx	sha512_224;
+	t_sha512_256Ctx	sha512_256;
+	t_whirlpoolCtx	whirlpool;
+}	t_hashMaxCtx;
+
+#define HASH_MAX_CTX_SIZE	sizeof(t_hashMaxCtx)
 
 typedef struct s_hmacCtx
 {
-	const t_hashAlgo *algo;
-	uint8_t		  innerCtx[HASH_MAX_CTX_SIZE] __attribute__((aligned(16)));
-	uint8_t		  outerCtx[HASH_MAX_CTX_SIZE] __attribute__((aligned(16)));
+	const t_hash	*algo;
+	uint8_t			innerCtx[HASH_MAX_CTX_SIZE] __attribute__((aligned(16)));
+	uint8_t			outerCtx[HASH_MAX_CTX_SIZE] __attribute__((aligned(16)));
 }   t_hmacCtx;
 
 
@@ -73,9 +45,9 @@ typedef struct s_hmacCtx
  *			of the context or until it is reinitialized.
  */
 void	hmacInit(t_hmacCtx			*ctx,
-			  const t_hashAlgo	*algo,
-			  const uint8_t		*key,
-			  size_t			keyLen);
+				  const t_hash		*algo,
+				  const uint8_t		*key,
+				  size_t			keyLen);
 
 /**
  * @brief Finalizes the HMAC computation and retrieves the message authentication code
@@ -103,7 +75,7 @@ void	hmacFinal(t_hmacCtx *ctx, uint8_t *digest);
  * @param out Pointer to a buffer where the computed HMAC digest will be stored.
  * @return void
  */
-void	hmac(const t_hashAlgo	*algo,
+void	hmac(const t_hash		*algo,
 			 const uint8_t		*key,	size_t	keyLen,
 			 const uint8_t		*data,	size_t	dataLen,
 			 uint8_t			*out);
@@ -207,18 +179,6 @@ void	md5HmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
  */
 void	whirlpoolHmacInit(t_hmacCtx *ctx, const uint8_t *key, size_t keyLen);
 
-extern const t_hashAlgo	g_sha1Algo;
-extern const t_hashAlgo	g_sha224Algo;
-extern const t_hashAlgo	g_sha256Algo;
-extern const t_hashAlgo	g_sha384Algo;
-extern const t_hashAlgo	g_sha512Algo;
-extern const t_hashAlgo	g_sha512_224Algo;
-extern const t_hashAlgo	g_sha512_256Algo;
-extern const t_hashAlgo	g_md5Algo;
-extern const t_hashAlgo	g_whirlpoolAlgo;
-
-
-
 /* --------------- HMAC_DRBG ---------------  */
 
 
@@ -237,7 +197,7 @@ typedef struct s_hmacDrbg
 {
 	uint8_t				K[64];			/* Key of length hashLen */
 	uint8_t				V[64];			/* Value of length hashLen */
-	const t_hashAlgo	*hash;			/* Hash algorithm for HMAC */
+	const t_hash		*hash;			/* Hash algorithm for HMAC */
 	size_t				hashLen;		/* Length of hash output in bytes */
 	uint64_t			reseedCounter;	/* Number of generate calls since last reseed */
 }	t_hmacDrbg;
@@ -302,7 +262,7 @@ int	hmacDrbgGenerate(t_hmacDrbg *drbg, uint8_t *out, size_t outLen);
  * @param personalLen	Length of personalisation string in bytes
  * @return			1 on success, 0 on error
  */
-int	hmacDrbgInit(t_hmacDrbg		*drbg,		const t_hashAlgo	*hash,
+int	hmacDrbgInit(t_hmacDrbg		*drbg,		const t_hash		*hash,
 				 const uint8_t	*entropy,	size_t				entropyLen,
 				 const uint8_t	*nonce,		size_t				nonceLen,
 				 const uint8_t	*personal,	size_t				personalLen);

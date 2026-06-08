@@ -20,10 +20,10 @@
  * @param hash		Pointer to the hash function to use
  * @return			1 on success, 0 on error
  */
-int	hkdfExtract(const uint8_t		*salt,	size_t	saltLen,
-				const uint8_t		*ikm,	size_t	ikmLen,
-				uint8_t				*prk,	size_t	prkLen,
-				const t_hashAlgo	*hash);
+int	hkdfExtract(const uint8_t	*salt,	size_t	saltLen,
+				const uint8_t	*ikm,	size_t	ikmLen,
+				uint8_t			*prk,	size_t	prkLen,
+				const t_hash	*hash);
 
 /**
  * @brief HKDF expand phase
@@ -43,7 +43,7 @@ int	hkdfExtract(const uint8_t		*salt,	size_t	saltLen,
 int	hkdfExpand(const uint8_t	*prk,	size_t	prkLen,
 			   const uint8_t	*info,	size_t	infoLen,
 			   uint8_t			*okm,	size_t	okmLen,
-			   const t_hashAlgo	*hash);
+			   const t_hash		*hash);
 
 /**
  * @brief HKDF one‑shot function (extract + expand)
@@ -63,14 +63,14 @@ int	hkdfExpand(const uint8_t	*prk,	size_t	prkLen,
  * @param hash		Pointer to the hash function to use
  * @return			1 on success, 0 on error
  */
-int	hkdf(const uint8_t		*salt,
-		 size_t				saltLen,
-		 const uint8_t		*ikm,
-		 size_t				ikmLen,
-		 const uint8_t		*info,
-		 size_t				infoLen,
-		 uint8_t			*okm,
-		 size_t				okmLen,
-		 const t_hashAlgo	*hash);
+int	hkdf(const uint8_t	*salt,
+		 size_t			saltLen,
+		 const uint8_t	*ikm,
+		 size_t			ikmLen,
+		 const uint8_t	*info,
+		 size_t			infoLen,
+		 uint8_t		*okm,
+		 size_t			okmLen,
+		 const t_hash	*hash);
 
 #endif /* HAJCRYPT_HKDF_H */

@@ -1,7 +1,15 @@
 build
+tls/obj
 ft_ssl
 hajcrypt.a
+tls/libbtls.a
+tls/test_client
+tls/test_server
 includes/consts/*
 !includes/consts/consts.h
 !includes/consts/blowfish.h
 benchmark.html
+*.der
+*.crt
+*.pem
+*.key

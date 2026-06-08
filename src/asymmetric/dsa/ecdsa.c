@@ -4,6 +4,7 @@
 #include "../../../hajlib/include/hmemory.h"
 #include "../../../hajlib/include/hprintf.h"
 #include "../../../includes/asymmetric/bigint.h"
+#include "../../../includes/hash/sha/sha256.h"
 #include "../../../includes/utils/utils.h"
 #include "../../../includes/hash/hmac.h"
 #include "../../../includes/x509/asn1.h"
@@ -101,7 +102,7 @@ static int generateK(t_bigInt		**k,	const t_bigInt	*n,
 	ft_memcpy(t + nLen, hOctets, nLen);
 	
 	/* 4. HMAC_DRBG_Init(entropy_input = t) */
-	hmacDrbgInit(&drbg, &g_sha256Algo, t, tLen, NULL, 0, NULL, 0);
+	hmacDrbgInit(&drbg, &g_sha256Hash, t, tLen, NULL, 0, NULL, 0);
 	
 	/* 5. Generate k until it is in [1, n-1] */
 	*k = bigIntNew(n->numWords);

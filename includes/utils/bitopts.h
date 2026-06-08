@@ -173,6 +173,12 @@ static inline void store64Be(void *dst, uint64_t w)
 	p[7] = w & 0xFF;
 }
 
+static inline void writeUint16(uint8_t *out, uint16_t value)
+{
+	out[0] = (value >> 8) & 0xFF;
+	out[1] = value & 0xFF;
+}
+
 static inline uint16_t readUint16(const uint8_t *data)
 {
 	return ((uint16_t)data[0] << 8) | data[1];

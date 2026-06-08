@@ -69,7 +69,7 @@ int			processFd(int fd, const t_hash *hash, t_sslOptions *opts, const char *file
 	while (bytesRead > 0) {
 		if (opts->flagK) {
 			t_hmacCtx *hctx = (t_hmacCtx *)ctx;
-			hctx->algo->hashUpdate(hctx->innerCtx, buffer, bytesRead);
+			hctx->algo->update(hctx->innerCtx, buffer, bytesRead);
 		} else
 			hash->update(ctx, buffer, bytesRead);
 
@@ -133,7 +133,7 @@ int			processString(const char *str, const t_hash *hash, t_sslOptions *opts)
 	if (opts->flagK) {
 		t_hmacCtx *hctx = (t_hmacCtx *)ctx;
 		hash->hmacInit(hctx, (const uint8_t *)opts->hmacKey, ft_strlen(opts->hmacKey));
-		hctx->algo->hashUpdate(hctx->innerCtx, (const uint8_t *)str, ft_strlen(str));
+		hctx->algo->update(hctx->innerCtx, (const uint8_t *)str, ft_strlen(str));
 		hmacFinal(hctx, digest);
 	} else {
 		hash->init(ctx);

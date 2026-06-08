@@ -1,15 +1,15 @@
 #include <stdlib.h>
 
 #include "../../hajlib/include/hmemory.h"
-#include "../../includes/hash/hmac.h"
 #include "../../includes/utils/utils.h"
+#include "../../includes/hash/hmac.h"
 
 #include "../../includes/kdf/hkdf.h"
 
-int	hkdfExtract(const uint8_t		*salt,	size_t	saltLen,
-				const uint8_t		*ikm,	size_t	ikmLen,
-				uint8_t				*prk,	size_t	prkLen,
-				const t_hashAlgo	*hash)
+int	hkdfExtract(const uint8_t	*salt,	size_t	saltLen,
+				const uint8_t	*ikm,	size_t	ikmLen,
+				uint8_t			*prk,	size_t	prkLen,
+				const t_hash	*hash)
 {
 	uint8_t	*zeroSalt;
 
@@ -37,7 +37,7 @@ int	hkdfExtract(const uint8_t		*salt,	size_t	saltLen,
 int	hkdfExpand(const uint8_t	*prk,	size_t	prkLen,
 			   const uint8_t	*info,	size_t	infoLen,
 			   uint8_t			*okm,	size_t	okmLen,
-			   const t_hashAlgo	*hash)
+			   const t_hash		*hash)
 {
 	uint8_t	previous[128];	/* max digest size (SHA-512) */
 	uint8_t	current[128];
@@ -98,7 +98,7 @@ int	hkdf(const uint8_t	*salt,	size_t	saltLen,
 		 const uint8_t	*ikm,	size_t	ikmLen,
 		 const uint8_t	*info,	size_t	infoLen,
 		 uint8_t		*okm,	size_t	okmLen,
-		 const t_hashAlgo	*hash)
+		 const t_hash	*hash)
 {
 	uint8_t	prk[64];
 	

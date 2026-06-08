@@ -1,4 +1,5 @@
 #include "../../../../includes/hash/sha/sha512.h"
+#include "../../../../includes/hash/hmac.h" /* IWYU pragma: keep */
 #include "../../../../includes/consts/sha.h"
 
 #define SHA_NAME				sha512
