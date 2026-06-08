@@ -3,6 +3,7 @@
 
 # include <stddef.h>
 # include <stdint.h>
+# include "../../includes/utils/bitopts.h"
 
 /**
  * @brief PSK (Pre-Shared Key) configuration
@@ -563,6 +564,22 @@ typedef struct s_tlsExtension {
 int		tlsParseExtensions(const uint8_t *data, size_t dataLen, t_tlsParsedExtensions *out, int isServerHello);
 
 /**
+ * @brief Encode extensions into wire format for ClientHello or ServerHello
+ *
+ * This function encodes the parsed extensions back into wire format for
+ * inclusion in a ClientHello or ServerHello message. It iterates over all
+ * fields in the t_tlsParsedExtensions structure and encodes them according
+ * to their respective formats, building the final extensions block.
+ *
+ * @param ext			Parsed extensions to encode
+ * @param out			Output buffer for encoded extensions
+ * @param outLen		Length written (input: buffer size, output: actual length)
+ * @param isServerHello	1 if encoding for ServerHello, 0 if encoding for ClientHello
+ * @return				1 on success, 0 on error
+ */
+int		tlsEncodeExtensions(const t_tlsParsedExtensions *ext, uint8_t *out, size_t *outLen, int isServerHello);
+
+/**
  * @brief Free all dynamically allocated memory in a t_tlsParsedExtensions structure
  *
  * This function frees all dynamically allocated buffers within the t_tlsParsedExtensions
@@ -584,5 +601,20 @@ void tlsFreeParsedExtensions(t_tlsParsedExtensions *ext);
  */
 void tlsPrintParsedExtensions(const t_tlsParsedExtensions *ext);
 
+/* -------------------- Private helper functions for encoding specific extensions -------------------- */
+
+#define ENC_U16_LIST(out, pos, EXT, values, count)		\
+	do {												\
+		size_t listLen_ = (count) * 2;					\
+		size_t dlen_ = 2 + listLen_;					\
+		wU16(out, *pos, EXT);							\
+		wU16(out, *pos + 2, (uint16_t)dlen_);			\
+		wU16(out, *pos + 4, (uint16_t)listLen_);		\
+		for (size_t i_ = 0; i_ < (count); i_++)			\
+			wU16(out, *pos + 6 + i_ * 2, (values)[i_]);	\
+		*pos += 4 + dlen_;								\
+	} while(0)
+
+void putExt(uint8_t *out, size_t *pos, uint16_t type, const uint8_t *data, size_t dlen);
 
 #endif /* BTLS_EXTENSIONS_H */

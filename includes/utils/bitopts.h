@@ -173,11 +173,29 @@ static inline void store64Be(void *dst, uint64_t w)
 	p[7] = w & 0xFF;
 }
 
+static inline void writeUint8(uint8_t *out, uint8_t value)
+{
+	if (out) out[0] = value;
+}
+
 static inline void writeUint16(uint8_t *out, uint16_t value)
 {
 	out[0] = (value >> 8) & 0xFF;
 	out[1] = value & 0xFF;
 }
+
+static inline void writeUint32(uint8_t *out, uint32_t value)
+{
+	out[0] = (value >> 24) & 0xFF;
+	out[1] = (value >> 16) & 0xFF;
+	out[2] = (value >> 8) & 0xFF;
+	out[3] = value & 0xFF;
+}
+
+#define wU8(out, off, val)   do { if (out) writeUint8((out)+(off), (uint8_t)(val)); } while(0)
+#define wU16(out, off, val)  do { if (out) writeUint16((out)+(off), (uint16_t)(val)); } while(0)
+#define wU32(out, off, val)  do { if (out) writeUint32((out)+(off), (uint32_t)(val)); } while(0)
+
 
 static inline uint16_t readUint16(const uint8_t *data)
 {
@@ -194,5 +212,11 @@ static inline uint32_t readUint32(const uint8_t *data)
 	return ((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16) |
 		   ((uint32_t)data[2] << 8) | data[3];
 }
+
+static inline void wBytes(uint8_t *b, size_t p, const void *src, size_t n)
+{
+	if (b && src && n) ft_memcpy(b + p, src, n);
+}
+
 
 #endif /* HAJCRYPT_BITOPTS_H */
