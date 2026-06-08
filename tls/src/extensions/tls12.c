@@ -132,8 +132,54 @@ int parseSupportedGroups(const uint8_t *data, size_t len, t_tlsParsedExtensions 
 /* 11 - ec_point_formats */
 int parseEcPointFormats(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
 {
-	(void)data; (void)len; (void)out; (void)isServer;
-	BTLS_DEBUG("Parsing ec_point_formats: Not implemented yet !!!");
+	(void)isServer;
+	size_t	numFormats;
+	size_t	i;
+
+	if (!data || !out)
+		return (0);
+
+	if (len < 1)
+	{
+		BTLS_DEBUG("ec_point_formats: data too short (%zu bytes)", len);
+		return (0);
+	}
+
+	numFormats = data[0];
+	if (numFormats == 0 || numFormats > 255)
+	{
+		BTLS_DEBUG("ec_point_formats: invalid format count (%zu)", numFormats);
+		return (0);
+	}
+
+	if (len < 1 + numFormats)
+	{
+		BTLS_DEBUG("ec_point_formats: truncated data (expected %zu, got %zu)", 1 + numFormats, len);
+		return (0);
+	}
+
+	out->ecPointFormats = malloc(numFormats * sizeof(uint8_t));
+	if (!out->ecPointFormats)
+		return (0);
+
+	out->numEcPointFormats = numFormats;
+
+	for (i = 0; i < numFormats; i++)
+	{
+		uint8_t fmt = data[1 + i];
+		
+		switch (fmt)
+		{
+			case 0:  /* uncompressed */
+			case 1:  /* ansiX962_compressed_prime (obsolete) */
+			case 2:  /* ansiX962_compressed_char2 (obsolete) */
+				out->ecPointFormats[i] = fmt;
+				break;
+			default:
+				BTLS_DEBUG("ec_point_formats: unknown format %u at index %zu", fmt, i);
+				break;
+		}
+	}
 	return (1);
 }
 

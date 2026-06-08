@@ -497,20 +497,22 @@ typedef struct s_tlsParsedExtensions
 	t_tlsCertCompressionInternal	certCompression;
 	
 	/* ===== Security features (shared) ===== */
-	t_tlsOcsp			ocsp;				/* OCSP stapling */
-	t_tlsOcspV2			ocspV2;				/* OCSP stapling v2 */
-	t_tlsSctList		sct;				/* Signed Certificate Timestamp */
-	t_tlsHeartbeat		heartbeat;			/* Heartbeat extension */
-	t_tlsCertType		clientCertType;		/* Client certificate type */
-	t_tlsCertType		serverCertType;		/* Server certificate type */
-	t_tlsPadding		padding;			/* Padding extension */
-	t_tlsTokenBinding	tokenBinding;		/* Token binding */
-	t_tlsCachedInfo		cachedInfo;			/* Cached info */
-	t_tlsTicketPinning	ticketPinning;		/* Ticket pinning */
+	uint8_t						*ecPointFormats;		/* EC point formats */
+	size_t						numEcPointFormats;	
+	t_tlsOcsp					ocsp;					/* OCSP stapling */
+	t_tlsOcspV2					ocspV2;					/* OCSP stapling v2 */
+	t_tlsSctList				sct;					/* Signed Certificate Timestamp */
+	t_tlsHeartbeat				heartbeat;				/* Heartbeat extension */
+	t_tlsCertType				clientCertType;			/* Client certificate type */
+	t_tlsCertType				serverCertType;			/* Server certificate type */
+	t_tlsPadding				padding;				/* Padding extension */
+	t_tlsTokenBinding			tokenBinding;			/* Token binding */
+	t_tlsCachedInfo				cachedInfo;				/* Cached info */
+	t_tlsTicketPinning			ticketPinning;			/* Ticket pinning */
 	t_tlsSupportedEktCiphers	supportedEktCiphers;	/* Supported EKT ciphers */
-	t_tlsExternalIdHash		externalIdHash;		/* External ID hash */
-	t_tlsExternalSessionId	externalSessionId;	/* External session ID */
-	t_tlsTicketRequest		ticketRequest;		/* Ticket request */
+	t_tlsExternalIdHash			externalIdHash;			/* External ID hash */
+	t_tlsExternalSessionId		externalSessionId;		/* External session ID */
+	t_tlsTicketRequest			ticketRequest;			/* Ticket request */
 	int	postHandshakeAuth;	/* Post-handshake authentication */
 	
 	/* ===== Security features (TLS 1.2 only) ===== */
@@ -525,12 +527,12 @@ typedef struct s_tlsParsedExtensions
 	t_tlsTlsFlags		tlsFlags;			/* TLS flags */
 	
 	/* ===== Modern features (TLS 1.3) ===== */
-	uint8_t				*earlyData;				/* Early data content (client) */
-	size_t				earlyDataLen;
-	t_tlsQuicTransportParams	quicParams;		/* QUIC transport parameters */
+	uint8_t						*earlyData;				/* Early data content (client) */
+	size_t						earlyDataLen;
+	t_tlsQuicTransportParams	quicParams;				/* QUIC transport parameters */
 	t_tlsDelegatedCredential	delegatedCredential;	/* Delegated credential */
-	t_tlsEch					ech;			/* Encrypted Client Hello */
-	t_tlsEchOuterExtensions		echOuterExtensions;	/* ECH outer extensions */
+	t_tlsEch					ech;					/* Encrypted Client Hello */
+	t_tlsEchOuterExtensions		echOuterExtensions;		/* ECH outer extensions */
 	
 	/* ===== SRTP (shared) ===== */
 	t_tlsSrtp			srtp;				/* SRTP protection profiles */
