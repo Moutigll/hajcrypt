@@ -13,7 +13,7 @@ int	hkdfExtract(const uint8_t		*salt,	size_t	saltLen,
 {
 	uint8_t	*zeroSalt;
 
-	if (!ikm || !prk || !hash)
+	if ((!ikm && ikmLen > 0) || !prk || !hash)
 		return (0);
 	if (prkLen < hash->digestSize)
 		return (0);

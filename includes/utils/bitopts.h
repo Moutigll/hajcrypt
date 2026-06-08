@@ -173,4 +173,20 @@ static inline void store64Be(void *dst, uint64_t w)
 	p[7] = w & 0xFF;
 }
 
+static inline uint16_t readUint16(const uint8_t *data)
+{
+	return ((uint16_t)data[0] << 8) | data[1];
+}
+
+static inline uint32_t readUint24(const uint8_t *data)
+{
+	return ((uint32_t)data[0] << 16) | ((uint32_t)data[1] << 8) | data[2];
+}
+
+static inline uint32_t readUint32(const uint8_t *data)
+{
+	return ((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16) |
+		   ((uint32_t)data[2] << 8) | data[3];
+}
+
 #endif /* HAJCRYPT_BITOPTS_H */
