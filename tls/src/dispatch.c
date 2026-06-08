@@ -2,6 +2,7 @@
 #include "../../includes/asymmetric/rsa.h"
 #include "../../includes/asymmetric/dsa.h"
 #include "../../includes/asymmetric/ecdsa.h"
+
 #include "../includes/constants.h"
 
 static inline int isVersionSupported(uint8_t supportedVersions, uint8_t tlsVersion)
@@ -40,22 +41,25 @@ const t_tlsCipherSuite g_supportedCipherSuites[] = {
  * @brief Supported signature algorithms table
  */
 const t_tlsSigAlgo g_supportedSignatureAlgorithms[] = {
+	{ TLS_SIG_ECDSA_SHA1,				&g_sha1Algo,	&g_ecdsaPkeyDef,	"ecdsa_sha1 (deprecated)",				0}, /* Deprecated */
+	{ TLS_SIG_ECDSA_SECP256R1_SHA256,	&g_sha256Algo,	&g_ecdsaPkeyDef,	"ecdsa_secp256r1_sha256",	TLS_VERS_1_3 | TLS_VERS_1_2 },
+	{ TLS_SIG_ECDSA_SECP384R1_SHA384,	&g_sha384Algo,	&g_ecdsaPkeyDef,	"ecdsa_secp384r1_sha384",	TLS_VERS_1_3 | TLS_VERS_1_2 },
+	{ TLS_SIG_ECDSA_SECP521R1_SHA512,	&g_sha512Algo,	&g_ecdsaPkeyDef,	"ecdsa_secp521r1_sha512",	TLS_VERS_1_3 | TLS_VERS_1_2 },
 	/* RSA-PSS (TLS 1.3) */
+	{ TLS_SIG_RSA_PSS_PSS_SHA256,		&g_sha256Algo,	&g_rsaPkeyDef, 		"rsa_pss_pss_sha256",		TLS_VERS_1_3 },
+	{ TLS_SIG_RSA_PSS_PSS_SHA384,		&g_sha384Algo,	&g_rsaPkeyDef, 		"rsa_pss_pss_sha384",		TLS_VERS_1_3 },
+	{ TLS_SIG_RSA_PSS_PSS_SHA512,		&g_sha512Algo,	&g_rsaPkeyDef, 		"rsa_pss_pss_sha512",		TLS_VERS_1_3 },
 	{ TLS_SIG_RSA_PSS_RSAE_SHA256,		&g_sha256Algo,	&g_rsaPkeyDef, 		"rsa_pss_rsae_sha256",		TLS_VERS_1_3 },
 	{ TLS_SIG_RSA_PSS_RSAE_SHA384,		&g_sha384Algo,	&g_rsaPkeyDef,		"rsa_pss_rsae_sha384",		TLS_VERS_1_3 },
 	{ TLS_SIG_RSA_PSS_RSAE_SHA512,		&g_sha512Algo,	&g_rsaPkeyDef,		"rsa_pss_rsae_sha512",		TLS_VERS_1_3 },
 	/* ECDSA (TLS 1.3 and 1.2) */
-//	{ TLS_SIG_ECDSA_SHA1,				&g_sha1Algo,	&g_ecdsaPkeyDef,		"ecdsa_sha1",				TLS_VERS_1_3 | TLS_VERS_1_2 }, Deprecated
-	{ TLS_SIG_ECDSA_SECP256R1_SHA256,	&g_sha256Algo,	&g_ecdsaPkeyDef,	"ecdsa_secp256r1_sha256",	TLS_VERS_1_3 | TLS_VERS_1_2 },
-	{ TLS_SIG_ECDSA_SECP384R1_SHA384,	&g_sha384Algo,	&g_ecdsaPkeyDef,	"ecdsa_secp384r1_sha384",	TLS_VERS_1_3 | TLS_VERS_1_2 },
-	{ TLS_SIG_ECDSA_SECP521R1_SHA512,	&g_sha512Algo,	&g_ecdsaPkeyDef,	"ecdsa_secp521r1_sha512",	TLS_VERS_1_3 | TLS_VERS_1_2 },
 	/* RSA PKCS#1 v1.5 (TLS 1.2 only, not recommended) */
-//	{ TLS_SIG_RSA_PKCS1_SHA1,			&g_sha1Algo,	&g_rsaPkeyDef,		"rsa_pkcs1_sha1",				TLS_VERS_1_2 }, Deprecated
+	{ TLS_SIG_RSA_PKCS1_SHA1,			&g_sha1Algo,	&g_rsaPkeyDef,		"rsa_pkcs1_sha1 (deprecated)",			0 }, /* Deprecated */
 	{ TLS_SIG_RSA_PKCS1_SHA256,		&g_sha256Algo,	&g_rsaPkeyDef,		"rsa_pkcs1_sha256",			TLS_VERS_1_2 },
 	{ TLS_SIG_RSA_PKCS1_SHA384,		&g_sha384Algo,	&g_rsaPkeyDef,		"rsa_pkcs1_sha384",			TLS_VERS_1_2 },
 	{ TLS_SIG_RSA_PKCS1_SHA512,		&g_sha512Algo,	&g_rsaPkeyDef,		"rsa_pkcs1_sha512",			TLS_VERS_1_2 },
 	/* DSA (TLS 1.2 only, not recommended) */
-//	{ TLS_SIG_DSA_SHA1,				&g_sha1Algo,	&g_dsaPkeyDef,		"dsa_sha1",					TLS_VERS_1_2 }, Deprecated
+	{ TLS_SIG_DSA_SHA1,			&g_sha1Algo,	&g_dsaPkeyDef,		"dsa_sha1 (deprecated)",					0 }, /* Deprecated */
 	{ TLS_SIG_DSA_SHA256,			&g_sha256Algo,	&g_dsaPkeyDef,		"dsa_sha256",					TLS_VERS_1_2 },
 	{ TLS_SIG_DSA_SHA384,			&g_sha384Algo,	&g_dsaPkeyDef,		"dsa_sha384",					TLS_VERS_1_2 },
 	{ TLS_SIG_DSA_SHA512,			&g_sha512Algo,	&g_dsaPkeyDef,		"dsa_sha512",					TLS_VERS_1_2 },
@@ -76,7 +80,7 @@ size_t getSupportedGroupsWire(uint16_t *out, size_t maxGroups, uint8_t tlsVersio
 	return (count);
 }
 
-int selectGroup(const uint16_t *clientGroups, size_t clientCount, uint16_t *selectedWire, int *kexType, int *groupId)
+int negotiateGroup(const uint16_t *clientGroups, size_t clientCount, uint16_t *selectedWire, int *kexType, int *groupId)
 {
 	for (size_t i = 0; i < clientCount; i++) {
 		for (size_t j = 0; j < NUM_SUPPORTED_GROUPS; j++) {
@@ -103,7 +107,7 @@ size_t getSupportedCipherSuitesWire(uint16_t *out, size_t maxSuites, uint8_t tls
 	return (count);
 }
 
-const t_tlsCipherSuite *selectCipherSuite(const uint16_t *clientSuites, size_t clientCount)
+const t_tlsCipherSuite *negotiateCipherSuite(const uint16_t *clientSuites, size_t clientCount)
 {
 	for (size_t i = 0; i < clientCount; i++) {
 		for (size_t j = 0; j < NUM_SUPPORTED_CIPHER_SUITES; j++) {
@@ -126,13 +130,43 @@ size_t getSupportedSignatureAlgorithmsWire(uint16_t *out, size_t maxAlgs, uint8_
 	return (count);
 }
 
-const t_tlsSigAlgo *selectSignatureAlgorithm(const uint16_t *clientAlgs, size_t clientCount)
+const t_tlsSigAlgo *negotiateSignatureAlgorithm(const uint16_t *clientAlgs, size_t clientCount)
 {
 	for (size_t i = 0; i < clientCount; i++) {
 		for (size_t j = 0; j < NUM_SUPPORTED_SIG_ALGS; j++) {
 			if (clientAlgs[i] == g_supportedSignatureAlgorithms[j].wireValue)
 				return (&g_supportedSignatureAlgorithms[j]);
 		}
+	}
+	return (NULL);
+}
+
+const t_tlsGroup *getGroup(uint16_t wireValue)
+{
+	for (size_t i = 0; i < NUM_SUPPORTED_GROUPS; i++)
+	{
+		if (wireValue == g_supportedGroups[i].wireValue)
+			return (&g_supportedGroups[i]);
+	}
+	return (NULL);
+}
+
+const t_tlsCipherSuite *getCipherSuite(uint16_t wireValue)
+{
+	for (size_t i = 0; i < NUM_SUPPORTED_CIPHER_SUITES; i++)
+	{
+		if (wireValue == g_supportedCipherSuites[i].wireValue)
+			return (&g_supportedCipherSuites[i]);
+	}
+	return (NULL);
+}
+
+const t_tlsSigAlgo *getSigAlgo(uint16_t wireValue)
+{
+	for (size_t i = 0; i < NUM_SUPPORTED_SIG_ALGS; i++)
+	{
+		if (wireValue == g_supportedSignatureAlgorithms[i].wireValue)
+			return (&g_supportedSignatureAlgorithms[i]);
 	}
 	return (NULL);
 }
