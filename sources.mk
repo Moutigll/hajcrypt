@@ -30,6 +30,7 @@ LIB_SRC = \
 	$(SRC_DIR)/x509/pemDecode.c \
 	$(SRC_DIR)/x509/pemEncode.c \
 	$(SRC_DIR)/x509/pemCipher.c \
+	$(SRC_DIR)/x509/certificate.c \
 	$(SRC_DIR)/kdf/kdf.c \
 	$(SRC_DIR)/kdf/hkdf.c \
 	$(SRC_DIR)/kdf/bytesToKey.c \
@@ -132,7 +133,8 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/password.c \
 	$(SRC_DIR)/cli/pkey.c \
 	$(SRC_DIR)/cli/pkeygen.c \
-	$(SRC_DIR)/cli/pkeyutl.c
+	$(SRC_DIR)/cli/pkeyutl.c \
+	$(SRC_DIR)/cli/cert.c
 
 TEST_SRC = \
 	tests/main.test.c \

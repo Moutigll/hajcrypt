@@ -276,6 +276,12 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 		return (0);
 	}
 
+	if (ft_strcmp(arg, "cert") == 0) {
+		opts->algo = ALGO_NONE;
+		opts->cmdType = CMD_CERT;
+		return (0);
+	}
+
 	ft_dprintf(STDERR_FILENO, "ft_ssl: Error: '%s' is an invalid command.\n\n", arg);
 	printUsage();
 	return (1);
@@ -378,7 +384,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		return (0);
 	}
 
-	if (opts->cmdType == CMD_PKEY|| opts->cmdType == CMD_PKEYUTL || opts->cmdType == CMD_GENPKEY)
+	if (opts->cmdType == CMD_PKEY|| opts->cmdType == CMD_PKEYUTL || opts->cmdType == CMD_GENPKEY || opts->cmdType == CMD_CERT)
 		return (0); /* PKEY and PKEYUTL have their own argument parsing */
 
 	if (opts->cmdType == CMD_HASH)

@@ -8,6 +8,7 @@
 #include "../../includes/cli/algoHandling.h"
 #include "../../includes/cli/parser.h"
 #include "../../includes/cli/pkey.h"
+#include "../../includes/cli/cert.h"
 
 
 static int executeSsl(t_sslOptions *opts, int argc, char **argv, char **env)
@@ -64,6 +65,8 @@ static int executeSsl(t_sslOptions *opts, int argc, char **argv, char **env)
 		return (cmdPkey(argc, argv, env));
 	else if (opts->cmdType == CMD_PKEYUTL)
 		return (cmdPkeyutl(argc, argv, env));
+	else if (opts->cmdType == CMD_CERT)
+		return (cmdCert(argc, argv, env));
 	return (0);
 }
 

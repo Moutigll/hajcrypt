@@ -12,7 +12,7 @@
 
 #include "../../includes/cli/pkey.h"
 
-char	*readPkeyFileContent(const char *fileName)
+char	*readBinaryFile(const char *fileName)
 {
 	int		fd;
 	char	*buf;
@@ -58,7 +58,7 @@ char	*readPkeyFileContent(const char *fileName)
 	return (buf);
 
 mallocError:
-	ft_dprintf(STDERR_FILENO, "ft_ssl: pkey: memory allocation failed\n");
+	ft_dprintf(STDERR_FILENO, "ft_ssl: memory allocation failed\n");
 	if (fileName)
 		close(fd);
 	return (NULL);
@@ -263,7 +263,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 	}
 
 	/* ----- read PEM ----- */
-	pem = readPkeyFileContent(opt.inFile);
+	pem = readBinaryFile(opt.inFile);
 	if (!pem)
 	{
 		free(passinPass);

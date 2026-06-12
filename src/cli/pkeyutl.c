@@ -179,7 +179,7 @@ static int loadPkeyKey(const char	*keyFile,
 	char	*password;
 	int		ret;
 
-	pem = readPkeyFileContent(keyFile);
+	pem = readBinaryFile(keyFile);
 	if (!pem)
 		return (0);
 
