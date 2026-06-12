@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <time.h>
 
 /* Tags ASN.1 */
 #define ASN1_INTEGER		0x02
@@ -281,7 +282,6 @@ int asn1ParseOid(const uint8_t	*data, size_t	maxLen,
 				 uint8_t		**out, size_t	*outLen,
 				 size_t			*consumed);
 
-
 /**
  * @brief Parses an ASN.1 BIT STRING from a buffer.
  *
@@ -296,4 +296,50 @@ int asn1ParseOid(const uint8_t	*data, size_t	maxLen,
 int asn1ParseBitString(const uint8_t	*data,	size_t	maxLen,
 					 uint8_t			**out,	size_t	*outLen,
 					 size_t				*consumed);
+
+/**
+ * @brief Parses an ASN.1 UTCTime or GeneralizedTime value from a buffer.
+ *
+ * This function attempts to parse an ASN.1 time value, which can be encoded as either
+ * UTCTime (tag 0x17) or GeneralizedTime (tag 0x18). It extracts the time value and converts it to a time_t representation.
+ *
+ * @param data      Pointer to the input buffer containing the ASN.1 DER encoded time value.
+ * @param maxLen    Maximum number of bytes available in @p data.
+ * @param out       Receives the parsed time value as a time_t.
+ * @param consumed  Receives the number of bytes consumed from @p data during parsing.
+ * @return Integer status code indicating success (1) or failure (0) of the parsing operation.
+ */
+int asn1DecodeUTCTime(const uint8_t *data, size_t maxLen, time_t *out, size_t *consumed);
+
+/**
+ * @brief Parses an ASN.1 GeneralizedTime value from a buffer.
+ *
+ * This function reads an ASN.1 GeneralizedTime structure from the provided input buffer,
+ * extracting the time value while validating the format. The GeneralizedTime is expected
+ * to be in the format "YYYYMMDDHHMMSSZ" (UTC time).
+ *
+ * @param data Pointer to the input buffer containing the ASN.1 DER encoded GeneralizedTime value.
+ * @param maxLen    Maximum number of bytes available in @p data.
+ * @param out       Receives the parsed time value as a time_t.
+ * @param consumed  Receives the number of bytes consumed from @p data during parsing.
+ *
+ * @return 1 on successful parsing, or 0 if parsing fails (e.g., invalid format,
+ *         insufficient data).
+ */
+int asn1DecodeGeneralizedTime(const uint8_t *data, size_t maxLen, time_t *out, size_t *consumed);
+
+/**
+ * @brief Parses an ASN.1 time value (UTCTime or GeneralizedTime) from a buffer.
+ *
+ * This function attempts to parse an ASN.1 time value, which can be encoded as either
+ * UTCTime (tag 0x17) or GeneralizedTime (tag 0x18). It extracts the time value and converts it to a time_t representation.
+ *
+ * @param data      Pointer to the input buffer containing the ASN.1 DER encoded time value.
+ * @param maxLen    Maximum number of bytes available in @p data.
+ * @param out       Receives the parsed time value as a time_t.
+ * @param consumed  Receives the number of bytes consumed from @p data during parsing.
+ * @return Integer status code indicating success (1) or failure (0) of the parsing operation.
+ */
+int asn1DecodeTime(const uint8_t *data, size_t maxLen, time_t *out, size_t *consumed);
+
 #endif

@@ -1111,6 +1111,22 @@ char *bigIntToDec(const t_bigInt *n)
 	return (result);
 }
 
+void bigIntShl(t_bigInt *n)
+{
+	uint64_t carry = 0;
+	for (size_t i = 0; i < n->used; i++) {
+		uint64_t newCarry = n->words[i] >> 63;
+		n->words[i] = (n->words[i] << 1) | carry;
+		carry = newCarry;
+	}
+	if (carry) {
+		if (n->used < n->numWords) {
+			n->words[n->used] = carry;
+			n->used++;
+		}
+	}
+}
+
 void bigIntShr(t_bigInt *n)
 {
 	uint64_t carry = 0;

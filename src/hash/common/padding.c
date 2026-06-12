@@ -11,6 +11,9 @@ size_t padMessage(uint8_t *dst, const uint8_t *lastBlock, size_t lastLen, t_padd
 	
 	if (!dst || !lastBlock || !params || params->blockSize == 0)
 		return (0);
+
+	if (lastLen > params->blockSize)
+		return (0); /* Invalid input: lastLen cannot exceed block size */
 	
 	for (i = 0; i < lastLen; i++) /* Copy remaining bytes of the last block */
 		dst[offset++] = lastBlock[i];

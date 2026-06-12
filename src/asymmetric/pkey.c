@@ -45,7 +45,7 @@ void	pkeyFree(t_pkey *pkey)
 
 
 
-int	pkeyEncrypt(t_pkey			*pkey,
+int	pkeyEncrypt(const t_pkey	*pkey,
 				const uint8_t	*input,		size_t	inputLen,
 				uint8_t			*output,	size_t	*outputLen,
 				t_pkeyPadding	padding)
@@ -57,7 +57,7 @@ int	pkeyEncrypt(t_pkey			*pkey,
 	return (pkey->def->encrypt(input, inputLen, pkey->key, output, outputLen, padding));
 }
 
-int	pkeyDecrypt(t_pkey			*pkey,
+int	pkeyDecrypt(const t_pkey	*pkey,
 				const uint8_t	*input,		size_t	inputLen,
 				uint8_t			*output,	size_t	*outputLen,
 				t_pkeyPadding	padding)
@@ -69,7 +69,7 @@ int	pkeyDecrypt(t_pkey			*pkey,
 	return (pkey->def->decrypt(input, inputLen, pkey->key, output, outputLen, padding));
 }
 
-int	pkeySign(t_pkey			*pkey,
+int	pkeySign(const t_pkey	*pkey,
 			 const uint8_t	*digest,	size_t	digestLen,
 			 const t_algoId	*digestAlgo,
 			 uint8_t		*sig,		size_t	*sigLen,
@@ -82,7 +82,7 @@ int	pkeySign(t_pkey			*pkey,
 	return (pkey->def->sign(digest, digestLen, digestAlgo, pkey->key, sig, sigLen, padding));
 }
 
-int	pkeyVerify(t_pkey			*pkey,
+int	pkeyVerify(const t_pkey		*pkey,
 			   const uint8_t	*digest,	size_t	digestLen,
 			   const t_algoId	*digestAlgo,
 			   const uint8_t	*sig,		size_t	sigLen,

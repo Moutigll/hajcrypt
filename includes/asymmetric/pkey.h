@@ -397,7 +397,7 @@ int		pkeyFromPem(const char *pem, t_pkey *pkey, int isPrivate, const char *passw
  * @param padding   Padding scheme.
  * @return 1 on success, 0 on failure.
  */
-int		pkeyEncrypt(t_pkey			*pkey,
+int		pkeyEncrypt(const t_pkey	*pkey,
 					const uint8_t	*input,		size_t	inputLen,
 					uint8_t			*output,	size_t	*outputLen,
 					t_pkeyPadding	padding);
@@ -413,7 +413,7 @@ int		pkeyEncrypt(t_pkey			*pkey,
  * @param padding   Padding scheme.
  * @return 1 on success, 0 on failure.
  */
-int		pkeyDecrypt(t_pkey			*pkey,
+int		pkeyDecrypt(const t_pkey	*pkey,
 					const uint8_t	*input,		size_t	inputLen,
 					uint8_t			*output,	size_t	*outputLen,
 					t_pkeyPadding	padding);
@@ -430,7 +430,7 @@ int		pkeyDecrypt(t_pkey			*pkey,
  * @param padding    Padding / encoding scheme.
  * @return 1 on success, 0 on failure.
  */
-int		pkeySign(t_pkey			*pkey,
+int		pkeySign(const t_pkey	*pkey,
 				 const uint8_t	*digest,	size_t	digestLen,
 				 const t_algoId	*digestAlgo,
 				 uint8_t		*sig,		size_t	*sigLen,
@@ -448,7 +448,7 @@ int		pkeySign(t_pkey			*pkey,
  * @param padding    Padding / encoding scheme.
  * @return 1 if the signature is valid, 0 otherwise.
  */
-int		pkeyVerify(t_pkey			*pkey,
+int		pkeyVerify(const t_pkey		*pkey,
 				   const uint8_t	*digest,	size_t	digestLen,
 				   const t_algoId	*digestAlgo,
 				   const uint8_t	*sig,		size_t	sigLen,

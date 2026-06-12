@@ -269,6 +269,8 @@ int ecdhComputeShared(t_ecdhCtx		*ctx,
 		else
 			x448ScalarMult(shared, privBytes, peerPub);
 
+		ctx->shared = bigIntFromBytes(shared, need);
+
 		ft_memcpy(sharedSecret, shared, need);
 		*sharedLen = need;
 		return (1);
@@ -304,6 +306,11 @@ int ecdhComputeShared(t_ecdhCtx		*ctx,
 			ok = 0;
 		else
 			*sharedLen = coordLen;
+	}
+
+	ctx->shared = bigIntNew(c->p->numWords);
+	if (ctx->shared) {
+		bigIntCopy(ctx->shared, sharedPoint.x);
 	}
 
 	bigIntFree(peerPoint.x);

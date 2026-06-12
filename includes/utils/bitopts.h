@@ -192,9 +192,22 @@ static inline void writeUint32(uint8_t *out, uint32_t value)
 	out[3] = value & 0xFF;
 }
 
+static inline void writeUint64(uint8_t *out, uint64_t value)
+{
+	out[0] = (value >> 56) & 0xFF;
+	out[1] = (value >> 48) & 0xFF;
+	out[2] = (value >> 40) & 0xFF;
+	out[3] = (value >> 32) & 0xFF;
+	out[4] = (value >> 24) & 0xFF;
+	out[5] = (value >> 16) & 0xFF;
+	out[6] = (value >> 8) & 0xFF;
+	out[7] = value & 0xFF;
+}
+
 #define wU8(out, off, val)   do { if (out) writeUint8((out)+(off), (uint8_t)(val)); } while(0)
 #define wU16(out, off, val)  do { if (out) writeUint16((out)+(off), (uint16_t)(val)); } while(0)
 #define wU32(out, off, val)  do { if (out) writeUint32((out)+(off), (uint32_t)(val)); } while(0)
+#define wU64(out, off, val)  do { if (out) writeUint64((out)+(off), (uint64_t)(val)); } while(0)
 
 
 static inline uint16_t readUint16(const uint8_t *data)

@@ -3,19 +3,19 @@
 #include "../../includes/extensions.h"
 #include "../../includes/constants.h"
 
-void encCompressCert(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encCompressCert(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->certCompression.enabled && e->certCompression.numAlgorithms)
 		ENC_U16_LIST(out, pos, TLS_EXT_COMPRESS_CERTIFICATE, e->certCompression.algorithms, e->certCompression.numAlgorithms);
 }
 
-void encDelegatedCredential(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encDelegatedCredential(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->delegatedCredential.credentialLen && e->delegatedCredential.credential)
 		putExt(out, pos, TLS_EXT_DELEGATED_CREDENTIAL, e->delegatedCredential.credential, e->delegatedCredential.credentialLen);
 }
 
-void encPreSharedKey(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer)
+void encPreSharedKey(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer)
 {
 	if (!e->numPsks || !e->psks) return;
 	if (isServer) {
@@ -50,7 +50,7 @@ void encPreSharedKey(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, 
 	*pos += 4 + dlen;
 }
 
-void encEarlyData(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encEarlyData(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->earlyData && e->earlyDataLen)
 		putExt(out, pos, TLS_EXT_EARLY_DATA, e->earlyData, e->earlyDataLen);
@@ -60,7 +60,7 @@ void encEarlyData(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	}
 }
 
-void encSupportedVersions(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer)
+void encSupportedVersions(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer)
 {
 	if (isServer) {
 		if (!e->negotiatedVersion) return;
@@ -78,7 +78,7 @@ void encSupportedVersions(uint8_t *out, size_t *pos, const t_tlsParsedExtensions
 	*pos += 4 + 1 + versLen;
 }
 
-void encCookie(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encCookie(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->cookie.cookieLen || !e->cookie.cookie) return;
 	size_t dlen = 2 + e->cookie.cookieLen;
@@ -89,7 +89,7 @@ void encCookie(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	*pos += 4 + dlen;
 }
 
-void encPskKeyExchangeModes(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encPskKeyExchangeModes(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->pskKe && !e->pskDheKe) return;
 	uint8_t modes[2], cnt = 0;
@@ -103,7 +103,7 @@ void encPskKeyExchangeModes(uint8_t *out, size_t *pos, const t_tlsParsedExtensio
 	*pos += 4 + dlen;
 }
 
-void encCertAuthorities(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encCertAuthorities(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->certAuthorities.numNames) return;
 	size_t listLen = 0;
@@ -121,7 +121,7 @@ void encCertAuthorities(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *
 	*pos += 4 + 2 + listLen;
 }
 
-void encOidFilters(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encOidFilters(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->oidFilters.numOids) return;
 	size_t listLen = 0;
@@ -139,18 +139,18 @@ void encOidFilters(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	*pos += 4 + 2 + listLen;
 }
 
-void encPostHandshakeAuth(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encPostHandshakeAuth(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->postHandshakeAuth) putExt(out, pos, TLS_EXT_POST_HANDSHAKE_AUTH, NULL, 0);
 }
 
-void encSigAlgsCert(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encSigAlgsCert(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->numSignatureAlgsCert && e->signatureAlgsCert)
 		ENC_U16_LIST(out, pos, TLS_EXT_SIGNATURE_ALGORITHMS_CERT, e->signatureAlgsCert, e->numSignatureAlgsCert);
 }
 
-void encKeyShare(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer)
+void encKeyShare(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer)
 {
 	if (!e->numKeyShares || !e->keyShares) return;
 	if (isServer) {
@@ -183,13 +183,13 @@ void encKeyShare(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int 
 	*pos += 4 + 2 + sharesLen;
 }
 
-void encTransparencyInfo(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encTransparencyInfo(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
 	BTLS_DEBUG("Encoding transparency_info: not implemented");
 }
 
-void encConnectionId(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encConnectionId(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->connectionId.cidLen || !e->connectionId.cid) return;
 	size_t dlen = 2 + e->connectionId.cidLen;
@@ -200,47 +200,47 @@ void encConnectionId(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	*pos += 4 + dlen;
 }
 
-void encConnectionIdDepr(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encConnectionIdDepr(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	encConnectionId(out, pos, e);   /* reuse the real encoder */
 }
 
-void encExternalIdHash(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encExternalIdHash(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->externalIdHash.hashLen && e->externalIdHash.hash)
 		putExt(out, pos, TLS_EXT_EXTERNAL_ID_HASH, e->externalIdHash.hash, e->externalIdHash.hashLen);
 }
 
-void encExternalSessionId(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encExternalSessionId(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->externalSessionId.idLen && e->externalSessionId.sessionId)
 		putExt(out, pos, TLS_EXT_EXTERNAL_SESSION_ID, e->externalSessionId.sessionId, e->externalSessionId.idLen);
 }
 
-void encQuicTransportParams(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encQuicTransportParams(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->quicParams.paramsLen && e->quicParams.params)
 		putExt(out, pos, TLS_EXT_QUIC_TRANSPORT_PARAMS, e->quicParams.params, e->quicParams.paramsLen);
 }
 
-void encTicketRequest(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encTicketRequest(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->ticketRequest.request) putExt(out, pos, TLS_EXT_TICKET_REQUEST, NULL, 0);
 }
 
-void encDnssecChain(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encDnssecChain(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
 	BTLS_DEBUG("Encoding dnssec_chain: not implemented");
 }
 
-void encSeqNumEncryptionAlgs(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encSeqNumEncryptionAlgs(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
 	BTLS_DEBUG("Encoding sequence_number_encryption_algorithms: not implemented");
 }
 
-void encRrc(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encRrc(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->rrc.challengeLen || !e->rrc.challenge) return;
 	size_t dlen = 2 + e->rrc.challengeLen;
@@ -251,7 +251,7 @@ void encRrc(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	*pos += 4 + dlen;
 }
 
-void encTlsFlags(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encTlsFlags(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->tlsFlags.flags) return;
 	uint8_t d[8];
@@ -260,13 +260,13 @@ void encTlsFlags(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	putExt(out, pos, TLS_EXT_TLS_FLAGS, d, 8);
 }
 
-void encEchOuterExtensions(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encEchOuterExtensions(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->echOuterExtensions.numTypes && e->echOuterExtensions.extensionTypes)
 		ENC_U16_LIST(out, pos, TLS_EXT_ECH_OUTER_EXTENSIONS, e->echOuterExtensions.extensionTypes, e->echOuterExtensions.numTypes);
 }
 
-void encEch(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encEch(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->ech.enabled && e->ech.encLen && e->ech.enc)
 		putExt(out, pos, TLS_EXT_ENCRYPTED_CLIENT_HELLO, e->ech.enc, e->ech.encLen);

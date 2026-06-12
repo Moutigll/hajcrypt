@@ -34,64 +34,61 @@ int	hkdfExtract(const uint8_t	*salt,	size_t	saltLen,
 	return (1);
 }
 
-int	hkdfExpand(const uint8_t	*prk,	size_t	prkLen,
-			   const uint8_t	*info,	size_t	infoLen,
-			   uint8_t			*okm,	size_t	okmLen,
-			   const t_hash		*hash)
+int hkdfExpand(const uint8_t *prk,  size_t prkLen,
+               const uint8_t *info, size_t infoLen,
+               uint8_t       *okm,  size_t okmLen,
+               const t_hash  *hash)
 {
-	uint8_t	previous[128];	/* max digest size (SHA-512) */
-	uint8_t	current[128];
-	uint8_t	counter;
-	size_t	remaining;
-	uint8_t	*buffer;
-	size_t	bufLen;
-	int		ret;
+    uint8_t previous[128];
+    uint8_t current[128];
+    uint8_t counter;
+    size_t  remaining;
+    uint8_t *buffer;
+    size_t  bufLen;
+    size_t  prevLen;
+    int     firstBlock;
+    int     ret;
 
-	if (!prk || !okm || !hash)
-		return (0);
-	if (prkLen < hash->digestSize)
-		return (0);
-	if (okmLen > 255 * hash->digestSize)
-		return (0);
+    if (!prk || !okm || !hash)           return 0;
+    if (prkLen < hash->digestSize)       return 0;
+    if (okmLen > 255 * hash->digestSize) return 0;
 
-	ft_memset(previous, 0, hash->digestSize);
-	remaining = okmLen;
-	counter = 1;
-	ret = 1;
+    remaining  = okmLen;
+    counter    = 1;
+    ret        = 1;
+    firstBlock = 1;
 
-	while (remaining > 0)
-	{
-		bufLen = hash->digestSize + infoLen + 1;
-		buffer = ft_calloc(1, bufLen);
-		if (!buffer)
-		{
-			ret = 0;
-			break;
-		}
+    while (remaining > 0)
+    {
+        /* T(0) is the empty string, so skip it on the first block */
+        prevLen = firstBlock ? 0 : hash->digestSize;
+        bufLen  = prevLen + infoLen + 1;
 
-		ft_memcpy(buffer, previous, hash->digestSize);
-		if (info && infoLen)
-			ft_memcpy(buffer + hash->digestSize, info, infoLen);
-		buffer[hash->digestSize + infoLen] = counter;
+        buffer = ft_calloc(1, bufLen);
+        if (!buffer) { ret = 0; break; }
 
-		hmac(hash, prk, prkLen, buffer, bufLen, current);
+        if (!firstBlock)
+            ft_memcpy(buffer, previous, hash->digestSize);
+        if (info && infoLen)
+            ft_memcpy(buffer + prevLen, info, infoLen);
+        buffer[prevLen + infoLen] = counter;
 
-		if (remaining < hash->digestSize)
-			ft_memcpy(okm + (okmLen - remaining), current, remaining);
-		else
-			ft_memcpy(okm + (okmLen - remaining), current, hash->digestSize);
+        hmac(hash, prk, prkLen, buffer, bufLen, current);
 
-		remaining -= (remaining < hash->digestSize) ? remaining : hash->digestSize;
-		counter++;
-		ft_memcpy(previous, current, hash->digestSize);
+        size_t toCopy = (remaining < hash->digestSize) ? remaining : hash->digestSize;
+        ft_memcpy(okm + (okmLen - remaining), current, toCopy);
+        remaining -= toCopy;
+        counter++;
+        ft_memcpy(previous, current, hash->digestSize);
+        firstBlock = 0;
 
-		secureZeroMemory(buffer, bufLen);
-		free(buffer);
-	}
+        secureZeroMemory(buffer, bufLen);
+        free(buffer);
+    }
 
-	secureZeroMemory(previous, hash->digestSize);
-	secureZeroMemory(current, sizeof(current));
-	return (ret);
+    secureZeroMemory(previous, hash->digestSize);
+    secureZeroMemory(current, sizeof(current));
+    return ret;
 }
 
 int	hkdf(const uint8_t	*salt,	size_t	saltLen,
