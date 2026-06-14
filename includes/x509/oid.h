@@ -164,5 +164,12 @@ static const uint8_t pkcs5Pbes2Oid[] = { 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05
 #define OID_STATE_NAME		{ 0x55, 0x04, 0x08 }
 #define OID_EMAIL_ADDRESS	{ 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09, 0x01 }
 
+/**
+ * @brief Compare two OIDs for equality.
+ * @param a First OID to compare.
+ * @param b Second OID to compare.
+ * @return 1 if the OIDs are equal, 0 otherwise.
+ */
+int	oidEqual(const t_algoId *a, const t_algoId *b);
 
 #endif	/* HAJCRYPT_OID_H */

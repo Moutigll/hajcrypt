@@ -30,7 +30,7 @@ typedef struct s_x509Cert
 	time_t		notAfter;		/* Unix timestamp (end) */
 	
 	/* Public key */
-	t_pkey		pubKey;		/* Public key structure */
+	t_pkey		pubKey;			/* Public key structure */
 	uint8_t		*pubKeyRaw;		/* Raw public key bytes (from BIT STRING) */
 	size_t		pubKeyRawLen;
 	

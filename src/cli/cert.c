@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
@@ -10,7 +11,6 @@
 #include "../../includes/x509/asn1.h"
 #include "../../includes/x509/pem.h"
 #include "../../includes/cli/password.h"
-#include "../../includes/cli/pkey.h"
 #include "../../includes/utils/utils.h"
 
 #include "../../includes/cli/cert.h"
@@ -182,7 +182,7 @@ static int loadCert(const char *fileName, uint8_t **der, size_t *derLen)
 	t_pemBlock	block;
 
 	if (fileName) {
-		*der = (uint8_t *)readBinaryFile(fileName);
+		readBinaryFile(fileName, der, derLen);
 		if (!*der)
 			return (0);
 		*derLen = ft_strlen((char *)*der);
@@ -203,7 +203,7 @@ static int loadCert(const char *fileName, uint8_t **der, size_t *derLen)
 		}
 		return (1);
 	} else {
-		*der = (uint8_t *)readBinaryFile(NULL);
+		readBinaryFile(NULL, der, derLen);
 		if (!*der)			return (0);
 		*derLen = ft_strlen((char *)*der);
 
@@ -464,13 +464,11 @@ static void outputCert(t_x509Cert *cert, t_certOptions *opt)
 
 static t_pkey *loadKeyFromFile(const char *file)
 {
-	char	*pem;
+	uint8_t	*pem;
 	t_pkey	*pkey;
 	int		ret;
 
-	pem = readBinaryFile(file);
-	if (!pem)
-		return (NULL);
+	readBinaryFile(file, &pem, NULL);
 
 	pkey = malloc(sizeof(t_pkey));
 	if (!pkey) {
@@ -479,12 +477,12 @@ static t_pkey *loadKeyFromFile(const char *file)
 	}
 	ft_bzero(pkey, sizeof(t_pkey));
 
-	ret = pkeyFromPem(pem, pkey, 1, NULL);	/* want private key, no initial password */
+	ret = pkeyFromPem((const char *)pem, pkey, 1, NULL);	/* want private key, no initial password */
 	if (ret == 2) {
 		/* password required, prompt interactively */
 		char *password = promptPassword("Enter password for encrypted key: ");
 		if (password) {
-			ret = pkeyFromPem(pem, pkey, 1, password);
+			ret = pkeyFromPem((const char *)pem, pkey, 1, password);
 			secureZeroMemory(password, ft_strlen(password));
 			free(password);
 		} else

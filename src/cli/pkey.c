@@ -12,59 +12,6 @@
 
 #include "../../includes/cli/pkey.h"
 
-char	*readBinaryFile(const char *fileName)
-{
-	int		fd;
-	char	*buf;
-	char	tmp[4096];
-	ssize_t	bytesRead;
-	size_t	totalSize;
-	size_t	capacity;
-
-	if (fileName == NULL)
-		fd = STDIN_FILENO;
-	else
-		fd = open(fileName, O_RDONLY);
-	
-	if (fd < 0)
-	{
-		ft_dprintf(STDERR_FILENO, "ft_ssl: pkey: cannot open '%s'\n",
-			fileName ? fileName : "stdin");
-		return (NULL);
-	}
-
-	capacity = 4096;
-	buf = malloc(capacity);
-	if (!buf) goto mallocError;
-	
-	totalSize = 0;
-	while ((bytesRead = read(fd, tmp, sizeof(tmp))) > 0)
-	{
-		if (totalSize + bytesRead >= capacity)
-		{
-			while (totalSize + bytesRead >= capacity)
-				capacity *= 2;
-			buf = realloc(buf, capacity);
-			if (!buf) goto mallocError;
-		}
-		ft_memcpy(buf + totalSize, tmp, bytesRead);
-		totalSize += bytesRead;
-	}
-	
-	buf[totalSize] = '\0';
-	
-	if (fileName)
-		close(fd);
-	return (buf);
-
-mallocError:
-	ft_dprintf(STDERR_FILENO, "ft_ssl: memory allocation failed\n");
-	if (fileName)
-		close(fd);
-	return (NULL);
-}
-
-
 static const tFtLongOption	g_pkeyLongOpts[] = {
 	{"inform",		FT_GETOPT_REQUIRED_ARGUMENT,	'I'},
 	{"outform",		FT_GETOPT_REQUIRED_ARGUMENT,	'O'},
@@ -263,7 +210,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 	}
 
 	/* ----- read PEM ----- */
-	pem = readBinaryFile(opt.inFile);
+	readBinaryFile(opt.inFile, (uint8_t **)&pem, NULL);
 	if (!pem)
 	{
 		free(passinPass);

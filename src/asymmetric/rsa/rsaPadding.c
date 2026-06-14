@@ -10,16 +10,6 @@
 
 #include "../../../includes/asymmetric/rsa.h"
 
-
-static int	oidEqual(const t_algoId *a, const t_algoId *b)
-{
-	if (!a || !b)
-		return (0);
-	if (a->len != b->len)
-		return (0);
-	return (ft_memcmp(a->data, b->data, a->len) == 0);
-}
-
 static int	getDigestInfoHeader(const t_algoId *oid, const uint8_t **header, size_t *headerLen, size_t *digestLen)
 {
 	if (oidEqual(oid, &g_sha256Hash.oid))
@@ -81,7 +71,7 @@ static int	mgf1(const uint8_t	*seed,		size_t	seedLen,
 		hash->init(ctx);
 		hash->update(ctx, seed, seedLen);
 		hash->update(ctx, counterBytes, 4);
-		hash->final(ctx, digest);
+		hash->final(digest, ctx);
 		toCopy = hashLen;
 		if (toCopy > outputLen - written)
 			toCopy = outputLen - written;
@@ -481,73 +471,128 @@ int	rsaOaepUnpadEncrypt(const uint8_t	*padded,	size_t	paddedLen,
  *                   PSS Signature Padding (SHA-256)
  * ========================================================================= */
 
+ /**
+ * @brief Hash data using the hash algorithm identified by oid.
+ * @param hash      Hash algorithm structure (from getHashByOid).
+ * @param data      Data to hash.
+ * @param dataLen   Length of data.
+ * @param out       Output buffer, must be at least hash->digestSize bytes.
+ * @return 1 on success, 0 on error.
+ */
+static int hashDataWithOid(const t_hash *hash, const uint8_t *data, size_t dataLen, uint8_t *out)
+{
+	if (!hash)
+		return (0);
+
+	void *ctx = malloc(hash->ctxSize);
+	if (!ctx)
+		return (0);
+
+	hash->init(ctx);
+	hash->update(ctx, data, dataLen);
+	hash->final(out, ctx);
+	free(ctx);
+	return (1);
+}
+
 int	rsaPssPadSign(const uint8_t		*digest,	size_t	digestLen,
 				  const t_algoId	*digestAlgo,
 				  const t_rsaKey	*key,
 				  uint8_t			*padded,	size_t	paddedLen)
 {
-	size_t		k;
-	size_t		hLen;
-	size_t		sLen;
-	uint8_t		salt[32];
-	uint8_t		mHash[32];
-	uint8_t		hash[32];
-	uint8_t		*db;
-	uint8_t		*dbMask;
+	size_t			k;
+	size_t			hLen;
+	size_t			sLen;
+	const t_hash	*hashDef;
+	uint8_t			*salt;
+	uint8_t			*mHash;
+	uint8_t			*hash;
+	uint8_t			*db;
+	uint8_t			*dbMask;
+	uint8_t			*m_prime;
 
-	if (!oidEqual(digestAlgo, &g_sha256Hash.oid))
-		return (HAJCRYPT_DPRINT("PSS padding: unsupported hash algorithm OID\n"), (0));
-	if (digestLen != SHA256_DIGEST_LEN)
+	hashDef = getHashByOid(digestAlgo->data, digestAlgo->len);
+	if (!hashDef)
+		return (HAJCRYPT_DPRINT("PSS padding: unsupported hash algorithm OID\n"), 0);
+	hLen = hashDef->digestSize;
+	if (digestLen != hLen)
 		return (HAJCRYPT_DPRINT("PSS padding: invalid digest length\n"), (0));
 
 	k = rsaModulusBytes(key);
-	hLen = SHA256_DIGEST_LEN;
 	sLen = hLen; /* recommended salt length */
 	if (paddedLen != k || k < hLen + sLen + 2)
 		return (HAJCRYPT_DPRINT("PSS padding failed: invalid padded length or key size\n"), (0));
 
-	/* mHash = SHA256(M) = digest (already hashed by caller) */
+	/* Allocate dynamic buffers */
+	salt = malloc(hLen);
+	mHash = malloc(hLen);
+	hash = malloc(hLen);
+	if (!salt || !mHash || !hash) {
+		free(salt); free(mHash); free(hash);
+		return (0);
+	}
+
+	/* mHash = H(M) = digest (already hashed by caller) */
 	ft_memcpy(mHash, digest, hLen);
 
 	/* Generate random salt */
 	hajSecRandBytes(salt, sLen);
 
-	/* M' = 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 || mHash || salt */
+	/* M' = 0x00*8 || mHash || salt */
 	{
-		uint8_t m_prime[8 + 32 + 32]; /* 8 zero bytes + hash + salt */
+		m_prime = malloc(8 + hLen + sLen);
+		if (!m_prime) {
+			free(salt); free(mHash); free(hash);
+			return (0);
+		}
 		ft_memset(m_prime, 0, 8);
 		ft_memcpy(m_prime + 8, mHash, hLen);
 		ft_memcpy(m_prime + 8 + hLen, salt, sLen);
-		sha256Hash(m_prime, 8 + hLen + sLen, hash);
+		if (!hashDataWithOid(hashDef, m_prime, 8 + hLen + sLen, hash)) {
+			free(salt); free(mHash); free(hash); free(m_prime);
+			return (0);
+		}
+		free(m_prime);
 	}
 
 	/* DB = 0x00...0x01 || salt */
 	{
 		size_t dbLen = k - hLen - 1;
 		db = malloc(dbLen);
-		if (!db) return (0);
+		if (!db) {
+			free(salt); free(mHash); free(hash);
+			return (0);
+		}
 		ft_memset(db, 0, dbLen - sLen - 1);
 		db[dbLen - sLen - 1] = 0x01;
 		ft_memcpy(db + dbLen - sLen, salt, sLen);
+
+		/* dbMask = MGF1(hash, hLen, dbLen) */
+		dbMask = malloc(k - hLen - 1);
+		if (!dbMask) {
+			free(salt); free(mHash); free(hash); free(db);
+			return (0);
+		}
+		if (!mgf1(hash, hLen, dbMask, k - hLen - 1, digestAlgo))
+			{ free(salt); free(mHash); free(hash); free(db); free(dbMask);
+			  return (HAJCRYPT_DPRINT("PSS padding: MGF1 failed\n"), (0)); }
+
+		/* maskedDB = DB ^ dbMask */
+		for (size_t i = 0; i < (size_t)(k - hLen - 1); i++)
+			db[i] ^= dbMask[i];
+
+		/* Build EM = maskedDB || hash || 0xBC */
+		ft_memcpy(padded, db, k - hLen - 1);
+		padded[0] &= 0x7F; /* Clear the leftmost bit if set */
+		free(db);
+		free(dbMask);
 	}
-
-	/* dbMask = MGF1(hash, hLen, dbLen) */
-	dbMask = malloc(k - hLen - 1);
-	if (!dbMask) { free(db); return (0); }
-	if (!mgf1(hash, hLen, dbMask, k - hLen - 1, &g_sha256Hash.oid))
-		{ free(db); free(dbMask); return (HAJCRYPT_DPRINT("PSS padding: MGF1 failed\n"), (0)); }
-
-	/* maskedDB = DB ^ dbMask */
-	for (size_t i = 0; i < (size_t)(k - hLen - 1); i++)
-		db[i] ^= dbMask[i];
-
-	/* Build EM = maskedDB || hash || 0xBC */
-	ft_memcpy(padded, db, k - hLen - 1);
 	ft_memcpy(padded + k - hLen - 1, hash, hLen);
 	padded[k - 1] = 0xBC;
 
-	free(db);
-	free(dbMask);
+	free(salt);
+	free(mHash);
+	free(hash);
 	return (1);
 }
 
@@ -555,28 +600,37 @@ int rsaPssUnpadSign(const uint8_t	*padded,			size_t	paddedLen,
 					const uint8_t	*expectedDigest,	size_t	expectedDigestLen,
 					const t_algoId	*expectedAlgo)
 {
-	size_t	k,			hLen,		dbLen;
-	uint8_t	*db,		*dbMask;
-	uint8_t	hash[32],	salt[32],	mHash[32];
-	uint8_t	mPrime[8 + 32 + 32],	hash2[32];
-	size_t	i;
+	size_t			k,			hLen,		dbLen;
+	const t_hash	*hashDef;
+	uint8_t			*db,		*dbMask;
+	uint8_t			*hash,		*salt,		*mHash;
+	uint8_t			*m_prime,	*hash2;
+	size_t			i;
+	uint8_t			diff;
+	size_t			pos;
 
-	/* We currently only support SHA‑256 */
-	if (!oidEqual(expectedAlgo, &g_sha256Hash.oid))
+	hashDef = getHashByOid(expectedAlgo->data, expectedAlgo->len);
+	if (!hashDef)
 		return (HAJCRYPT_DPRINT("PSS verification: unsupported hash algorithm OID\n"), (0));
-	if (expectedDigestLen != SHA256_DIGEST_LEN)
-		return (HAJCRYPT_DPRINT("PSS verification: invalid expected digest length, expected %zu, got %zu\n", SHA256_DIGEST_LEN, expectedDigestLen), (0));
+	hLen = hashDef->digestSize;
+	if (expectedDigestLen != hLen)
+		return (HAJCRYPT_DPRINT("PSS verification: invalid expected digest length\n"), (0));
 
 	k = paddedLen;
-	hLen = SHA256_DIGEST_LEN;
 	if (k < hLen + hLen + 2 || padded[k - 1] != 0xBC)
 		return (HAJCRYPT_DPRINT("PSS verification: invalid encoded message format\n"), (0));
 
 	dbLen = k - hLen - 1;
 	db = malloc(dbLen);
 	dbMask = malloc(dbLen);
-	if (!db || !dbMask) {
-		free(db); free(dbMask);
+	hash = malloc(hLen);
+	salt = malloc(hLen);
+	mHash = malloc(hLen);
+	m_prime = malloc(8 + hLen + hLen);
+	hash2 = malloc(hLen);
+	if (!db || !dbMask || !hash || !salt || !mHash || !m_prime || !hash2) {
+		free(db); free(dbMask); free(hash); free(salt);
+		free(mHash); free(m_prime); free(hash2);
 		return (0);
 	}
 
@@ -585,9 +639,10 @@ int rsaPssUnpadSign(const uint8_t	*padded,			size_t	paddedLen,
 	ft_memcpy(hash, padded + dbLen, hLen);
 
 	/* dbMask = MGF1(H, dbLen) */
-	if (!mgf1(hash, hLen, dbMask, dbLen, &g_sha256Hash.oid)) {
+	if (!mgf1(hash, hLen, dbMask, dbLen, expectedAlgo)) {
 		HAJCRYPT_DPRINT("PSS verification: MGF1 failed\n");
-		free(db); free(dbMask);
+		free(db); free(dbMask); free(hash); free(salt);
+		free(mHash); free(m_prime); free(hash2);
 		return (0);
 	}
 
@@ -595,41 +650,51 @@ int rsaPssUnpadSign(const uint8_t	*padded,			size_t	paddedLen,
 	for (i = 0; i < dbLen; i++)
 		db[i] ^= dbMask[i];
 
+	db[0] &= 0x7F; /* Clear the leftmost bit if set */
+
 	/* Find the 0x01 separator and extract salt (last hLen bytes) */
-	{
-		size_t pos = 0;
-		while (pos < dbLen && db[pos] == 0x00)
-			pos++;
-		if (pos >= dbLen - 1 || db[pos] != 0x01) {
-			HAJCRYPT_DPRINT("PSS verification: invalid DB format\n");
-			free(db); free(dbMask);
-			return (0);
-		}
-		if (dbLen - pos - 1 != hLen) {   /* salt length must equal hash length */
-			HAJCRYPT_DPRINT("PSS verification: invalid salt length\n");
-			free(db); free(dbMask);
-			return (0);
-		}
-		ft_memcpy(salt, db + pos + 1, hLen);
+	pos = 0;
+	while (pos < dbLen && db[pos] == 0x00)
+		pos++;
+	if (pos >= dbLen - 1 || db[pos] != 0x01) {
+		HAJCRYPT_DPRINT("PSS verification: invalid DB format\n");
+		free(db); free(dbMask); free(hash); free(salt);
+		free(mHash); free(m_prime); free(hash2);
+		return (0);
 	}
+	if (dbLen - pos - 1 != hLen) {   /* salt length must equal hash length */
+		HAJCRYPT_DPRINT("PSS verification: invalid salt length\n");
+		free(db); free(dbMask); free(hash); free(salt);
+		free(mHash); free(m_prime); free(hash2);
+		return (0);
+	}
+	ft_memcpy(salt, db + pos + 1, hLen);
 
 	/* mHash = expectedDigest */
 	ft_memcpy(mHash, expectedDigest, hLen);
 
 	/* M' = (0x00*8) || mHash || salt */
-	ft_memset(mPrime, 0, 8);
-	ft_memcpy(mPrime + 8, mHash, hLen);
-	ft_memcpy(mPrime + 8 + hLen, salt, hLen);
-	sha256Hash(mPrime, 8 + hLen + hLen, hash2);
-
-	/* Compare H' with H */
-	if (ft_memcmp(hash, hash2, hLen) != 0) {
-		HAJCRYPT_DPRINT("PSS verification: hash mismatch\n");
-		free(db); free(dbMask);
+	ft_memset(m_prime, 0, 8);
+	ft_memcpy(m_prime + 8, mHash, hLen);
+	ft_memcpy(m_prime + 8 + hLen, salt, hLen);
+	if (!hashDataWithOid(hashDef, m_prime, 8 + hLen + hLen, hash2)) {
+		free(db); free(dbMask); free(hash); free(salt);
+		free(mHash); free(m_prime); free(hash2);
 		return (0);
 	}
 
-	free(db);
-	free(dbMask);
+	/* Compare H' with H (constant-time) */
+	diff = 0;
+	for (i = 0; i < hLen; i++)
+		diff |= hash[i] ^ hash2[i];
+
+	free(db); free(dbMask); free(hash); free(salt);
+	free(mHash); free(m_prime); free(hash2);
+
+	if (diff != 0) {
+		HAJCRYPT_DPRINT("PSS verification: hash mismatch\n");
+		return (0);
+	}
+
 	return (1);
 }

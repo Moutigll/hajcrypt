@@ -14,6 +14,7 @@
 #define ECDH_GROUP_SECP521R1	25	/* 0x0019 */
 #define ECDH_GROUP_X25519		29	/* 0x001D */
 #define ECDH_GROUP_X448			30	/* 0x001E */
+#define ECDH_GROUP_FRP256V1		0x2F	/* 0x002F (FRP256v1) */
 
 /**
  * @brief Key sizes in bytes for each curve
@@ -28,6 +29,7 @@
 #define SECP521R1_KEY_SIZE		66
 #define X25519_KEY_SIZE			32
 #define X448_KEY_SIZE			56
+#define FRP256V1_KEY_SIZE		32
 
 /* Public key size in bytes (uncompressed point format) */
 #define SECP256R1_PUB_SIZE		65	/* 0x04 + 32 bytes X + 32 bytes Y */
@@ -35,6 +37,7 @@
 #define SECP521R1_PUB_SIZE		133	/* 0x04 + 66 bytes X + 66 bytes Y */
 #define X25519_PUB_SIZE			32
 #define X448_PUB_SIZE			56
+#define FRP256V1_PUB_SIZE		65	/* 0x04 + 32 bytes X + 32 bytes Y */
 
 /* Shared secret size in bytes (X coordinate size) */
 #define SECP256R1_SHARED_SIZE	32
@@ -42,6 +45,7 @@
 #define SECP521R1_SHARED_SIZE	66
 #define X25519_SHARED_SIZE		32
 #define X448_SHARED_SIZE		56
+#define FRP256V1_SHARED_SIZE	32
 
 /**
  * @brief Affine point on a Weierstrass curve

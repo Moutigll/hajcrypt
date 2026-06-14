@@ -94,6 +94,5 @@ int	cmdPkey(int argc, char **argv, char **env);
 int	cmdPkeyutl(int argc, char **argv, char **env);
 
 int		writePkeyOutput(const char *filename, const char *data);
-char	*readBinaryFile(const char *fileName);
 
 #endif // CLI_PKEY_H
