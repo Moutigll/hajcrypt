@@ -184,6 +184,7 @@ static void	printUsage(void)
 	"\t-a\t\tBase64 encode/decode input/output\n"
 	"\t-v <iv>\t\tIV in hex (for ciphers that use IV)\n"
 	"\t-b\t\tFor hashes, output binary instead of hex\n"
+	"\t-P\t\tDisable padding for block ciphers\n"
 	"\t-h\t\tShow this help message\n"
 	);
 }
@@ -384,7 +385,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 	if (opts->cmdType == CMD_HASH)
 		shortOpts = "pqrs:bh";
 	else
-		shortOpts = "p:qreds:k:i:o:v:ah";
+		shortOpts = "p:qreds:k:i:o:v:ahP";
 
 	ft_getoptInit(&st, argc - 2, argv + 2);
 	st.index = 0; /* reset index to start of options (argv[2]) */
@@ -499,6 +500,9 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 					printUsage();
 					freeSslOptions(opts);
 					return (0);
+				case 'P':
+					opts->noPadding = 1;
+					break;
 
 				case 's':
 					if (st.optArg)

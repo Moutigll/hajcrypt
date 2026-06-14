@@ -67,6 +67,11 @@ static int processDecryptLast(t_cipherCtx *c, t_blockData *b, uint8_t *outBuf)
 		return (-1);
 	}
 	c->cipher->update(c->ctx, b->lastBlock, c->cipher->blockSize, outBuf, &outLen);
+	if (c->opts->noPadding) {
+		if (outLen > 0 && writeOutput(c->outFd, outBuf, outLen, c->shouldWrap, &c->lineLen) < 0)
+			return (-1);
+		return (0);
+	}
 	if (c->cipher->unpad && outLen > 0)
 	{
 		if (c->cipher->unpad(outBuf, &unpaddedLen, c->cipher->blockSize) != 0)
@@ -88,6 +93,15 @@ static int processEncryptLast(t_cipherCtx *c, t_blockData *b, uint8_t *outBuf)
 
 	if (b->lastLen > 0)
 		ft_memcpy(block, b->lastBlock, b->lastLen);
+	if (c->opts->noPadding) {
+		if (b->lastLen > 0) {
+			c->cipher->update(c->ctx, block, b->lastLen, outBuf, &outLen);
+			if (outLen > 0 && writeOutput(c->outFd, outBuf,
+										  outLen, c->shouldWrap, &c->lineLen) < 0)
+				return (-1);
+		}
+		return (0);
+	}
 	if (c->cipher->pad)
 	{
 		c->cipher->pad(block, b->lastLen, c->cipher->blockSize);
@@ -314,9 +328,9 @@ static int processCipherFd(int fd, int outFd, const t_cipher *cipher, t_sslOptio
 		if (initCipherCtx(&c, cipher, opts, outFd) != 0)
 			return (1);
 		if (c.cipher->pad == NULL && c.cipher->unpad == NULL)
-		    ret = handleStreamCipher(&c, fd);
+			ret = handleStreamCipher(&c, fd);
 		else
-		    ret = handleBlockCipher(&c, fd);
+			ret = handleBlockCipher(&c, fd);
 		c.cipher->free(c.ctx);
 		free(c.ctx);
 		return (ret);

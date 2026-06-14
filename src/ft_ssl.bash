@@ -35,7 +35,7 @@ _ft_ssl_hash_opts()
 
 _ft_ssl_cipher_opts()
 {
-	echo "-p -q -s -k -e -d -i -o -a -v -h"
+	echo "-p -q -s -k -e -d -i -o -a -v -h -P"
 }
 
 _ft_ssl_key_mgmt_opts()

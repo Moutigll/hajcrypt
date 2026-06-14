@@ -47,6 +47,7 @@ typedef struct s_sslOptions
 	char	*outputFile;	/* -o output file */
 	int		isDecoding;		/* -d decrypt mode */
 	int		wrapOutput;		/* -w wrap output */
+	int		noPadding;		/* --nopad disable padding */
 
 	char	**stringInputs;
 	size_t	stringCount;
