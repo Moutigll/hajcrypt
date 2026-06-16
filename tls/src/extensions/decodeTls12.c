@@ -8,7 +8,7 @@
 #include "../../includes/extensions.h"
 
 /* 0 - server_name (SNI) */
-int parseServerName(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseServerName(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 3) return (1);
@@ -34,7 +34,7 @@ int parseServerName(const uint8_t *data, size_t len, t_tlsParsedExtensions *out,
 }
 
 /* 1 - max_fragment_length */
-int parseMaxFragmentLength(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseMaxFragmentLength(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 1) return (1);
@@ -50,7 +50,7 @@ int parseMaxFragmentLength(const uint8_t *data, size_t len, t_tlsParsedExtension
 }
 
 /* 3 - trusted_ca_keys (deprecated) */
-int parseTrustedCaKeys(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseTrustedCaKeys(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing trusted_ca_keys: Not implemented yet !!!");
@@ -58,7 +58,7 @@ int parseTrustedCaKeys(const uint8_t *data, size_t len, t_tlsParsedExtensions *o
 }
 
 /* 4 - truncated_hmac (deprecated) */
-int parseTruncatedHmac(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseTruncatedHmac(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing truncated_hmac: Not implemented yet !!!");
@@ -66,7 +66,7 @@ int parseTruncatedHmac(const uint8_t *data, size_t len, t_tlsParsedExtensions *o
 }
 
 /* 5 - status_request (OCSP stapling) */
-int parseStatusRequest(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseStatusRequest(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 1) return (1);
@@ -78,7 +78,7 @@ int parseStatusRequest(const uint8_t *data, size_t len, t_tlsParsedExtensions *o
 }
 
 /* 6 - user_mapping (RFC 4681) */
-int parseUserMapping(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseUserMapping(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing user_mapping: Not implemented yet !!!");
@@ -86,7 +86,7 @@ int parseUserMapping(const uint8_t *data, size_t len, t_tlsParsedExtensions *out
 }
 
 /* 7 - client_authz */
-int parseClientAuthz(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseClientAuthz(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing client_authz: Not implemented yet !!!");
@@ -94,7 +94,7 @@ int parseClientAuthz(const uint8_t *data, size_t len, t_tlsParsedExtensions *out
 }
 
 /* 8 - server_authz */
-int parseServerAuthz(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseServerAuthz(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing server_authz: Not implemented yet !!!");
@@ -102,7 +102,7 @@ int parseServerAuthz(const uint8_t *data, size_t len, t_tlsParsedExtensions *out
 }
 
 /* 9 - cert_type (RFC 6091) */
-int parseCertType(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseCertType(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 1) return (1);
@@ -114,7 +114,7 @@ int parseCertType(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, i
 }
 
 /* 10 - supported_groups */
-int parseSupportedGroups(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseSupportedGroups(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -130,7 +130,7 @@ int parseSupportedGroups(const uint8_t *data, size_t len, t_tlsParsedExtensions 
 }
 
 /* 11 - ec_point_formats */
-int parseEcPointFormats(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseEcPointFormats(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	size_t	numFormats;
@@ -184,7 +184,7 @@ int parseEcPointFormats(const uint8_t *data, size_t len, t_tlsParsedExtensions *
 }
 
 /* 12 - srp */
-int parseSrp(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseSrp(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing srp: Not implemented yet !!!");
@@ -192,7 +192,7 @@ int parseSrp(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int is
 }
 
 /* 13 - signature_algorithms */
-int parseSignatureAlgorithms(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseSignatureAlgorithms(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -208,7 +208,7 @@ int parseSignatureAlgorithms(const uint8_t *data, size_t len, t_tlsParsedExtensi
 }
 
 /* 14 - use_srtp */
-int parseUseSrtp(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseUseSrtp(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 4) return (1);
@@ -233,7 +233,7 @@ int parseUseSrtp(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, in
 }
 
 /* 15 - heartbeat */
-int parseHeartbeat(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseHeartbeat(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 1) return (1);
@@ -243,7 +243,7 @@ int parseHeartbeat(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, 
 }
 
 /* 16 - alpn */
-int parseAlpn(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseAlpn(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -276,7 +276,7 @@ int parseAlpn(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int i
 }
 
 /* 17 - status_request_v2 */
-int parseStatusRequestV2(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseStatusRequestV2(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -308,7 +308,7 @@ int parseStatusRequestV2(const uint8_t *data, size_t len, t_tlsParsedExtensions 
 }
 
 /* 18 - signed_certificate_timestamp (SCT) */
-int parseSct(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseSct(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -336,7 +336,7 @@ int parseSct(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int is
 }
 
 /* 19 - client_certificate_type */
-int parseClientCertType(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseClientCertType(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 1) return (1);
@@ -348,7 +348,7 @@ int parseClientCertType(const uint8_t *data, size_t len, t_tlsParsedExtensions *
 }
 
 /* 20 - server_certificate_type */
-int parseServerCertType(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseServerCertType(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 1) return (1);
@@ -360,7 +360,7 @@ int parseServerCertType(const uint8_t *data, size_t len, t_tlsParsedExtensions *
 }
 
 /* 21 - padding */
-int parsePadding(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parsePadding(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)isServer;
 	out->padding.length = len;
@@ -368,7 +368,7 @@ int parsePadding(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, in
 }
 
 /* 22 - encrypt_then_mac (TLS 1.2 only) */
-int parseEncryptThenMac(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseEncryptThenMac(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)isServer;
 	out->encryptThenMac.supported = 1;
@@ -376,7 +376,7 @@ int parseEncryptThenMac(const uint8_t *data, size_t len, t_tlsParsedExtensions *
 }
 
 /* 23 - extended_master_secret */
-int parseExtendedMasterSecret(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseExtendedMasterSecret(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)isServer;
 	out->extendedMasterSecret.supported = 1;
@@ -384,7 +384,7 @@ int parseExtendedMasterSecret(const uint8_t *data, size_t len, t_tlsParsedExtens
 }
 
 /* 24 - token_binding */
-int parseTokenBinding(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseTokenBinding(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -396,7 +396,7 @@ int parseTokenBinding(const uint8_t *data, size_t len, t_tlsParsedExtensions *ou
 }
 
 /* 25 - cachedInfo */
-int parseCachedInfo(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseCachedInfo(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -410,7 +410,7 @@ int parseCachedInfo(const uint8_t *data, size_t len, t_tlsParsedExtensions *out,
 }
 
 /* 26 - tls_lts (draft) */
-int parseTlsLts(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseTlsLts(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing tls_lts: Not implemented yet !!!");
@@ -418,7 +418,7 @@ int parseTlsLts(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int
 }
 
 /* 28 - record_size_limit (shared) */
-int parseRecordSizeLimit(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseRecordSizeLimit(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -428,7 +428,7 @@ int parseRecordSizeLimit(const uint8_t *data, size_t len, t_tlsParsedExtensions 
 }
 
 /* 29 - pwd_protect */
-int parsePwdProtect(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parsePwdProtect(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing pwd_protect: Not implemented yet !!!");
@@ -436,7 +436,7 @@ int parsePwdProtect(const uint8_t *data, size_t len, t_tlsParsedExtensions *out,
 }
 
 /* 30 - pwd_clear */
-int parsePwdClear(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parsePwdClear(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing pwd_clear: Not implemented yet !!!");
@@ -444,7 +444,7 @@ int parsePwdClear(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, i
 }
 
 /* 31 - password_salt */
-int parsePasswordSalt(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parsePasswordSalt(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing password_salt: Not implemented yet !!!");
@@ -452,7 +452,7 @@ int parsePasswordSalt(const uint8_t *data, size_t len, t_tlsParsedExtensions *ou
 }
 
 /* 32 - ticket_pinning */
-int parseTicketPinning(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseTicketPinning(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -466,7 +466,7 @@ int parseTicketPinning(const uint8_t *data, size_t len, t_tlsParsedExtensions *o
 }
 
 /* 33 - tls_cert_with_extern_psk (shared) */
-int parseTlsCertWithExternPsk(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseTlsCertWithExternPsk(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing tls_cert_with_extern_psk: Not implemented yet !!!");
@@ -474,7 +474,7 @@ int parseTlsCertWithExternPsk(const uint8_t *data, size_t len, t_tlsParsedExtens
 }
 
 /* 35 - session_ticket (RFC 5077) */
-int parseSessionTicket(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseSessionTicket(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	if (!isServer && len > 0) {
 		out->sessionTicketLen = len;
@@ -486,17 +486,17 @@ int parseSessionTicket(const uint8_t *data, size_t len, t_tlsParsedExtensions *o
 }
 
 /* 36,37,38 - TLMSP */
-int parseTlmsp(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseTlmsp(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing TLMSP: Not implemented yet !!!");
 	return (1);
 }
-int parseTlmspProxying(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer) { return parseTlmsp(data, len, out, isServer); }
-int parseTlmspDelegate(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer) { return parseTlmsp(data, len, out, isServer); }
+int parseTlmspProxying(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer) { return parseTlmsp(data, len, out, isServer); }
+int parseTlmspDelegate(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer) { return parseTlmsp(data, len, out, isServer); }
 
 /* 39 - supported_ekt_ciphers */
-int parseSupportedEktCiphers(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseSupportedEktCiphers(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -512,7 +512,7 @@ int parseSupportedEktCiphers(const uint8_t *data, size_t len, t_tlsParsedExtensi
 }
 
 /* 52 - transparency_info (ignore) */
-int parseTransparencyInfo(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseTransparencyInfo(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing transparency_info: Not implemented yet !!!");
@@ -520,7 +520,7 @@ int parseTransparencyInfo(const uint8_t *data, size_t len, t_tlsParsedExtensions
 }
 
 /* 54 - connection_id */
-int parseConnectionId(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseConnectionId(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -534,14 +534,14 @@ int parseConnectionId(const uint8_t *data, size_t len, t_tlsParsedExtensions *ou
 }
 
 /* 53 - connection_id (deprecated) */
-int parseConnectionIdDeprecated(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseConnectionIdDeprecated(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	return (parseConnectionId(data, len, out, isServer));
 }
 
 
 /* 55 - external_id_hash */
-int parseExternalIdHash(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseExternalIdHash(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	out->externalIdHash.hashLen = len;
@@ -552,7 +552,7 @@ int parseExternalIdHash(const uint8_t *data, size_t len, t_tlsParsedExtensions *
 }
 
 /* 56 - external_session_id */
-int parseExternalSessionId(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseExternalSessionId(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	out->externalSessionId.idLen = len;
@@ -563,7 +563,7 @@ int parseExternalSessionId(const uint8_t *data, size_t len, t_tlsParsedExtension
 }
 
 /* 58 - ticket_request */
-int parseTicketRequest(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseTicketRequest(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)isServer;
 	out->ticketRequest.request = 1;
@@ -571,7 +571,7 @@ int parseTicketRequest(const uint8_t *data, size_t len, t_tlsParsedExtensions *o
 }
 
 /* 59 - dnssec_chain (ignore) */
-int parseDnssecChain(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseDnssecChain(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing dnssec_chain: Not implemented yet !!!");
@@ -579,7 +579,7 @@ int parseDnssecChain(const uint8_t *data, size_t len, t_tlsParsedExtensions *out
 }
 
 /* 60 - seq_num_encryption_algs (ignore) */
-int parseSeqNumEncryptionAlgs(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseSeqNumEncryptionAlgs(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing seq_num_encryption_algs: Not implemented yet !!!");
@@ -587,7 +587,7 @@ int parseSeqNumEncryptionAlgs(const uint8_t *data, size_t len, t_tlsParsedExtens
 }
 
 /* 61 - rrc */
-int parseRrc(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseRrc(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -601,7 +601,7 @@ int parseRrc(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int is
 }
 
 /* 62 - tls_flags */
-int parseTlsFlags(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseTlsFlags(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 8) return (1);

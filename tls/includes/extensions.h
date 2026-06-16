@@ -453,7 +453,7 @@ typedef struct s_tlsGrease
  * ServerHello message. It separates fields by category and includes both
  * TLS 1.3 specific features and features shared with TLS 1.2.
  */
-typedef struct s_tlsParsedExtensions
+typedef struct s_tlsExtensions
 {
 	/* ===== Version negotiation (TLS 1.3) ===== */
 	uint16_t	supportedVersions[4];	/* Versions supported by client */
@@ -538,12 +538,12 @@ typedef struct s_tlsParsedExtensions
 	/* ===== SRTP (shared) ===== */
 	t_tlsSrtp			srtp;				/* SRTP protection profiles */
 	
-}	t_tlsParsedExtensions;
+}	t_tlsExtensions;
 
 typedef struct s_tlsExtension {
 	uint16_t	type;				/* Extension type */
 	const char	*name;				/* Extension name (for debugging) */
-	int			(*parser)(const uint8_t *data, size_t dataLen, t_tlsParsedExtensions *out, int isServer);	/* Parser function for this extension */
+	int			(*parser)(const uint8_t *data, size_t dataLen, t_tlsExtensions *out, int isServer);	/* Parser function for this extension */
 	uint8_t		supportedVersions;	/* Bitmask of supported TLS versions (1.2=0x01, 1.3=0x02) */
 }	t_tlsExtension;
 
@@ -561,14 +561,14 @@ typedef struct s_tlsExtension {
  * @param isServerHello	1 if parsing ServerHello, 0 if parsing ClientHello
  * @return				1 on success, 0 on error
  */
-int		tlsParseExtensions(const uint8_t *data, size_t dataLen, t_tlsParsedExtensions *out, int isServerHello);
+int		tlsParseExtensions(const uint8_t *data, size_t dataLen, t_tlsExtensions *out, int isServerHello);
 
 /**
  * @brief Encode extensions into wire format for ClientHello or ServerHello
  *
  * This function encodes the parsed extensions back into wire format for
  * inclusion in a ClientHello or ServerHello message. It iterates over all
- * fields in the t_tlsParsedExtensions structure and encodes them according
+ * fields in the t_tlsExtensions structure and encodes them according
  * to their respective formats, building the final extensions block.
  *
  * @param ext			Parsed extensions to encode
@@ -577,29 +577,29 @@ int		tlsParseExtensions(const uint8_t *data, size_t dataLen, t_tlsParsedExtensio
  * @param isServerHello	1 if encoding for ServerHello, 0 if encoding for ClientHello
  * @return				1 on success, 0 on error
  */
-int		tlsEncodeExtensions(const t_tlsParsedExtensions *ext, uint8_t *out, size_t *outLen, int isServerHello);
+int		tlsEncodeExtensions(const t_tlsExtensions *ext, uint8_t *out, size_t *outLen, int isServerHello);
 
 /**
- * @brief Free all dynamically allocated memory in a t_tlsParsedExtensions structure
+ * @brief Free all dynamically allocated memory in a t_tlsExtensions structure
  *
- * This function frees all dynamically allocated buffers within the t_tlsParsedExtensions
+ * This function frees all dynamically allocated buffers within the t_tlsExtensions
  * structure, such as supported groups, key shares, PSKs, ALPN protocols, OCSP responses, etc.
  * It also resets the structure to zero after freeing.
  *
  * @param ext	Structure to free (must be initialised)
  */
-void tlsFreeParsedExtensions(t_tlsParsedExtensions *ext);
+void tlsFreeParsedExtensions(t_tlsExtensions *ext);
 
 /**
  * @brief Print the contents of parsed extensions for debugging
  *
- * This function prints the contents of a t_tlsParsedExtensions structure in a
+ * This function prints the contents of a t_tlsExtensions structure in a
  * human-readable format. It is useful for debugging and understanding what
  * extensions were received and how they were parsed.
  *
  * @param ext	Parsed extensions to print
  */
-void tlsPrintParsedExtensions(const t_tlsParsedExtensions *ext);
+void tlsPrintParsedExtensions(const t_tlsExtensions *ext);
 
 /* -------------------- Private helper functions for encoding specific extensions -------------------- */
 

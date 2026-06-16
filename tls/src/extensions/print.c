@@ -151,8 +151,6 @@ int tlsPrintHello(const t_tlsHello *hello)
 		printCipherSuites(hello->cipherSuites, hello->numCipherSuites);
 		ft_printf("\n");
 	}
-	else
-		ft_printf("\033[94m\tcipher_suites:\033[0m (none)\n");
 
 	if (hello->numCompressionMethods > 0)
 	{
@@ -165,18 +163,18 @@ int tlsPrintHello(const t_tlsHello *hello)
 		}
 		ft_printf("\n");
 	}
-	else
-		ft_printf("\033[96m\tcompression_methods:\033[0m (none)\n");
 
 	if (hello->selectedCipherSuite != 0)
-		ft_printf("\033[92m\tselected_cipher_suite:\033[0m 0x%04x\n", hello->selectedCipherSuite);
+		ft_printf("\033[92m\tselected_cipher_suite:\033[0m %s (0x%04x)\n",
+		          getCipherSuite(hello->selectedCipherSuite) ? getCipherSuite(hello->selectedCipherSuite)->name : "",
+		          hello->selectedCipherSuite);
 	if (hello->selectedCompression != 0)
 		ft_printf("\033[93m\tselected_compression:\033[0m 0x%02x\n", hello->selectedCompression);
 
 	if (hello->extensionsLen > 0)
 	{
 		ft_printf("\033[35m\textensions\033[0m (%zu bytes)\n", hello->extensionsLen);
-		tlsPrintParsedExtensions(&hello->parsedExtensions);
+		tlsPrintParsedExtensions(&hello->extensions);
 	}
 	else
 		ft_printf("\033[35m\textensions:\033[0m (none)\n");
@@ -185,7 +183,7 @@ int tlsPrintHello(const t_tlsHello *hello)
 	return (1);
 }
 
-void tlsPrintParsedExtensions(const t_tlsParsedExtensions *ext)
+void tlsPrintParsedExtensions(const t_tlsExtensions *ext)
 {
 	if (!ext) {
 		ft_printf("\t\t(null)\n");
@@ -267,7 +265,7 @@ void tlsPrintParsedExtensions(const t_tlsParsedExtensions *ext)
 			ft_printf("\t\t\t\tgroup: ");
 			printGroupList(&ext->keyShares[i].group, 1);
 			ft_printf("\n\t\t\t\tkey_exchange (%zu bytes): ", ext->keyShares[i].keyLen);
-			printHex(ext->keyShares[i].key, ext->keyShares[i].keyLen, 16);
+			printHex(ext->keyShares[i].key, ext->keyShares[i].keyLen, 32);
 			ft_printf("\n");
 		}
 		ft_printf("\n");
@@ -308,7 +306,7 @@ void tlsPrintParsedExtensions(const t_tlsParsedExtensions *ext)
 			ft_printf("\n\t\t\t\tobfuscated_ticket_age: %u\n",
 			          ext->psks[i].obfuscatedTicketAge);
 			ft_printf("\t\t\t\tbinder: ");
-			printHex(ext->psks[i].binder, ext->psks[i].binderLen, 16);
+			printHex(ext->psks[i].binder, ext->psks[i].binderLen, 32);
 			ft_printf("\n");
 		}
 		ft_printf("\n");

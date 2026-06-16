@@ -18,70 +18,70 @@ static int isGrease(uint16_t value)
 
 /* --------------- External declarations of all parsers --------------- */
 /* From extensions_tls12.c */
-extern int parseServerName(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseMaxFragmentLength(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseTrustedCaKeys(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseTruncatedHmac(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseStatusRequest(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseUserMapping(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseClientAuthz(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseServerAuthz(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseCertType(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseSupportedGroups(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseEcPointFormats(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseSrp(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseSignatureAlgorithms(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseUseSrtp(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseHeartbeat(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseAlpn(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseStatusRequestV2(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseSct(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseClientCertType(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseServerCertType(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parsePadding(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseEncryptThenMac(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseExtendedMasterSecret(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseTokenBinding(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseCachedInfo(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseTlsLts(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseRecordSizeLimit(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parsePwdProtect(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parsePwdClear(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parsePasswordSalt(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseTicketPinning(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseTlsCertWithExternPsk(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseSessionTicket(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseTlmsp(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseTlmspProxying(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseTlmspDelegate(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseSupportedEktCiphers(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseTransparencyInfo(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseConnectionIdDeprecated(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseConnectionId(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseExternalIdHash(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseExternalSessionId(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseTicketRequest(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseDnssecChain(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseSeqNumEncryptionAlgs(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseRrc(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseTlsFlags(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
+extern int parseServerName(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseMaxFragmentLength(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseTrustedCaKeys(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseTruncatedHmac(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseStatusRequest(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseUserMapping(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseClientAuthz(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseServerAuthz(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseCertType(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseSupportedGroups(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseEcPointFormats(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseSrp(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseSignatureAlgorithms(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseUseSrtp(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseHeartbeat(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseAlpn(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseStatusRequestV2(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseSct(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseClientCertType(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseServerCertType(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parsePadding(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseEncryptThenMac(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseExtendedMasterSecret(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseTokenBinding(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseCachedInfo(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseTlsLts(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseRecordSizeLimit(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parsePwdProtect(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parsePwdClear(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parsePasswordSalt(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseTicketPinning(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseTlsCertWithExternPsk(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseSessionTicket(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseTlmsp(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseTlmspProxying(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseTlmspDelegate(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseSupportedEktCiphers(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseTransparencyInfo(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseConnectionIdDeprecated(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseConnectionId(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseExternalIdHash(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseExternalSessionId(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseTicketRequest(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseDnssecChain(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseSeqNumEncryptionAlgs(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseRrc(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseTlsFlags(const uint8_t*, size_t, t_tlsExtensions*, int);
 
 /* From extensions_tls13.c */
-extern int parseCompressCertificate(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseDelegatedCredential(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parsePreSharedKey(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseEarlyData(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseSupportedVersions(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseCookie(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parsePskKeyExchangeModes(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseCertificateAuthorities(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseOidFilters(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parsePostHandshakeAuth(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseSignatureAlgsCert(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseKeyShare(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseQuicTransportParams(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseEchOuterExtensions(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
-extern int parseEncryptedClientHello(const uint8_t*, size_t, t_tlsParsedExtensions*, int);
+extern int parseCompressCertificate(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseDelegatedCredential(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parsePreSharedKey(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseEarlyData(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseSupportedVersions(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseCookie(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parsePskKeyExchangeModes(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseCertificateAuthorities(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseOidFilters(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parsePostHandshakeAuth(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseSignatureAlgsCert(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseKeyShare(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseQuicTransportParams(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseEchOuterExtensions(const uint8_t*, size_t, t_tlsExtensions*, int);
+extern int parseEncryptedClientHello(const uint8_t*, size_t, t_tlsExtensions*, int);
 
 /* ============================================================================
  * Dispatch table (ordered by extension type)
@@ -158,12 +158,12 @@ static const t_tlsExtension g_tlsExtensions[] = {
 
 
 
-int tlsParseExtensions(const uint8_t *data, size_t dataLen, t_tlsParsedExtensions *out, int isServerHello)
+int tlsParseExtensions(const uint8_t *data, size_t dataLen, t_tlsExtensions *out, int isServerHello)
 {
 	const uint8_t *ptr = data;
 	size_t remaining = dataLen;
 	if (!data || !out) return (0);
-	ft_bzero(out, sizeof(t_tlsParsedExtensions));
+	ft_bzero(out, sizeof(t_tlsExtensions));
 	while (remaining >= 4) {
 		uint16_t extType = readUint16(ptr);
 		uint16_t extLen = readUint16(ptr + 2);
@@ -190,7 +190,7 @@ int tlsParseExtensions(const uint8_t *data, size_t dataLen, t_tlsParsedExtension
 	return (1);
 }
 
-void tlsFreeParsedExtensions(t_tlsParsedExtensions *ext)
+void tlsFreeParsedExtensions(t_tlsExtensions *ext)
 {
 	if (!ext) return;
 	free(ext->supportedGroups);
@@ -253,5 +253,5 @@ void tlsFreeParsedExtensions(t_tlsParsedExtensions *ext)
 	free(ext->psks);
 	free(ext->srtp.profiles);
 	free(ext->srtp.mki);
-	ft_bzero(ext, sizeof(t_tlsParsedExtensions));
+	ft_bzero(ext, sizeof(t_tlsExtensions));
 }

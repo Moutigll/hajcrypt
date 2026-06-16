@@ -7,7 +7,7 @@
 #include "../../includes/constants.h"
 
 /* 27 - compress_certificate */
-int parseCompressCertificate(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseCompressCertificate(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -24,7 +24,7 @@ int parseCompressCertificate(const uint8_t *data, size_t len, t_tlsParsedExtensi
 }
 
 /* 34 - delegated_credential */
-int parseDelegatedCredential(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseDelegatedCredential(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	out->delegatedCredential.credentialLen = len;
@@ -35,7 +35,7 @@ int parseDelegatedCredential(const uint8_t *data, size_t len, t_tlsParsedExtensi
 }
 
 /* 41 - pre_shared_key */
-int parsePreSharedKey(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parsePreSharedKey(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)out; (void)isServer;
 	BTLS_DEBUG("Parsing pre_shared_key: Not implemented yet !!!");
@@ -43,7 +43,7 @@ int parsePreSharedKey(const uint8_t *data, size_t len, t_tlsParsedExtensions *ou
 }
 
 /* 42 - early_data */
-int parseEarlyData(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseEarlyData(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	if (isServer)
 		out->earlyDataLen = 0;
@@ -53,7 +53,7 @@ int parseEarlyData(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, 
 }
 
 /* 43 - supported_versions */
-int parseSupportedVersions(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseSupportedVersions(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	if (!isServer) {
 		if (len < 1) return (1);
@@ -70,7 +70,7 @@ int parseSupportedVersions(const uint8_t *data, size_t len, t_tlsParsedExtension
 }
 
 /* 44 - cookie */
-int parseCookie(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseCookie(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -84,7 +84,7 @@ int parseCookie(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int
 }
 
 /* 45 - psk_key_exchange_modes */
-int parsePskKeyExchangeModes(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parsePskKeyExchangeModes(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -99,7 +99,7 @@ int parsePskKeyExchangeModes(const uint8_t *data, size_t len, t_tlsParsedExtensi
 }
 
 /* 47 - certificate_authorities */
-int parseCertificateAuthorities(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseCertificateAuthorities(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -131,7 +131,7 @@ int parseCertificateAuthorities(const uint8_t *data, size_t len, t_tlsParsedExte
 }
 
 /* 48 - oid_filters */
-int parseOidFilters(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseOidFilters(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -163,7 +163,7 @@ int parseOidFilters(const uint8_t *data, size_t len, t_tlsParsedExtensions *out,
 }
 
 /* 49 - post_handshake_auth */
-int parsePostHandshakeAuth(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parsePostHandshakeAuth(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)data; (void)len; (void)isServer;
 	out->postHandshakeAuth = 1;
@@ -171,7 +171,7 @@ int parsePostHandshakeAuth(const uint8_t *data, size_t len, t_tlsParsedExtension
 }
 
 /* 50 - signature_algorithms_cert */
-int parseSignatureAlgsCert(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseSignatureAlgsCert(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -187,7 +187,7 @@ int parseSignatureAlgsCert(const uint8_t *data, size_t len, t_tlsParsedExtension
 }
 
 /* 51 - key_share */
-int parseKeyShare(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseKeyShare(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	if (isServer) {
 		if (len < 4) return (1);
@@ -230,7 +230,7 @@ int parseKeyShare(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, i
 }
 
 /* 57 - quic_transport_parameters */
-int parseQuicTransportParams(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseQuicTransportParams(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	out->quicParams.paramsLen = len;
@@ -241,7 +241,7 @@ int parseQuicTransportParams(const uint8_t *data, size_t len, t_tlsParsedExtensi
 }
 
 /* 64768 - ech_outer_extensions */
-int parseEchOuterExtensions(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseEchOuterExtensions(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	if (len < 2) return (1);
@@ -257,7 +257,7 @@ int parseEchOuterExtensions(const uint8_t *data, size_t len, t_tlsParsedExtensio
 }
 
 /* 65037 - encrypted_client_hello (ECH) */
-int parseEncryptedClientHello(const uint8_t *data, size_t len, t_tlsParsedExtensions *out, int isServer)
+int parseEncryptedClientHello(const uint8_t *data, size_t len, t_tlsExtensions *out, int isServer)
 {
 	(void)isServer;
 	out->ech.enabled = 1;

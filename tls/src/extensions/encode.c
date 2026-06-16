@@ -12,75 +12,75 @@ void putExt(uint8_t *out, size_t *pos, uint16_t type, const uint8_t *data, size_
 
 /* ----- Forward declarations - encode_tls12.c ----- */
 
-extern void encSni(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer);
-extern void encMaxFragLen(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encTrustedCaKeys(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encTruncatedHmac(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encStatusRequest(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer);
-extern void encUserMapping(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encClientAuthz(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encServerAuthz(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encCertType(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer);
-extern void encSupportedGroups(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encEcPointFormats(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encSrp(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encSigAlgs(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encUseSrtp(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encHeartbeat(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encAlpn(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer);
-extern void encStatusRequestV2(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer);
-extern void encSct(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encPadding(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encEncryptThenMac(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encExtendedMasterSecret(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encTokenBinding(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encCachedInfo(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encTlsLts(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encRecordSizeLimit(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encPwdProtect(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encPwdClear(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encPasswordSalt(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encTicketPinning(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encTlsCertWithExternPsk(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encSessionTicket(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer);
-extern void encTlsp(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encTlspProxying(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encTlspDelegate(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encSupportedEktCiphers(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
+extern void encSni(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer);
+extern void encMaxFragLen(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encTrustedCaKeys(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encTruncatedHmac(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encStatusRequest(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer);
+extern void encUserMapping(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encClientAuthz(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encServerAuthz(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encCertType(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer);
+extern void encSupportedGroups(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encEcPointFormats(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encSrp(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encSigAlgs(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encUseSrtp(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encHeartbeat(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encAlpn(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer);
+extern void encStatusRequestV2(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer);
+extern void encSct(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encPadding(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encEncryptThenMac(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encExtendedMasterSecret(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encTokenBinding(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encCachedInfo(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encTlsLts(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encRecordSizeLimit(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encPwdProtect(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encPwdClear(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encPasswordSalt(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encTicketPinning(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encTlsCertWithExternPsk(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encSessionTicket(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer);
+extern void encTlsp(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encTlspProxying(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encTlspDelegate(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encSupportedEktCiphers(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
 
 /* ----- Forward declarations - encode_tls13.c ----- */
 
-extern void encCompressCert(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encDelegatedCredential(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encPreSharedKey(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer);
-extern void encEarlyData(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encSupportedVersions(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer);
-extern void encCookie(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encPskKeyExchangeModes(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encCertAuthorities(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encOidFilters(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encPostHandshakeAuth(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encSigAlgsCert(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encKeyShare(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer);
-extern void encTransparencyInfo(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encConnectionIdDepr(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encConnectionId(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encExternalIdHash(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encExternalSessionId(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encQuicTransportParams(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encTicketRequest(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encDnssecChain(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encSeqNumEncryptionAlgs(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encRrc(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encTlsFlags(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encEchOuterExtensions(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
-extern void encEch(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e);
+extern void encCompressCert(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encDelegatedCredential(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encPreSharedKey(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer);
+extern void encEarlyData(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encSupportedVersions(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer);
+extern void encCookie(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encPskKeyExchangeModes(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encCertAuthorities(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encOidFilters(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encPostHandshakeAuth(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encSigAlgsCert(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encKeyShare(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer);
+extern void encTransparencyInfo(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encConnectionIdDepr(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encConnectionId(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encExternalIdHash(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encExternalSessionId(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encQuicTransportParams(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encTicketRequest(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encDnssecChain(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encSeqNumEncryptionAlgs(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encRrc(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encTlsFlags(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encEchOuterExtensions(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
+extern void encEch(uint8_t *out, size_t *pos, const t_tlsExtensions *e);
 
 
 
 /* --------------- Public function to encode extensions into wire format --------------- */
 
-int tlsEncodeExtensions(const t_tlsParsedExtensions *ext, uint8_t *out,
+int tlsEncodeExtensions(const t_tlsExtensions *ext, uint8_t *out,
 						size_t *outLen, int isServerHello)
 {
 	if (!ext || !outLen) return 0;

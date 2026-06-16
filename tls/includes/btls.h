@@ -1,8 +1,14 @@
 #ifndef BTLS_H
 # define BTLS_H
 
-# include "handshake.h"
+# include "../../includes/asymmetric/pkey.h"
+# include "../../includes/asymmetric/kex.h"
+# include "../../includes/hash/hash.h"
+# include "../../includes/x509/cert.h"
+
 # include "io.h"
+#include "record.h"
+#include "keySchedule.h"
 
 /**
  * @brief TLS version negotiation
@@ -19,6 +25,116 @@ typedef enum e_tlsVersionPref
 	TLS_VERSION_PREF_TLS12_ONLY,			/* Only TLS 1.2 */
 	TLS_VERSION_PREF_TLS13_AND_12,			/* Both TLS 1.3 and 1.2, prefer 1.3 */
 }	t_tlsVersionPref;
+
+/**
+ * @brief TLS handshake state machine states
+ *
+ * This enumeration tracks the progress of a TLS handshake through its various
+ * stages. States are separated by protocol version (TLS 1.3 vs TLS 1.2) and
+ * role (client vs server). The state machine transitions as messages are
+ * sent and received during the handshake.
+ */
+typedef enum e_tlsHandshakeState
+{
+	/* Initial states */
+	TLS_HS_STATE_IDLE = 0,
+
+	/* TLS 1.3 - Server side */
+	TLS_HS_STATE_TLS13_SERVER_HELLO_SENT,
+	TLS_HS_STATE_TLS13_EE_SENT,			/* EncryptedExtensions */
+	TLS_HS_STATE_TLS13_CERT_SENT,		/* Certificate */
+	TLS_HS_STATE_TLS13_CV_SENT,			/* CertificateVerify */
+	TLS_HS_STATE_TLS13_FINISHED_SENT,
+	TLS_HS_STATE_TLS13_FINISHED_RECVD,
+
+	/* TLS 1.3 - Client side */
+	TLS_HS_STATE_TLS13_CLIENT_HELLO_SENT,
+	TLS_HS_STATE_TLS13_SERVER_HELLO_RECVD,
+	TLS_HS_STATE_TLS13_EE_RECVD,
+	TLS_HS_STATE_TLS13_CERT_RECVD,
+	TLS_HS_STATE_TLS13_CV_RECVD,
+	TLS_HS_STATE_TLS13_FINISHED_RECVD_CLIENT,
+	TLS_HS_STATE_TLS13_FINISHED_SENT_CLIENT,
+
+	/* TLS 1.2 - Server side */
+	TLS_HS_STATE_TLS12_SERVER_HELLO_SENT,
+	TLS_HS_STATE_TLS12_CERT_SENT,
+	TLS_HS_STATE_TLS12_SKE_SENT,		/* ServerKeyExchange */
+	TLS_HS_STATE_TLS12_SHD_SENT,		/* ServerHelloDone */
+	TLS_HS_STATE_TLS12_CERT_RECVD,
+	TLS_HS_STATE_TLS12_CKE_RECVD,		/* ClientKeyExchange */
+	TLS_HS_STATE_TLS12_CV_RECVD,		/* CertificateVerify */
+	TLS_HS_STATE_TLS12_CCS_RECVD,		/* ChangeCipherSpec */
+	TLS_HS_STATE_TLS12_FINISHED_RECVD,
+	TLS_HS_STATE_TLS12_CCS_SENT,
+	TLS_HS_STATE_TLS12_FINISHED_SENT,
+
+	/* TLS 1.2 - Client side */
+	TLS_HS_STATE_TLS12_CLIENT_HELLO_SENT,
+	TLS_HS_STATE_TLS12_SERVER_HELLO_RECVD,
+	TLS_HS_STATE_TLS12_CERT_RECVD_CLIENT,
+	TLS_HS_STATE_TLS12_SKE_RECVD,
+	TLS_HS_STATE_TLS12_CR_RECVD,		/* CertificateRequest */
+	TLS_HS_STATE_TLS12_SHD_RECVD,		/* ServerHelloDone */
+	TLS_HS_STATE_TLS12_CERT_SENT_CLIENT,
+	TLS_HS_STATE_TLS12_CKE_SENT,
+	TLS_HS_STATE_TLS12_CV_SENT_CLIENT,
+	TLS_HS_STATE_TLS12_CCS_SENT_CLIENT,
+	TLS_HS_STATE_TLS12_FINISHED_SENT_CLIENT,
+	TLS_HS_STATE_TLS12_CCS_RECVD_CLIENT,
+	TLS_HS_STATE_TLS12_FINISHED_RECVD_CLIENT,
+
+	/* Final states */
+	TLS_HS_STATE_CONNECTED,
+	TLS_HS_STATE_ERROR
+}	t_tlsHandshakeState;
+
+/**
+ * @brief TLS handshake context structure
+ *
+ * This structure holds all state for a TLS handshake including the current
+ * state machine position, protocol version, cipher suite, transcript hash,
+ * key schedule secrets, record protection contexts, key exchange material,
+ * and certificate chains.
+ */
+typedef struct s_tlsHandshakeCtx
+{
+	/* State */
+	t_tlsHandshakeState	state;				/* Current handshake state */
+	int					isClient;			/* 1 for client, 0 for server */
+	uint16_t			version;			/* Negotiated TLS version */
+
+	/* Transcript hash */
+	t_hash				transcriptHash;		/* Hash algorithm for transcript */
+	uint8_t				transcript[256];		/* Running transcript hash */
+
+	uint8_t				clientRandom[32];		/* Client random (from ClientHello) */
+	uint8_t				serverRandom[32];		/* Server random (from ServerHello) */
+
+	/* Negotiation */
+	uint16_t			cipherSuite;		/* Negotiated cipher suite */
+
+	/* Key schedule (TLS 1.3) */
+	t_tls13Secrets		secrets;			/* Derived secrets */
+
+	/* Record layer */
+	t_tlsRecordCtx		handshakeSendCtx;	/* Sending handshake traffic */
+	t_tlsRecordCtx		handshakeRecvCtx;	/* Receiving handshake traffic */
+	t_tlsRecordCtx		appSendCtx;			/* Sending application data */
+	t_tlsRecordCtx		appRecvCtx;			/* Receiving application data */
+
+	/* Key exchange */
+	t_kexCtx			*keyExchangeCtx;	/* Key exchange context */
+	uint8_t				sharedSecret[64];	/* Computed shared secret */
+	size_t				sharedSecretLen;	/* Length of shared secret */
+
+	/* Our certificate chain */
+	t_certChain			*certChain;			/* Our certificate chain (leaf first) */
+	t_pkey				*privateKey;		/* Our private key */
+
+	/* Peer certificate (received) */
+	t_certChain			*peerCertChain;		/* Peer certificate chain (leaf first) */
+}	t_tlsHandshakeCtx;
 
 /**
  * @brief Supported ALPN protocols (Application-Layer Protocol Negotiation)
@@ -214,10 +330,12 @@ typedef struct s_tlsCertVerify
  */
 typedef struct s_tlsParams
 {
+	int						middleboxCompat;	/* 1 if operating in middlebox compatibility mode */
 	t_tlsVersionPref		versionPref;		/* Preferred TLS version */
 	int						isClient;			/* 1 for client, 0 for server */
 	int						socket;				/* Connected socket */
 	int						isBlocking;			/* 1 for blocking mode, 0 for non-blocking */
+	int						sendGrease;			/* 1 to include GREASE values when possible */
 	t_tlsAlpn				alpn;				/* ALPN negotiation */
 	t_tlsSni				sni;				/* SNI for virtual hosting */
 	t_tlsQuicParams			quic;				/* QUIC transport parameters */
@@ -255,7 +373,7 @@ typedef struct s_tlsCtx
 	uint8_t				appDataBuf[TLS_MAX_FRAGMENT_LEN];	/* Application data buffer */
 	size_t				appDataLen;		/* Length of application data */
 	int					lastError;		/* Last error code */
-	char				errorMsg[256];	/* Human-readable error message */
+	char				*errorMsg;		/* Human-readable error message */
 }	t_tlsCtx;
 
 
@@ -447,6 +565,22 @@ int		tlsSetVerify(t_tlsCtx *ctx, int verifyPeer, const char *caFile, const char 
 int		tlsSetVerifyHostname(t_tlsCtx *ctx, const char *hostname);
 
 /**
+ * @brief Set server certificate and private key from files
+ *
+ * This function loads the server's certificate chain and private key
+ * directly from files. The certificate file can be PEM (single or
+ * concatenated) or DER. The private key must be PEM format.
+ * Ownership of both is transferred to the TLS context.
+ *
+ * @param ctx           TLS context
+ * @param certFile      Path to certificate chain file (PEM or DER)
+ * @param keyFile       Path to private key file (PEM)
+ * @param keyPassword   Password for the private key file (if encrypted)
+ * @return              TLS_SUCCESS on success, error code otherwise
+ */
+int     tlsSetServerCert(t_tlsCtx *ctx, const char *certFile, const char *keyFile, const char *keyPassword);
+
+/**
  * @brief Perform TLS handshake as client
  *
  * This function initiates the TLS handshake from the client side.
@@ -528,10 +662,9 @@ int		tlsIsConnected(t_tlsCtx *ctx);
  *
  * @param ctx		TLS context
  * @param certChain	Output pointer to certificate chain data
- * @param len		Output length of certificate chain
  * @return			1 if certificate is available, 0 otherwise
  */
-int		tlsGetPeerCertificate(t_tlsCtx *ctx, uint8_t **certChain, size_t *len);
+int		tlsGetPeerCertificate(t_tlsCtx *ctx, t_certChain **certChain);
 
 /**
  * @brief Export keying material (RFC 5705)

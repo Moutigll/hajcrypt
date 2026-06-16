@@ -63,6 +63,8 @@ static int parseServerSpecific(const uint8_t **ptr, size_t *remaining, t_tlsHell
 	return (1);
 }
 
+#include "../../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
+
 int tlsDecodeHello(const uint8_t *data, size_t dataLen, t_tlsHello *hello, int isServer)
 {
 	uint8_t			msgType;
@@ -74,13 +76,13 @@ int tlsDecodeHello(const uint8_t *data, size_t dataLen, t_tlsHello *hello, int i
 
 	if (!data || !hello)
 		return (0);
-
+	BTLS_DEBUG("Decoding %sHello message (%zu bytes)", isServer ? "Server" : "Client", dataLen);
 	tlsHelloInit(hello);
 
 	if (!handshakeDecode(data, dataLen, &msgType, &body, &bodyLen) ||
 		msgType != (isServer ? TLS_HT_SERVER_HELLO : TLS_HT_CLIENT_HELLO))
 		return (0);
-
+	BTLS_DEBUG("Decoded %sHello message: body length = %zu", isServer ? "Server" : "Client", bodyLen);
 	ptr = body;
 	remaining = bodyLen;
 

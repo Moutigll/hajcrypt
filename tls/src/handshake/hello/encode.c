@@ -124,12 +124,10 @@ int tlsBuildServerHello(t_tlsHello			*serverHello,
 	if (!serverHello || !clientHello || !out || !outLen)
 		return (0);
 
-	/* For tls 1.3 check if required extensions are present */
 	if (selectedVersion == TLS_VERSION_1_3
 		&& (serverHello->extensions.negotiatedVersion != TLS_VERSION_1_3
-		||  serverHello->extensions.numSupportedGroups == 0 || !serverHello->extensions.supportedGroups
 		||  serverHello->extensions.numKeyShares == 0 || !serverHello->extensions.keyShares))
-			return (0);
+		return (0);
 
 	if (serverHello->legacyVersion == 0)
 		serverHello->legacyVersion = 0x0303;
@@ -146,13 +144,13 @@ int tlsBuildServerHello(t_tlsHello			*serverHello,
 		}
 		if (randomEmpty)
 		{
-			if (!hajSecRandBytes(serverHello->random, 32))
+			if (hajSecRandBytes(serverHello->random, 32) != 0)
 				return (0);
 		}
 	}
 
 	if (serverHello->sessionIdLen == 0 && !serverHello->sessionId &&
-		clientHello->sessionIdLen > 0 && clientHello->sessionId) /* Re-use session_id from client if not set in serverHello */
+		clientHello->sessionIdLen > 0 && clientHello->sessionId)
 	{
 		serverHello->sessionIdLen = clientHello->sessionIdLen;
 		serverHello->sessionId = malloc(serverHello->sessionIdLen);
@@ -185,6 +183,90 @@ int tlsBuildServerHello(t_tlsHello			*serverHello,
 	}
 
 	ret = tlsEncodeHello(serverHello, out, outLen, 1);
+
+	return (ret);
+}
+
+int tlsBuildClientHello(t_tlsHello	*clientHello,
+						uint16_t	selectedVersion,
+						uint8_t		*out,
+						size_t		*outLen)
+{
+	int ret;
+
+	if (!clientHello || !out || !outLen)
+		return (0);
+
+	/* Set legacy version to TLS 1.2 (0x0303) as per RFC */
+	if (clientHello->legacyVersion == 0)
+		clientHello->legacyVersion = 0x0303;
+
+	/* Generate random if empty */
+	{
+		int randomEmpty = 1;
+		for (int i = 0; i < 32; i++)
+		{
+			if (clientHello->random[i] != 0)
+			{
+				randomEmpty = 0;
+				break;
+			}
+		}
+		if (randomEmpty)
+		{
+			if (hajSecRandBytes(clientHello->random, 32) != 0)
+				return (0);
+		}
+	}
+
+	/* Generate session ID if empty */
+	if (clientHello->sessionIdLen == 0 && !clientHello->sessionId)
+	{
+		clientHello->sessionIdLen = 32;
+		clientHello->sessionId = malloc(32);
+		if (!clientHello->sessionId)
+			return (0);
+		if (hajSecRandBytes(clientHello->sessionId, 32) != 0)
+		{
+			free(clientHello->sessionId);
+			clientHello->sessionId = NULL;
+			clientHello->sessionIdLen = 0;
+			return (0);
+		}
+	}
+
+	/* Set compression methods if empty (at least null compression) */
+	if (clientHello->numCompressionMethods == 0 && !clientHello->compressionMethods)
+	{
+		static uint8_t nullCompression[] = {0x00};
+		clientHello->compressionMethods = nullCompression;
+		clientHello->numCompressionMethods = 1;
+	}
+
+	/* Encode extensions if not already raw-encoded */
+	if (selectedVersion == TLS_VERSION_1_3)
+	{
+		if (!clientHello->rawExtensions || clientHello->extensionsLen == 0)
+		{
+			size_t extLen;
+			tlsEncodeExtensions(&clientHello->extensions, NULL, &extLen, 0);
+			clientHello->rawExtensions = malloc(extLen);
+			if (!clientHello->rawExtensions)
+				return (0);
+			tlsEncodeExtensions(&clientHello->extensions, clientHello->rawExtensions, &extLen, 0);
+			clientHello->extensionsLen = extLen;
+		}
+	}
+	else /* TLS 1.2 */
+	{
+		if (!clientHello->rawExtensions)
+		{
+			clientHello->rawExtensions = NULL;
+			clientHello->extensionsLen = 0;
+		}
+	}
+
+	ret = tlsEncodeHello(clientHello, out, outLen, 0);
 
 	return (ret);
 }

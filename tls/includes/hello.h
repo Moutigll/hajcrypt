@@ -99,6 +99,25 @@ int tlsBuildServerHello(t_tlsHello			*serverHello,
 						uint16_t 			selectedVersion,
 						uint8_t				*out,	size_t	*outLen);
 
+/**
+ * @brief Builds a ClientHello message
+ *
+ * This function builds a ClientHello message based on the client's supported
+ * versions, cipher suites, groups, and key shares. It populates a t_tlsHello
+ * structure and encodes it into wire format. The resulting ClientHello can be
+ * sent directly to the server.
+ *
+ * @param clientHello		Client Hello structure to fill (must be initialised with tlsHelloInit())
+ * @param selectedVersion	TLS version to indicate in supported_versions extension
+ * @param out				Output buffer
+ * @param outLen			Length written (input: buffer size, output: actual length)
+ * @return					1 on success, 0 on error
+ */
+int tlsBuildClientHello(t_tlsHello       *clientHello,
+                        uint16_t          selectedVersion,
+                        uint8_t          *out,
+                        size_t           *outLen);
+
 int		tlsPrintHello(const t_tlsHello *hello);
 
 #endif /* BTLS_HANDSHAKE_HELLO_H */

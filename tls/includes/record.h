@@ -56,6 +56,7 @@ typedef struct s_tlsRecordCtx
 	t_tlsAeadCipher	aeadCtx;		/* AEAD cipher context (keys, IV, type) */
 	uint64_t		seqNumClient;	/* Sequence number for client → server */
 	uint64_t		seqNumServer;	/* Sequence number for server → client */
+	int				isEncrypt;	
 }	t_tlsRecordCtx;
 
 /**
@@ -78,7 +79,8 @@ int	tlsRecordCtxInit(t_tlsRecordCtx		*ctx,
 					 t_tlsCipherType	cipherType,
 					 const uint8_t		*secret,
 					 size_t				secretLen,
-					 const t_hashAlgo	*hash);
+					 const t_hash		*hash,
+					 int				isEncrypt);
 
 /**
  * @brief Free record context (zero sensitive data)
@@ -108,11 +110,11 @@ void	tlsRecordCtxFree(t_tlsRecordCtx *ctx);
  * @param outputLen		Pointer to output length
  * @return				1 on success, 0 on error
  */
-int	tlsRecordEncrypt(t_tlsRecordCtx		*ctx,
-					 const t_tlsRecord	*record,
-					 int				isClient,
-					 uint8_t			*output,
-					 size_t				*outputLen);
+int	tlsRecordEncrypt(t_tlsRecordCtx	*ctx,
+					 const uint8_t	*fragment,	size_t	fragmentLen,
+					 uint8_t		innerType,
+					 int			isClient,
+					 uint8_t		*output,	size_t	*outputLen);
 
 /**
  * @brief Decrypt a TLS record
@@ -132,12 +134,11 @@ int	tlsRecordEncrypt(t_tlsRecordCtx		*ctx,
  * @param outputLen		Pointer to output length
  * @return				1 on success, 0 on error (including tag mismatch)
  */
-int	tlsRecordDecrypt(t_tlsRecordCtx		*ctx,
-					 const uint8_t		*ciphertext,
-					 size_t				ciphertextLen,
-					 int				isClient,
-					 uint8_t			*output,
-					 size_t				*outputLen);
+int	tlsRecordDecrypt(t_tlsRecordCtx	*ctx,
+					 const uint8_t	*ciphertext,	size_t	ciphertextLen,
+					 int			isClient,
+					 uint8_t		*fragment,		size_t	*fragmentLen,
+					 uint8_t		*innerType);
 
 /**
  * @brief Build a plaintext record from data

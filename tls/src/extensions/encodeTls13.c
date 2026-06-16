@@ -19,7 +19,8 @@ void encPreSharedKey(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int is
 {
 	if (!e->numPsks || !e->psks) return;
 	if (isServer) {
-		uint8_t d[2]; wU16(d, 0, 0);
+		uint8_t d[2];
+		writeUint16(d, 0);
 		putExt(out, pos, TLS_EXT_PRE_SHARED_KEY, d, 2);
 		return;
 	}
@@ -55,7 +56,8 @@ void encEarlyData(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 	if (e->earlyData && e->earlyDataLen)
 		putExt(out, pos, TLS_EXT_EARLY_DATA, e->earlyData, e->earlyDataLen);
 	else if (e->earlyDataLen) {
-		uint8_t d[4]; wU32(d, 0, (uint32_t)e->earlyDataLen);
+		uint8_t d[4];
+		writeUint32(d, (uint32_t)e->earlyDataLen);
 		putExt(out, pos, TLS_EXT_EARLY_DATA, d, 4);
 	}
 }
@@ -64,7 +66,8 @@ void encSupportedVersions(uint8_t *out, size_t *pos, const t_tlsExtensions *e, i
 {
 	if (isServer) {
 		if (!e->negotiatedVersion) return;
-		uint8_t d[2]; wU16(d, 0, e->negotiatedVersion);
+		uint8_t d[2];
+		writeUint16(d, e->negotiatedVersion);
 		putExt(out, pos, TLS_EXT_SUPPORTED_VERSIONS, d, 2);
 		return;
 	}
@@ -202,7 +205,7 @@ void encConnectionId(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 
 void encConnectionIdDepr(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
-	encConnectionId(out, pos, e);   /* reuse the real encoder */
+	encConnectionId(out, pos, e);
 }
 
 void encExternalIdHash(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
@@ -231,13 +234,11 @@ void encTicketRequest(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 void encDnssecChain(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding dnssec_chain: not implemented");
 }
 
 void encSeqNumEncryptionAlgs(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding sequence_number_encryption_algorithms: not implemented");
 }
 
 void encRrc(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
@@ -255,8 +256,7 @@ void encTlsFlags(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->tlsFlags.flags) return;
 	uint8_t d[8];
-	for (int i = 0; i < 8; i++)
-		d[i] = (e->tlsFlags.flags >> (56 - i * 8)) & 0xFF;
+	writeUint64(d, e->tlsFlags.flags);
 	putExt(out, pos, TLS_EXT_TLS_FLAGS, d, 8);
 }
 

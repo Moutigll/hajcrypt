@@ -1,4 +1,3 @@
-
 #include "../../../hajlib/include/hmemory.h"
 #include "../../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
 #include "../../../hajlib/include/hstring.h"
@@ -7,7 +6,7 @@
 
 #include "../../includes/extensions.h"
 
-void encSni(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer)
+void encSni(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer)
 {
 	if (!e->sni.hostname) return;
 	if (isServer) { putExt(out, pos, TLS_EXT_SERVER_NAME, NULL, 0); return; }
@@ -22,7 +21,7 @@ void encSni(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isSer
 	*pos += 4 + dlen;
 }
 
-void encMaxFragLen(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encMaxFragLen(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	uint8_t code;
 	switch (e->maxFragmentLength.length) {
@@ -35,19 +34,19 @@ void encMaxFragLen(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	putExt(out, pos, TLS_EXT_MAX_FRAGMENT_LENGTH, &code, 1);
 }
 
-void encTrustedCaKeys(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encTrustedCaKeys(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
-	(void)out; (void)pos; (void)e;
+	(void)out; (void)pos;
+	if (!e->certAuthorities.numNames || !e->certAuthorities.distinguishedNames) return;
 	BTLS_DEBUG("Encoding trusted_ca_keys: not implemented");
 }
 
-void encTruncatedHmac(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encTruncatedHmac(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding truncated_hmac: not implemented");
 }
 
-void encStatusRequest(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer)
+void encStatusRequest(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer)
 {
 	if (!e->ocsp.requested) return;
 	if (isServer) { putExt(out, pos, TLS_EXT_STATUS_REQUEST, NULL, 0); return; }
@@ -55,25 +54,22 @@ void encStatusRequest(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e,
 	putExt(out, pos, TLS_EXT_STATUS_REQUEST, d, sizeof(d));
 }
 
-void encUserMapping(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encUserMapping(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding user_mapping: not implemented");
 }
 
-void encClientAuthz(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encClientAuthz(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding client_authz: not implemented");
 }
 
-void encServerAuthz(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encServerAuthz(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding server_authz: not implemented");
 }
 
-void encCertType(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer)
+void encCertType(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer)
 {
 	t_tlsCertType types = isServer ? e->clientCertType : e->serverCertType;
 	if (!types.numTypes || !types.types) return;
@@ -85,13 +81,13 @@ void encCertType(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int 
 	*pos += 4 + dlen;
 }
 
-void encSupportedGroups(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encSupportedGroups(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->numSupportedGroups && e->supportedGroups)
 		ENC_U16_LIST(out, pos, TLS_EXT_SUPPORTED_GROUPS, e->supportedGroups, e->numSupportedGroups);
 }
 
-void encEcPointFormats(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encEcPointFormats(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->numEcPointFormats || !e->ecPointFormats) return;
 	size_t dlen = 1 + e->numEcPointFormats;
@@ -102,19 +98,18 @@ void encEcPointFormats(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e
 	*pos += 4 + dlen;
 }
 
-void encSrp(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encSrp(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding srp: not implemented");
 }
 
-void encSigAlgs(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encSigAlgs(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->numSignatureAlgs && e->signatureAlgs)
 		ENC_U16_LIST(out, pos, TLS_EXT_SIGNATURE_ALGORITHMS, e->signatureAlgs, e->numSignatureAlgs);
 }
 
-void encUseSrtp(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encUseSrtp(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->srtp.numProfiles || !e->srtp.profiles) return;
 	size_t profLen = e->srtp.numProfiles * 2;
@@ -129,12 +124,12 @@ void encUseSrtp(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	*pos += 4 + dlen;
 }
 
-void encHeartbeat(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encHeartbeat(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->heartbeat.supported) putExt(out, pos, TLS_EXT_HEARTBEAT, &e->heartbeat.mode, 1);
 }
 
-void encAlpn(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer)
+void encAlpn(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer)
 {
 	if (isServer) {
 		if (!e->alpn.selected) return;
@@ -166,7 +161,7 @@ void encAlpn(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isSe
 	*pos += 4 + 2 + listLen;
 }
 
-void encStatusRequestV2(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer)
+void encStatusRequestV2(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer)
 {
 	if (!e->ocspV2.requested) return;
 	if (isServer || !e->ocspV2.numResponses) { putExt(out, pos, TLS_EXT_STATUS_REQUEST_V2, NULL, 0); return; }
@@ -187,7 +182,7 @@ void encStatusRequestV2(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *
 	*pos += 4 + dlen;
 }
 
-void encSct(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encSct(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->sct.numScts || !e->sct.scts) return;
 	size_t listLen = 0;
@@ -205,7 +200,7 @@ void encSct(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	*pos += 4 + 2 + listLen;
 }
 
-void encPadding(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encPadding(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->padding.length) return;
 	wU16(out, *pos, TLS_EXT_PADDING);
@@ -214,23 +209,23 @@ void encPadding(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	*pos += 4 + e->padding.length;
 }
 
-void encEncryptThenMac(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encEncryptThenMac(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->encryptThenMac.supported) putExt(out, pos, TLS_EXT_ENCRYPT_THEN_MAC, NULL, 0);
 }
 
-void encExtendedMasterSecret(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encExtendedMasterSecret(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->extendedMasterSecret.supported) putExt(out, pos, TLS_EXT_EXTENDED_MASTER_SECRET, NULL, 0);
 }
 
-void encTokenBinding(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encTokenBinding(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->tokenBinding.paramsLen && e->tokenBinding.params)
 		putExt(out, pos, TLS_EXT_TOKEN_BINDING, e->tokenBinding.params, e->tokenBinding.paramsLen);
 }
 
-void encCachedInfo(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encCachedInfo(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->cachedInfo.cachedInfoLen || !e->cachedInfo.cachedInfo) return;
 	size_t dlen = 2 + e->cachedInfo.cachedInfoLen;
@@ -241,39 +236,36 @@ void encCachedInfo(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	*pos += 4 + dlen;
 }
 
-void encTlsLts(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encTlsLts(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding tls_lts: not implemented");
 }
 
-void encRecordSizeLimit(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encRecordSizeLimit(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->recordSizeLimit.enabled) {
-		uint8_t d[2]; wU16(d, 0, e->recordSizeLimit.limit);
+		uint8_t d[2];
+		writeUint16(d, e->recordSizeLimit.limit);
 		putExt(out, pos, TLS_EXT_RECORD_SIZE_LIMIT, d, 2);
 	}
 }
 
-void encPwdProtect(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encPwdProtect(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding pwd_protect: not implemented");
 }
 
-void encPwdClear(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encPwdClear(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding pwd_clear: not implemented");
 }
 
-void encPasswordSalt(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encPasswordSalt(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding password_salt: not implemented");
 }
 
-void encTicketPinning(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encTicketPinning(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (!e->ticketPinning.pinLen || !e->ticketPinning.ticket_pin) return;
 	size_t dlen = 2 + e->ticketPinning.pinLen;
@@ -284,38 +276,34 @@ void encTicketPinning(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
 	*pos += 4 + dlen;
 }
 
-void encTlsCertWithExternPsk(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encTlsCertWithExternPsk(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding tls_cert_with_extern_psk: not implemented");
 }
 
-void encSessionTicket(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e, int isServer)
+void encSessionTicket(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServer)
 {
 	(void)isServer;
-	if (e->sessionTicket || e->sessionTicketLen)
+	if (e->sessionTicket && e->sessionTicketLen)
 		putExt(out, pos, TLS_EXT_SESSION_TICKET, e->sessionTicket, e->sessionTicketLen);
 }
 
-void encTlsp(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encTlsp(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding tlsp: not implemented");
 }
 
-void encTlspProxying(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encTlspProxying(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding tlsp_proxying: not implemented");
 }
 
-void encTlspDelegate(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encTlspDelegate(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding tlsp_delegate: not implemented");
 }
 
-void encSupportedEktCiphers(uint8_t *out, size_t *pos, const t_tlsParsedExtensions *e)
+void encSupportedEktCiphers(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	if (e->supportedEktCiphers.numCiphers && e->supportedEktCiphers.ciphers)
 		ENC_U16_LIST(out, pos, TLS_EXT_SUPPORTED_EKT_CIPHERS, e->supportedEktCiphers.ciphers, e->supportedEktCiphers.numCiphers);
