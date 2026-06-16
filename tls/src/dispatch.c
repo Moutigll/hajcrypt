@@ -1,4 +1,5 @@
 #include "../../includes/asymmetric/kex.h"
+#include "../../includes/hash/sha.h" /* IWYU pragma: keep */
 #include "../../includes/asymmetric/rsa.h"
 #include "../../includes/asymmetric/dsa.h"
 #include "../../includes/asymmetric/ecdsa.h"
@@ -32,37 +33,37 @@ const t_tlsGroup g_supportedGroups[] = {
  * @brief Supported cipher suites table
  */
 const t_tlsCipherSuite g_supportedCipherSuites[] = {
-	{ TLS_CIPHER_AES_128_GCM,		TLS_CIPHER_AES_128_GCM,			"TLS_AES_128_GCM_SHA256",		&g_sha256Algo, TLS_VERS_1_3 },
-	{ TLS_CIPHER_AES_256_GCM,		TLS_CIPHER_AES_256_GCM,			"TLS_AES_256_GCM_SHA384",		&g_sha384Algo, TLS_VERS_1_3 },
-	{ TLS_CIPHER_CHACHA20_POLY1305,	TLS_CIPHER_CHACHA20_POLY1305,	"TLS_CHACHA20_POLY1305_SHA256",	&g_sha256Algo, TLS_VERS_1_3 },
+	{ TLS_CIPHER_AES_128_GCM,		BTLS_CIPHER_AES_128_GCM,			"TLS_AES_128_GCM_SHA256",		&g_sha256Hash, TLS_VERS_1_3 },
+	{ TLS_CIPHER_AES_256_GCM,		BTLS_CIPHER_AES_256_GCM,			"TLS_AES_256_GCM_SHA384",		&g_sha384Hash, TLS_VERS_1_3 },
+	{ TLS_CIPHER_CHACHA20_POLY1305,	BTLS_CIPHER_CHACHA20_POLY1305,	"TLS_CHACHA20_POLY1305_SHA256",		&g_sha256Hash, TLS_VERS_1_3 },
 };
 
 /**
  * @brief Supported signature algorithms table
  */
 const t_tlsSigAlgo g_supportedSignatureAlgorithms[] = {
-	{ TLS_SIG_ECDSA_SHA1,				&g_sha1Algo,	&g_ecdsaPkeyDef,	"ecdsa_sha1",				0}, /* Deprecated */
-	{ TLS_SIG_ECDSA_SECP256R1_SHA256,	&g_sha256Algo,	&g_ecdsaPkeyDef,	"ecdsa_secp256r1_sha256",	TLS_VERS_1_3 | TLS_VERS_1_2 },
-	{ TLS_SIG_ECDSA_SECP384R1_SHA384,	&g_sha384Algo,	&g_ecdsaPkeyDef,	"ecdsa_secp384r1_sha384",	TLS_VERS_1_3 | TLS_VERS_1_2 },
-	{ TLS_SIG_ECDSA_SECP521R1_SHA512,	&g_sha512Algo,	&g_ecdsaPkeyDef,	"ecdsa_secp521r1_sha512",	TLS_VERS_1_3 | TLS_VERS_1_2 },
+	{ TLS_SIG_ECDSA_SHA1,				&g_sha1Hash,	&g_ecdsaPkeyDef,	"ecdsa_sha1",				0}, /* Deprecated */
+	{ TLS_SIG_ECDSA_SECP256R1_SHA256,	&g_sha256Hash,	&g_ecdsaPkeyDef,	"ecdsa_secp256r1_sha256",	TLS_VERS_1_3 | TLS_VERS_1_2 },
+	{ TLS_SIG_ECDSA_SECP384R1_SHA384,	&g_sha384Hash,	&g_ecdsaPkeyDef,	"ecdsa_secp384r1_sha384",	TLS_VERS_1_3 | TLS_VERS_1_2 },
+	{ TLS_SIG_ECDSA_SECP521R1_SHA512,	&g_sha512Hash,	&g_ecdsaPkeyDef,	"ecdsa_secp521r1_sha512",	TLS_VERS_1_3 | TLS_VERS_1_2 },
 	/* RSA-PSS (TLS 1.3) */
-	{ TLS_SIG_RSA_PSS_PSS_SHA256,		&g_sha256Algo,	&g_rsaPkeyDef, 		"rsa_pss_pss_sha256",		TLS_VERS_1_3 },
-	{ TLS_SIG_RSA_PSS_PSS_SHA384,		&g_sha384Algo,	&g_rsaPkeyDef, 		"rsa_pss_pss_sha384",		TLS_VERS_1_3 },
-	{ TLS_SIG_RSA_PSS_PSS_SHA512,		&g_sha512Algo,	&g_rsaPkeyDef, 		"rsa_pss_pss_sha512",		TLS_VERS_1_3 },
-	{ TLS_SIG_RSA_PSS_RSAE_SHA256,		&g_sha256Algo,	&g_rsaPkeyDef, 		"rsa_pss_rsae_sha256",		TLS_VERS_1_3 },
-	{ TLS_SIG_RSA_PSS_RSAE_SHA384,		&g_sha384Algo,	&g_rsaPkeyDef,		"rsa_pss_rsae_sha384",		TLS_VERS_1_3 },
-	{ TLS_SIG_RSA_PSS_RSAE_SHA512,		&g_sha512Algo,	&g_rsaPkeyDef,		"rsa_pss_rsae_sha512",		TLS_VERS_1_3 },
+	{ TLS_SIG_RSA_PSS_PSS_SHA256,		&g_sha256Hash,	&g_rsaPkeyDef, 		"rsa_pss_pss_sha256",		TLS_VERS_1_3 },
+	{ TLS_SIG_RSA_PSS_PSS_SHA384,		&g_sha384Hash,	&g_rsaPkeyDef, 		"rsa_pss_pss_sha384",		TLS_VERS_1_3 },
+	{ TLS_SIG_RSA_PSS_PSS_SHA512,		&g_sha512Hash,	&g_rsaPkeyDef, 		"rsa_pss_pss_sha512",		TLS_VERS_1_3 },
+	{ TLS_SIG_RSA_PSS_RSAE_SHA256,		&g_sha256Hash,	&g_rsaPkeyDef, 		"rsa_pss_rsae_sha256",		TLS_VERS_1_3 },
+	{ TLS_SIG_RSA_PSS_RSAE_SHA384,		&g_sha384Hash,	&g_rsaPkeyDef,		"rsa_pss_rsae_sha384",		TLS_VERS_1_3 },
+	{ TLS_SIG_RSA_PSS_RSAE_SHA512,		&g_sha512Hash,	&g_rsaPkeyDef,		"rsa_pss_rsae_sha512",		TLS_VERS_1_3 },
 	/* ECDSA (TLS 1.3 and 1.2) */
 	/* RSA PKCS#1 v1.5 (TLS 1.2 only, not recommended) */
-	{ TLS_SIG_RSA_PKCS1_SHA1,			&g_sha1Algo,	&g_rsaPkeyDef,		"rsa_pkcs1_sha1",			0 }, /* Deprecated */
-	{ TLS_SIG_RSA_PKCS1_SHA256,		&g_sha256Algo,	&g_rsaPkeyDef,		"rsa_pkcs1_sha256",			TLS_VERS_1_2 },
-	{ TLS_SIG_RSA_PKCS1_SHA384,		&g_sha384Algo,	&g_rsaPkeyDef,		"rsa_pkcs1_sha384",			TLS_VERS_1_2 },
-	{ TLS_SIG_RSA_PKCS1_SHA512,		&g_sha512Algo,	&g_rsaPkeyDef,		"rsa_pkcs1_sha512",			TLS_VERS_1_2 },
+	{ TLS_SIG_RSA_PKCS1_SHA1,			&g_sha1Hash,	&g_rsaPkeyDef,		"rsa_pkcs1_sha1",			0 }, /* Deprecated */
+	{ TLS_SIG_RSA_PKCS1_SHA256,		&g_sha256Hash,	&g_rsaPkeyDef,		"rsa_pkcs1_sha256",			TLS_VERS_1_2 },
+	{ TLS_SIG_RSA_PKCS1_SHA384,		&g_sha384Hash,	&g_rsaPkeyDef,		"rsa_pkcs1_sha384",			TLS_VERS_1_2 },
+	{ TLS_SIG_RSA_PKCS1_SHA512,		&g_sha512Hash,	&g_rsaPkeyDef,		"rsa_pkcs1_sha512",			TLS_VERS_1_2 },
 	/* DSA (TLS 1.2 only, not recommended) */
-	{ TLS_SIG_DSA_SHA1,			&g_sha1Algo,	&g_dsaPkeyDef,		"dsa_sha1",						0 }, /* Deprecated */
-	{ TLS_SIG_DSA_SHA256,			&g_sha256Algo,	&g_dsaPkeyDef,		"dsa_sha256",					TLS_VERS_1_2 },
-	{ TLS_SIG_DSA_SHA384,			&g_sha384Algo,	&g_dsaPkeyDef,		"dsa_sha384",					TLS_VERS_1_2 },
-	{ TLS_SIG_DSA_SHA512,			&g_sha512Algo,	&g_dsaPkeyDef,		"dsa_sha512",					TLS_VERS_1_2 },
+	{ TLS_SIG_DSA_SHA1,			&g_sha1Hash,	&g_dsaPkeyDef,		"dsa_sha1",						0 }, /* Deprecated */
+	{ TLS_SIG_DSA_SHA256,			&g_sha256Hash,	&g_dsaPkeyDef,		"dsa_sha256",					TLS_VERS_1_2 },
+	{ TLS_SIG_DSA_SHA384,			&g_sha384Hash,	&g_dsaPkeyDef,		"dsa_sha384",					TLS_VERS_1_2 },
+	{ TLS_SIG_DSA_SHA512,			&g_sha512Hash,	&g_dsaPkeyDef,		"dsa_sha512",					TLS_VERS_1_2 },
 };
 
 #define NUM_SUPPORTED_GROUPS		(sizeof(g_supportedGroups) / sizeof(t_tlsGroup))

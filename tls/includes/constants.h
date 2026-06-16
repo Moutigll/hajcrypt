@@ -2,6 +2,7 @@
 # define BTLS_CONSTANTS_H
 
 # include "../../includes/asymmetric/pkey.h"
+# include "../../includes/asymmetric/kex.h"
 # include "../../includes/hash/hash.h"
 # include "aeadCipher.h"
 
@@ -18,26 +19,26 @@ typedef enum e_tlsVersionSupported {
 
 typedef struct s_tlsGroup {
 	uint16_t	wireValue;
-	int			kexType;
+	t_kexType	kexType;
 	int			groupId;
 	const char	*name;
 	uint8_t		supportedVersions;
 } t_tlsGroup;
 
 typedef struct s_tlsCipherSuite {
-	uint16_t			wireValue;
-	t_tlsCipherType		cipher;
-	const char			*name;
-	const t_hashAlgo	*hash;
-	uint8_t				supportedVersions;
+	uint16_t		wireValue;
+	t_tlsCipherType	cipher;
+	const char		*name;
+	const t_hash	*hash;
+	uint8_t			supportedVersions;
 } t_tlsCipherSuite;
 
 typedef struct s_tlsSignatureAlgorithm {
-	uint16_t			wireValue;
-	const t_hashAlgo	*hash;
-	const t_pkeyDef		*pkey;
-	const char			*name;
-	uint8_t				supportedVersions;
+	uint16_t		wireValue;
+	const t_hash	*hash;
+	const t_pkeyDef	*pkey;
+	const char		*name;
+	uint8_t			supportedVersions;
 } t_tlsSigAlgo;
 
 
@@ -89,6 +90,21 @@ typedef enum e_tlsAlertLevel {
 #define TLS_ALERT_CERTIFICATE_REQUIRED		0x70
 #define TLS_ALERT_RECORD_LIMIT_EXCEEDED		0x75
 #define TLS_ALERT_NO_APPLICATION_PROTOCOL	0x78
+
+/* TLS handshake message types */
+#define TLS_HT_HELLO_REQUEST				0
+#define TLS_HT_CLIENT_HELLO					1
+#define TLS_HT_SERVER_HELLO					2
+#define TLS_HT_NEW_SESSION_TICKET			4
+#define TLS_HT_END_OF_EARLY_DATA			5
+#define TLS_HT_HELLO_RETRY_REQUEST			6
+#define TLS_HT_ENCRYPTED_EXTENSIONS			8
+#define TLS_HT_CERTIFICATE					11
+#define TLS_HT_CERTIFICATE_REQUEST			13
+#define TLS_HT_CERTIFICATE_VERIFY			15
+#define TLS_HT_FINISHED						20
+#define TLS_HT_KEY_UPDATE					24
+#define TLS_HT_MESSAGE_HASH					254
 
 /* TLS record content types */
 #define TLS_RT_CHANGE_CIPHER_SPEC	0x14
@@ -186,6 +202,7 @@ typedef enum e_tlsAlertLevel {
 #define TLS13_LABEL_RESUMPTION_MASTER	"res master"
 #define TLS13_LABEL_TRAFFIC_KEY			"key"
 #define TLS13_LABEL_TRAFFIC_IV			"iv"
+#define TLS13_LABEL_FINISHED			"finished"
 
 /* TLS named groups */
 #define TLS_NAMED_GROUP_SECP256R1	0x0017

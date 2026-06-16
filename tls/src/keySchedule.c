@@ -8,28 +8,38 @@
 #include "../includes/keySchedule.h"
 #include "../includes/constants.h"
 
-
-int	tls13DeriveSecret(const uint8_t		*secret,	size_t	secretLen,
-					  const char		*label,
-					  const uint8_t		*context,	size_t	contextLen,
-					  uint8_t			*output,	size_t	outputLen,
-					  const t_hashAlgo	*hash)
+int	tls13DeriveSecret(const uint8_t	*secret,	size_t	secretLen,
+					  const char	*label,
+					  const uint8_t	*context,	size_t	contextLen,
+					  uint8_t		*output,	size_t	outputLen,
+					  const t_hash	*hash)
 {
 	if (!secret || !label || !output || !hash)
-		return (0);
+		return 0;
 
-	return (tlsHkdfExpandLabel(secret, secretLen,
-							   label, context, contextLen,
-							   output, outputLen, hash));
+	/* If context is NULL or has zero length, use the hash of an empty string as context */
+	if (!context || contextLen == 0) {
+		uint8_t empty_hash[64];
+		uint8_t hash_state[hash->ctxSize];
+		hash->init(hash_state);
+		hash->final(empty_hash, hash_state);
+	
+		return (tlsHkdfExpandLabel(secret,	secretLen,
+								  label,	empty_hash, hash->digestSize,
+								  output,	outputLen, hash));
+	}
+	
+	return (tlsHkdfExpandLabel(secret,	secretLen,
+							  label,	context,	contextLen,
+							  output,	outputLen,	hash));
 }
 
-
-void	tls13KeyScheduleInit(t_tls13Secrets *secrets, const t_hashAlgo *hash)
+void	tls13KeyScheduleInit(t_tls13Secrets *secrets, const t_hash *hash)
 {
 	if (!secrets || !hash)
 		return ;
 
-	ft_memset(secrets, 0, sizeof(t_tls13Secrets));
+	ft_bzero(secrets, sizeof(t_tls13Secrets));
 	secrets->hash = hash;
 	secrets->pskEnabled = 0;
 }
@@ -39,58 +49,75 @@ int	tls13KeyScheduleExtractHandshake(t_tls13Secrets	*secrets,
 									 const uint8_t	*sharedSecret,	size_t sharedLen)
 {
 	uint8_t	derived[64];
-	uint8_t	zero[64];
+	uint8_t	zeroSalt[64];
+	uint8_t	zeroPsk[64];
+	size_t	digestSize;
 
-	if (!secrets || !sharedSecret)
+	if (!secrets || !sharedSecret) {
+		BTLS_DEBUG("tls13KeyScheduleExtractHandshake: secrets or sharedSecret NULL");
 		return (0);
+	}
 
-	ft_memset(zero, 0, secrets->hash->digestSize);
+	if (!secrets->hash) {
+		BTLS_DEBUG("tls13KeyScheduleExtractHandshake: secrets->hash is NULL");
+		return (0);
+	}
 
-	if (psk && pskLen > 0)
-	{
-		/* early_secret = HKDF-Extract(0, psk) */
-		if (!hkdfExtract(NULL, 0, psk, pskLen,
-						 secrets->earlySecret, secrets->hash->digestSize,
-						 secrets->hash))
-			return (0);
+	digestSize = secrets->hash->digestSize;
+	if (digestSize == 0 || digestSize > 64) {
+		BTLS_DEBUG("tls13KeyScheduleExtractHandshake: invalid digestSize %zu", digestSize);
+		return (0);
+	}
 
-		/* external_binder_key = Derive-Secret(early_secret, "ext binder", "") */
-		if (!tls13DeriveSecret(secrets->earlySecret, secrets->hash->digestSize,
+	ft_bzero(zeroSalt, digestSize);
+	ft_bzero(zeroPsk, digestSize);
+
+	/* Step 1: early_secret = HKDF-Extract(0, 0) or HKDF-Extract(0, psk) */
+	const uint8_t *ikm = zeroPsk;
+	size_t ikmLen = digestSize;
+	if (psk && pskLen > 0) {
+		ikm = psk;
+		ikmLen = pskLen;
+	}
+
+	if (!hkdfExtract(zeroSalt, digestSize, ikm, ikmLen,
+					 secrets->earlySecret, digestSize, secrets->hash)) {
+		BTLS_DEBUG("hkdfExtract for early_secret failed");
+		return (0);
+	}
+
+	/* Step 2: derived = Derive-Secret(early_secret, "derived", "") */
+	if (!tls13DeriveSecret(secrets->earlySecret, digestSize,
+						   TLS13_LABEL_DERIVED, NULL, 0,
+						   derived, digestSize, secrets->hash)) {
+		BTLS_DEBUG("tls13DeriveSecret for derived failed");
+		return (0);
+	}
+
+	/* Step 3: handshake_secret = HKDF-Extract(derived, shared_secret) */
+	if (!hkdfExtract(derived, digestSize,
+					 sharedSecret, sharedLen,
+					 secrets->handshakeSecret, digestSize, secrets->hash)) {
+		BTLS_DEBUG("hkdfExtract for handshake_secret failed");
+		return (0);
+	}
+
+	/* If a PSK is provided, derive the external binder key for early data */
+	if (psk && pskLen > 0) {
+		if (!tls13DeriveSecret(secrets->earlySecret, digestSize,
 							   TLS13_LABEL_EXTRACTOR, NULL, 0,
-							   secrets->externalBinderKey, secrets->hash->digestSize,
-							   secrets->hash))
+							   secrets->externalBinderKey, digestSize,
+							   secrets->hash)) {
+			BTLS_DEBUG("tls13DeriveSecret for external_binder_key failed");
 			return (0);
-
-		/* derived = Derive-Secret(early_secret, "derived", "") */
-		if (!tls13DeriveSecret(secrets->earlySecret, secrets->hash->digestSize,
-							   TLS13_LABEL_DERIVED, NULL, 0,
-							   derived, secrets->hash->digestSize,
-							   secrets->hash))
-			return (0);
-
-		/* handshake_secret = HKDF-Extract(derived, shared_secret) */
-		if (!hkdfExtract(derived, secrets->hash->digestSize,
-						 sharedSecret, sharedLen,
-						 secrets->handshakeSecret, secrets->hash->digestSize,
-						 secrets->hash))
-			return (0);
-
+		}
 		secrets->pskEnabled = 1;
-	}
-	else
-	{
-		/* no PSK : handshake_secret = HKDF-Extract(0, shared_secret) */
-		if (!hkdfExtract(NULL, 0,
-						 sharedSecret, sharedLen,
-						 secrets->handshakeSecret, secrets->hash->digestSize,
-						 secrets->hash))
-			return (0);
-
+	} else
 		secrets->pskEnabled = 0;
-	}
 
 	secureZeroMemory(derived, sizeof(derived));
-	secureZeroMemory(zero, sizeof(zero));
+	secureZeroMemory(zeroSalt, sizeof(zeroSalt));
+	secureZeroMemory(zeroPsk, sizeof(zeroPsk));
 	return (1);
 }
 
@@ -99,39 +126,67 @@ int	tls13KeyScheduleDeriveHandshakeSecrets(t_tls13Secrets	*secrets,
 										   size_t			hashLen)
 {
 	uint8_t	derived[64];
+	size_t	digestSize;
 
-	if (!secrets || !handshakeHash || hashLen != secrets->hash->digestSize)
+	if (!secrets || !handshakeHash)
+	{
+		BTLS_DEBUG("tls13KeyScheduleDeriveHandshakeSecrets: NULL parameter");
 		return (0);
+	}
+	
+	if (!secrets->hash)
+	{
+		BTLS_DEBUG("tls13KeyScheduleDeriveHandshakeSecrets: secrets->hash is NULL");
+		return (0);
+	}
+	
+	digestSize = secrets->hash->digestSize;
+	if (hashLen != digestSize)
+	{
+		BTLS_DEBUG("tls13KeyScheduleDeriveHandshakeSecrets: hashLen mismatch (%zu vs %zu)", hashLen, digestSize);
+		return (0);
+	}
 
 	/* client_handshake_traffic_secret */
-	if (!tls13DeriveSecret(secrets->handshakeSecret, secrets->hash->digestSize,
+	if (!tls13DeriveSecret(secrets->handshakeSecret, digestSize,
 						   TLS13_LABEL_CLIENT_HS_TRAFFIC,
 						   handshakeHash, hashLen,
 						   secrets->clientHandshakeTrafficSecret,
-						   secrets->hash->digestSize, secrets->hash))
+						   digestSize, secrets->hash))
+	{
+		BTLS_DEBUG("client_handshake_traffic_secret derivation failed");
 		return (0);
+	}
 
 	/* server_handshake_traffic_secret */
-	if (!tls13DeriveSecret(secrets->handshakeSecret, secrets->hash->digestSize,
+	if (!tls13DeriveSecret(secrets->handshakeSecret, digestSize,
 						   TLS13_LABEL_SERVER_HS_TRAFFIC,
 						   handshakeHash, hashLen,
 						   secrets->serverHandshakeTrafficSecret,
-						   secrets->hash->digestSize, secrets->hash))
+						   digestSize, secrets->hash))
+	{
+		BTLS_DEBUG("server_handshake_traffic_secret derivation failed");
 		return (0);
+	}
 
 	/* derived = Derive-Secret(handshake_secret, "derived", "") */
-	if (!tls13DeriveSecret(secrets->handshakeSecret, secrets->hash->digestSize,
+	if (!tls13DeriveSecret(secrets->handshakeSecret, digestSize,
 						   TLS13_LABEL_DERIVED, NULL, 0,
-						   derived, secrets->hash->digestSize,
+						   derived, digestSize,
 						   secrets->hash))
+	{
+		BTLS_DEBUG("derived (handshake) derivation failed");
 		return (0);
+	}
 
 	/* master_secret = HKDF-Extract(derived, 0) */
-	if (!hkdfExtract(derived, secrets->hash->digestSize,
-					 NULL, 0,
-					 secrets->masterSecret, secrets->hash->digestSize,
-					 secrets->hash))
+	uint8_t zeroIkm[64] = {0};
+	if (!hkdfExtract(derived, digestSize, zeroIkm, digestSize,
+		 secrets->masterSecret, digestSize, secrets->hash))
+	{
+		BTLS_DEBUG("master_secret extraction failed");
 		return (0);
+	}
 
 	secureZeroMemory(derived, sizeof(derived));
 	return (1);
@@ -141,40 +196,70 @@ int	tls13KeyScheduleDeriveAppSecrets(t_tls13Secrets	*secrets,
 									const uint8_t	*handshakeHash,
 									size_t			hashLen)
 {
-	if (!secrets || !handshakeHash || hashLen != secrets->hash->digestSize)
+	size_t	digestSize;
+
+	if (!secrets || !handshakeHash)
+	{
+		BTLS_DEBUG("tls13KeyScheduleDeriveAppSecrets: NULL parameter");
 		return (0);
+	}
+	
+	if (!secrets->hash)
+	{
+		BTLS_DEBUG("tls13KeyScheduleDeriveAppSecrets: secrets->hash is NULL");
+		return (0);
+	}
+	
+	digestSize = secrets->hash->digestSize;
+	if (hashLen != digestSize)
+	{
+		BTLS_DEBUG("tls13KeyScheduleDeriveAppSecrets: hashLen mismatch (%zu vs %zu)", hashLen, digestSize);
+		return (0);
+	}
 
 	/* client_application_traffic_secret */
-	if (!tls13DeriveSecret(secrets->masterSecret, secrets->hash->digestSize,
+	if (!tls13DeriveSecret(secrets->masterSecret, digestSize,
 						   TLS13_LABEL_CLIENT_APP_TRAFFIC,
 						   handshakeHash, hashLen,
 						   secrets->clientAppTrafficSecret,
-						   secrets->hash->digestSize, secrets->hash))
+						   digestSize, secrets->hash))
+	{
+		BTLS_DEBUG("client_application_traffic_secret derivation failed");
 		return (0);
+	}
 
 	/* server_application_traffic_secret */
-	if (!tls13DeriveSecret(secrets->masterSecret, secrets->hash->digestSize,
+	if (!tls13DeriveSecret(secrets->masterSecret, digestSize,
 						   TLS13_LABEL_SERVER_APP_TRAFFIC,
 						   handshakeHash, hashLen,
 						   secrets->serverAppTrafficSecret,
-						   secrets->hash->digestSize, secrets->hash))
+						   digestSize, secrets->hash))
+	{
+		BTLS_DEBUG("server_application_traffic_secret derivation failed");
 		return (0);
+	}
 
 	/* exporter_master_secret */
-	if (!tls13DeriveSecret(secrets->masterSecret, secrets->hash->digestSize,
+	if (!tls13DeriveSecret(secrets->masterSecret, digestSize,
 						   TLS13_LABEL_EXPORTER_MASTER,
 						   handshakeHash, hashLen,
 						   secrets->exporterMasterSecret,
-						   secrets->hash->digestSize, secrets->hash))
+						   digestSize, secrets->hash))
+	{
+		BTLS_DEBUG("exporter_master_secret derivation failed");
 		return (0);
+	}
 
 	/* resumption_master_secret */
-	if (!tls13DeriveSecret(secrets->masterSecret, secrets->hash->digestSize,
+	if (!tls13DeriveSecret(secrets->masterSecret, digestSize,
 						   TLS13_LABEL_RESUMPTION_MASTER,
 						   handshakeHash, hashLen,
 						   secrets->resumptionMasterSecret,
-						   secrets->hash->digestSize, secrets->hash))
+						   digestSize, secrets->hash))
+	{
+		BTLS_DEBUG("resumption_master_secret derivation failed");
 		return (0);
+	}
 
 	return (1);
 }
@@ -182,7 +267,7 @@ int	tls13KeyScheduleDeriveAppSecrets(t_tls13Secrets	*secrets,
 int	tls13DeriveTrafficKeys(t_tls13TrafficKeys	*keys,
 						   const uint8_t		*secret,
 						   size_t				secretLen,
-						   const t_hashAlgo		*hash,
+						   const t_hash			*hash,
 						   size_t				cipherKeyLen)
 {
 	if (!keys || !secret || !hash)
@@ -196,22 +281,24 @@ int	tls13DeriveTrafficKeys(t_tls13TrafficKeys	*keys,
 	if (!tlsHkdfExpandLabel(secret, secretLen,
 							TLS13_LABEL_TRAFFIC_KEY, NULL, 0,
 							keys->key, cipherKeyLen, hash))
+	{
+		BTLS_DEBUG("traffic key derivation failed");
 		return (0);
+	}
 	keys->keyLen = cipherKeyLen;
 
 	/* Derive IV (12 bytes) */
 	if (!tlsHkdfExpandLabel(secret, secretLen,
 							TLS13_LABEL_TRAFFIC_IV, NULL, 0,
 							keys->iv, 12, hash))
+	{
+		BTLS_DEBUG("traffic IV derivation failed");
 		return (0);
+	}
 	keys->ivLen = 12;
 
 	return (1);
 }
-
-
-
-
 
 void	tls13PrintSecrets(const t_tls13Secrets *secrets)
 {

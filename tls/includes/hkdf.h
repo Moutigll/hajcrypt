@@ -29,6 +29,6 @@ int	tlsHkdfExpandLabel(const uint8_t	*secret,
 					   size_t			contextLen,
 					   uint8_t			*output,
 					   size_t			outputLen,
-					   const t_hashAlgo	*hash);
+					   const t_hash		*hash);
 
 #endif /* BTLS_HKDF_H */

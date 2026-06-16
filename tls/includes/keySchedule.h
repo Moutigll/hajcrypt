@@ -18,27 +18,27 @@
 typedef struct s_tls13Secrets
 {
 	/* Base secrets */
-	uint8_t				earlySecret[64];					/* Eventual Pre-Shared Key (PSK) to re-establish the connection faster, or zeros if not used */
-	uint8_t				handshakeSecret[64];				/* Derived from the shared secret of the key exchange (ECDHE/FFDHE) */
-	uint8_t				masterSecret[64];					/* Derived from the handshake secret after the handshake completes */
+	uint8_t			earlySecret[64];					/* Eventual Pre-Shared Key (PSK) to re-establish the connection faster, or zeros if not used */
+	uint8_t			handshakeSecret[64];				/* Derived from the shared secret of the key exchange (ECDHE/FFDHE) */
+	uint8_t			masterSecret[64];					/* Derived from the handshake secret after the handshake completes */
 
 	/* Traffic secrets */
-	uint8_t				clientEarlyTrafficSecret[64];		/* Used to derive keys for encrypting client's early data (0-RTT) */
-	uint8_t				clientHandshakeTrafficSecret[64];	/* Used to derive keys for encrypting client's handshake messages */
-	uint8_t				serverHandshakeTrafficSecret[64];	/* Used to derive keys for encrypting server's handshake messages */
-	uint8_t				clientAppTrafficSecret[64];			/* Used to derive keys for encrypting client's application messages */
-	uint8_t				serverAppTrafficSecret[64];			/* Used to derive keys for encrypting server's application messages */
+	uint8_t			clientEarlyTrafficSecret[64];		/* Used to derive keys for encrypting client's early data (0-RTT) */
+	uint8_t			clientHandshakeTrafficSecret[64];	/* Used to derive keys for encrypting client's handshake messages */
+	uint8_t			serverHandshakeTrafficSecret[64];	/* Used to derive keys for encrypting server's handshake messages */
+	uint8_t			clientAppTrafficSecret[64];			/* Used to derive keys for encrypting client's application messages */
+	uint8_t			serverAppTrafficSecret[64];			/* Used to derive keys for encrypting server's application messages */
 	
 	/* Export Secrets */
-	uint8_t				exporterMasterSecret[64];			/* Used to derive keys for the exporter function */
-	uint8_t				resumptionMasterSecret[64];			/* Used to derive keys for resuming sessions */
+	uint8_t			exporterMasterSecret[64];			/* Used to derive keys for the exporter function */
+	uint8_t			resumptionMasterSecret[64];			/* Used to derive keys for resuming sessions */
 
 	/* Binder secrets (for PSK authentication) */
-	uint8_t				externalBinderKey[64];				/* Derived from the external PSK for use in the binder */
-	uint8_t				resumptionBinderKey[64];			/* Derived from the resumption PSK for use in the binder */
+	uint8_t			externalBinderKey[64];				/* Derived from the external PSK for use in the binder */
+	uint8_t			resumptionBinderKey[64];			/* Derived from the resumption PSK for use in the binder */
 
-	const t_hashAlgo	*hash;								/* Pointer to the hash algorithm used */
-	int					pskEnabled;							/* Flag indicating whether PSK is used (1 if PSK is used, 0 otherwise) */
+	const t_hash	*hash;								/* Pointer to the hash algorithm used */
+	int				pskEnabled;							/* Flag indicating whether PSK is used (1 if PSK is used, 0 otherwise) */
 }	t_tls13Secrets;
 
 /**
@@ -73,11 +73,11 @@ typedef struct s_tls13TrafficKeys
  * @param hash			Hash algorithm to use
  * @return				1 on success, 0 on error
  */
-int	tls13DeriveSecret(const uint8_t		*secret,	size_t	secretLen,
-					  const char		*label,
-					  const uint8_t		*context,	size_t	contextLen,
-					  uint8_t			*output,	size_t	outputLen,
-					  const t_hashAlgo	*hash);
+int	tls13DeriveSecret(const uint8_t	*secret,	size_t	secretLen,
+					  const char	*label,
+					  const uint8_t	*context,	size_t	contextLen,
+					  uint8_t		*output,	size_t	outputLen,
+					  const t_hash	*hash);
 
 /**
  * @brief Initializes the secrets structure with default parameters
@@ -87,9 +87,9 @@ int	tls13DeriveSecret(const uint8_t		*secret,	size_t	secretLen,
  * and zeros out all secret buffers for security.
  *
  * @param secrets	Structure to initialize
- * @param hash		Hash algorithm to use (g_sha256Algo or g_sha384Algo)
+ * @param hash		Hash algorithm to use (g_sha256Hash or g_sha384Hash)
  */
-void	tls13KeyScheduleInit(t_tls13Secrets *secrets, const t_hashAlgo *hash);
+void	tls13KeyScheduleInit(t_tls13Secrets *secrets, const t_hash *hash);
 
 /**
  * @brief Derives handshakeSecret from the shared secret (ECDHE/FFDHE)
@@ -160,7 +160,7 @@ int	tls13KeyScheduleDeriveAppSecrets(t_tls13Secrets	*secrets,
 int	tls13DeriveTrafficKeys(t_tls13TrafficKeys	*keys,
 						   const uint8_t		*secret,
 						   size_t				secretLen,
-						   const t_hashAlgo		*hash,
+						   const t_hash			*hash,
 						   size_t				cipherKeyLen);
 
 
