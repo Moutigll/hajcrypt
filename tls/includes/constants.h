@@ -7,7 +7,7 @@
 # include "aeadCipher.h"
 
 
-# define BTLS_DEBUG(string, ...) ft_printf("\033[1;34m[BTLS DEBUG]: " string "\033[0m\n", ##__VA_ARGS__)
+# define BTLS_DEBUG(string, ...) ft_printf("[BTLS]: " string "\n", ##__VA_ARGS__)
 
 
 typedef enum e_tlsVersionSupported {

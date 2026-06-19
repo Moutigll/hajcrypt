@@ -184,10 +184,45 @@ void tlsConfigFree(t_tlsConfig *cfg)
 	}
 }
 
+static int pkeyMatchesCert(const t_pkey *pk, const t_x509Cert *cert)
+{
+	uint8_t	*keyPubDer;
+	size_t	keyPubDerLen;
+	int		match;
+
+	if (!pk || !pk->def || !pk->key)
+		return (1);
+	if (!cert || !cert->pubKeyRaw || !cert->pubKeyRawLen)
+		return (1);
+
+	if (!pk->def->encodePubKeySpki)
+		return (1); /* no way to encode the public key */
+
+	keyPubDer = pk->def->encodePubKeySpki(pk->key, &keyPubDerLen);
+	if (!keyPubDer)
+		return (1); /* encoding failed, assume ok */
+
+	match = (keyPubDerLen == cert->pubKeyRawLen
+		 && ft_memcmp(keyPubDer, cert->pubKeyRaw, keyPubDerLen) == 0);
+
+	free(keyPubDer);
+	return (match);
+}
+
+static int certIsSelfSigned(const t_x509Cert *cert)
+{
+	if (!cert || !cert->issuer || !cert->subject)
+		return (0);
+	if (cert->issuerLen != cert->subjectLen)
+		return (0);
+	return (ft_memcmp(cert->issuer, cert->subject, cert->issuerLen) == 0);
+}
+
 int tlsConfigLoadCertKey(t_tlsConfig *cfg, const char *certFile, const char *keyFile, const char *keyPassword)
 {
-	t_pkey		*pk;
-	t_certChain	*chain;
+	t_pkey				*pk;
+	t_certChain			*chain;
+	const t_x509Cert	*leaf;
 
 	if (!cfg || !certFile || !keyFile)
 		return (0);
@@ -219,11 +254,31 @@ int tlsConfigLoadCertKey(t_tlsConfig *cfg, const char *certFile, const char *key
 		return (0);
 	}
 
+	/* Verify key matches the leaf certificate */
+	if (chain->count > 0 && chain->certs[0]) {
+		leaf = chain->certs[0];
+
+		if (!pkeyMatchesCert(pk, leaf)) {
+			BTLS_DEBUG("[Config] Private key does not match the leaf certificate");
+			pkeyFree(pk);
+			free(pk);
+			certChainFree(chain);
+			return (0);
+		}
+
+		if (certIsSelfSigned(leaf))
+			ft_dprintf(STDERR_FILENO,
+				"btls: WARNING: certificate is self-signed\n");
+	} else
+		ft_dprintf(STDERR_FILENO,
+			"btls: WARNING: empty certificate chain, cannot verify key\n");
+
 	cfg->privateKey = pk;
 	cfg->certChain  = chain;
 	BTLS_DEBUG("[Config] Certificate and key loaded successfully");
 	return (1);
 }
+
 
 static void initConnectionCtx(t_tlsCtx *ctx, const t_tlsConfig *cfg, int socket, int isServer)
 {

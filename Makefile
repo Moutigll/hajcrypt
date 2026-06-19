@@ -5,9 +5,11 @@ ARCH := $(shell uname -m)
 
 CONST_EXEC	= $(BUILD_DIR)/genConst
 
-LIB_NAME	= hajcrypt
+LIB_NAME	= libhajcrypt
+BTLS_PATH	= tls
+BTLS_LIBA	= $(BTLS_PATH)/libbtls.a
 HLIB_PATH	= hajlib
-HLIB_LIBA	= $(HLIB_PATH)/hajlib.a
+HLIB_LIBA	= $(HLIB_PATH)/libhaj.a
 
 CC			= clang
 BASE_FLAGS	= -Wall -Wextra -Werror
@@ -70,6 +72,12 @@ $(HLIB_LIBA):
 	$(MAKE) -C $(HLIB_PATH) -j $(nproc)
 	@echo -e "$(GREEN)hajlib built.$(RESET)"
 
+# --- Build btls ---
+$(BTLS_LIBA): $(HLIB_LIBA)
+	@echo -e "$(BLUE)Building btls...$(RESET)"
+	$(MAKE) -C $(BTLS_PATH) -j $(nproc)
+	@echo -e "$(GREEN)btls built.$(RESET)"
+
 # ---- Generate constants ----
 $(BUILD_DIR)/consts/%.o: $(CONST_DIR)/%.c
 	@mkdir -p $(dir $@)
@@ -104,13 +112,17 @@ $(LIB_NAME).a: $(CONST_HEADERS) $(LIB_OBJ)
 	@echo -e "$(GREEN)Library $@ generated.$(RESET)"
 
 # --- Build executable ---
-$(NAME): $(HLIB_LIBA) $(LIB_NAME).a $(CLI_OBJ)
+$(NAME): $(HLIB_LIBA) $(LIB_NAME).a $(BTLS_LIBA) $(CLI_OBJ)
 	@echo -e "$(BLUE)Linking final executable $(NAME)...$(RESET)"
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(NAME) \
 		$(CLI_OBJ) \
+		$(BTLS_LIBA) \
 		$(LIB_NAME).a \
 		$(HLIB_LIBA)
 	@echo -e "$(GREEN)Executable $(NAME) ready.$(RESET)"
+
+btls: $(BTLS_LIBA)
+	cp $(BTLS_LIBA) .
 
 test: $(LIB_NAME).a $(TEST_SRC)
 	@echo -e "$(BLUE)Compiling tests...$(RESET)"
@@ -125,13 +137,16 @@ test: $(LIB_NAME).a $(TEST_SRC)
 # --- Clean ---
 clean:
 	$(MAKE) -C $(HLIB_PATH) clean
+	$(MAKE) -C $(BTLS_PATH) clean
 	rm -f $(CONST_HEADERS)
 	rm -rf $(BUILD_DIR)
 
 fclean: clean
 	rm -f $(NAME)
 	rm -f $(LIB_NAME).a
+	rm -f libbtls.a
 	$(MAKE) -C $(HLIB_PATH) fclean
+	$(MAKE) -C $(BTLS_PATH) fclean
 
 re: fclean all
 

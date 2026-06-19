@@ -69,7 +69,7 @@ int readBinaryFile(const char *file, uint8_t **data, size_t *len)
 	fd = file ? open(file, O_RDONLY) : STDIN_FILENO;
 	if (fd < 0)
 	{
-		HAJCRYPT_DPRINT("ft_ssl: cannot open '%s'\n", file ? file : "stdin");
+		HAJCRYPT_DPRINT("cannot open '%s'\n", file ? file : "stdin");
 		return (1);
 	}
 
@@ -77,7 +77,7 @@ int readBinaryFile(const char *file, uint8_t **data, size_t *len)
 	buf = malloc(capacity);
 	if (!buf)
 	{
-		HAJCRYPT_DPRINT("ft_ssl: memory allocation failed\n");
+		HAJCRYPT_DPRINT("memory allocation failed\n");
 		if (file)
 			close(fd);
 		return (1);
@@ -93,7 +93,7 @@ int readBinaryFile(const char *file, uint8_t **data, size_t *len)
 			buf = realloc(buf, capacity);
 			if (!buf)
 			{
-				HAJCRYPT_DPRINT("ft_ssl: memory allocation failed\n");
+				HAJCRYPT_DPRINT("memory allocation failed\n");
 				if (file)
 					close(fd);
 				return (1);

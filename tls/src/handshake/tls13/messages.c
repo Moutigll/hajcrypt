@@ -29,7 +29,7 @@ int tls13BuildEncryptedExtensions(t_tlsHandshakeCtx *ctx, uint8_t *out, size_t *
 	return (1);
 }
 
-int tls13BuildCertificate(t_tlsHandshakeCtx *ctx, uint8_t *out, size_t *outLen)
+int tls13BuildCertificate(t_tlsCtx *ctx, uint8_t *out, size_t *outLen)
 {
 	uint8_t	*body;
 	size_t	bodyLen;
@@ -37,13 +37,13 @@ int tls13BuildCertificate(t_tlsHandshakeCtx *ctx, uint8_t *out, size_t *outLen)
 	size_t	totalListLen;
 	size_t	i;
 
-	if (!ctx || !ctx->certChain || ctx->certChain->count == 0 || !out || !outLen)
+	if (!ctx || !ctx->config->certChain || ctx->config->certChain->count == 0 || !out || !outLen)
 		return (0);
 
 
 	totalListLen = 0;
-	for (i = 0; i < ctx->certChain->count; i++) {
-		totalListLen += 3 + ctx->certChain->certs[i]->derLen + 2;
+	for (i = 0; i < ctx->config->certChain->count; i++) {
+		totalListLen += 3 + ctx->config->certChain->certs[i]->derLen + 2;
 	}
 
 	bodyLen = 1 + 3 + totalListLen;
@@ -61,9 +61,9 @@ int tls13BuildCertificate(t_tlsHandshakeCtx *ctx, uint8_t *out, size_t *outLen)
 	body[offset++] = (totalListLen >> 8)  & 0xFF;
 	body[offset++] =  totalListLen		& 0xFF;
 
-	/* 3. CertificateEntry pour chaque certificat */
-	for (i = 0; i < ctx->certChain->count; i++) {
-		t_x509Cert *cert = ctx->certChain->certs[i];
+	/* 3. CertificateEntry for each certificate */
+	for (i = 0; i < ctx->config->certChain->count; i++) {
+		t_x509Cert *cert = ctx->config->certChain->certs[i];
 		size_t	  certLen = cert->derLen;
 
 		/* cert_data_length (3 octets big-endian) */
@@ -71,7 +71,7 @@ int tls13BuildCertificate(t_tlsHandshakeCtx *ctx, uint8_t *out, size_t *outLen)
 		body[offset++] = (certLen >> 8)  & 0xFF;
 		body[offset++] =  certLen		& 0xFF;
 
-		/* cert_data (le DER brut du certificat) */
+		/* cert_data */
 		if (certLen > 0 && cert->der)
 			ft_memcpy(body + offset, cert->der, certLen);
 		offset += certLen;
@@ -90,13 +90,13 @@ int tls13BuildCertificate(t_tlsHandshakeCtx *ctx, uint8_t *out, size_t *outLen)
 
 	free(body);
 
-	transcriptUpdate(ctx, TLS_HT_CERTIFICATE, out + 4, *outLen - 4);
+	transcriptUpdate(&ctx->handshake, TLS_HT_CERTIFICATE, out + 4, *outLen - 4);
 	return (1);
 }
 
 static int setSigSchemBytes(t_tlsCtx *ctx, uint8_t *body)
 {
-	switch (ctx->handshake.privateKey->def->type) {
+	switch (ctx->config->privateKey->def->type) {
 		case PKEY_TYPE_RSA:
 			if (oidEqual(&ctx->handshake.transcriptHash.oid, &g_sha256Hash.oid)) {
 				body[0] = 0x08; /* rsa_pss_rsae_sha256 */
@@ -117,7 +117,7 @@ static int setSigSchemBytes(t_tlsCtx *ctx, uint8_t *body)
 			break;
 		case PKEY_TYPE_ECDSA:
 		{
-			t_ecdsaKey *ecdsaKey = (t_ecdsaKey *)ctx->handshake.privateKey->key;
+			t_ecdsaKey *ecdsaKey = (t_ecdsaKey *)ctx->config->privateKey->key;
 			if (ecdsaKey->curveId == ECDH_GROUP_SECP256R1) {
 				body[0] = 0x04; /* ecdsa_secp256r1_sha256 */
 				body[1] = 0x03;
@@ -153,7 +153,7 @@ int tls13BuildCertificateVerify(t_tlsCtx *ctx, uint8_t *out, size_t *outLen)
 
 	if (!ctx || !out || !outLen)
 		return (0);
-	if (!ctx->handshake.privateKey)
+	if (!ctx->config->privateKey)
 		return (0);
 
 	hashLen = ctx->handshake.transcriptHash.digestSize;
@@ -180,7 +180,7 @@ int tls13BuildCertificateVerify(t_tlsCtx *ctx, uint8_t *out, size_t *outLen)
 
 	/* 3. Sign the digest */
 	signatureLen = sizeof(signature);
-	if (!pkeySign(ctx->handshake.privateKey,
+	if (!pkeySign(ctx->config->privateKey,
 				  digest, hashLen,
 				  &ctx->handshake.transcriptHash.oid,
 				  signature, &signatureLen,

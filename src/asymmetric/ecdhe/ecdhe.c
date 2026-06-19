@@ -121,9 +121,9 @@ int ecdhInit(t_ecdhCtx *ctx, int curveId)
 		size_t keySize = (curveId == ECDH_GROUP_X25519) ? X25519_KEY_SIZE : X448_KEY_SIZE;
 		ctx->priv = bigIntNew((keySize + 7) / 8);
 		ctx->pubX = bigIntNew((keySize + 7) / 8);
-		ctx->pubY = bigIntNew(1);
+		ctx->pubY = NULL;
 		ctx->shared = bigIntNew((keySize + 7) / 8);
-		return (ctx->priv && ctx->pubX && ctx->pubY && ctx->shared);
+		return (ctx->priv && ctx->pubX && ctx->shared);
 	}
 
 	/* Weierstrass curves (SECP256r1, SECP384r1, SECP521r1) */
@@ -151,7 +151,7 @@ int ecdhGenerateKeypair(t_ecdhCtx *ctx)
 	/* ----- Montgomery curves (X25519, X448) ----- */
 	if (ctx->curveId == ECDH_GROUP_X25519 || ctx->curveId == ECDH_GROUP_X448) {
 		size_t keySize = (ctx->curveId == ECDH_GROUP_X25519) ? X25519_KEY_SIZE : X448_KEY_SIZE;
-		uint8_t privBytes[56] = {0};   // little‑endian
+		uint8_t privBytes[56] = {0};
 		uint8_t pubBytes[56]  = {0};
 
 		/* 1. Get or generate the private key in little‑endian format */
@@ -286,6 +286,8 @@ int ecdhComputeShared(t_ecdhCtx		*ctx,
 		else
 			x448ScalarMult(shared, privBytes, peerPub);
 
+		/* Free old shared before reassigning */
+		bigIntFree(ctx->shared);
 		ctx->shared = bigIntFromBytes(shared, need);
 
 		ft_memcpy(sharedSecret, shared, need);
@@ -310,6 +312,15 @@ int ecdhComputeShared(t_ecdhCtx		*ctx,
 		return (0);
 	}
 
+	/* Free old shared before allocating new one */
+	bigIntFree(ctx->shared);
+	ctx->shared = bigIntNew(c->p->numWords);
+	if (!ctx->shared) {
+		bigIntFree(peerPoint.x);
+		bigIntFree(peerPoint.y);
+		return (0);
+	}
+
 	t_ecPoint sharedPoint = { ctx->shared, bigIntNew(c->p->numWords) };
 	if (!sharedPoint.y) {
 		bigIntFree(peerPoint.x);
@@ -323,11 +334,6 @@ int ecdhComputeShared(t_ecdhCtx		*ctx,
 			ok = 0;
 		else
 			*sharedLen = coordLen;
-	}
-
-	ctx->shared = bigIntNew(c->p->numWords);
-	if (ctx->shared) {
-		bigIntCopy(ctx->shared, sharedPoint.x);
 	}
 
 	bigIntFree(peerPoint.x);

@@ -16,6 +16,14 @@ void tlsHandshakeFree(t_tlsHandshakeCtx *ctx)
 		ctx->keyExchangeCtx = NULL;
 	}
 
+	/* Free ephemeral key shares */
+	if (ctx->keyExchangeCtx)
+	{
+		kexFree(ctx->keyExchangeCtx);
+		free(ctx->keyExchangeCtx);
+		ctx->keyExchangeCtx = NULL;
+	}
+
 	/* Free record protection contexts */
 	tlsRecordCtxFree(&ctx->handshakeSendCtx);
 	tlsRecordCtxFree(&ctx->handshakeRecvCtx);

@@ -172,7 +172,7 @@ int tls13ServerSendFlight(t_tlsCtx *ctx)
 		tlsHelloFree(&serverHello);
 
 		/* ---- Middlebox compat (CCS) ---- */
-		if (ctx->shared->params.middleboxCompat) {
+		if (ctx->config->middleboxCompat) {
 			uint8_t ccsBody = 0x01;
 			if (tlsIoWriteRecord(&ctx->io, TLS_RT_CHANGE_CIPHER_SPEC,
 						 &ccsBody, 1) != 1)
@@ -238,7 +238,7 @@ int tls13ServerSendFlight(t_tlsCtx *ctx)
 		}
 
 		/* Certificate */
-		if (!tls13BuildCertificate(&ctx->handshake, msg, &msgLen))
+		if (!tls13BuildCertificate(ctx, msg, &msgLen))
 		{
 			tlsSetError(ctx, TLS_ERR_INTERNAL,
 					"Failed to build Certificate");

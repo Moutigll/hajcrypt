@@ -154,12 +154,12 @@ int		tls13VerifyFinished(t_tlsHandshakeCtx	*ctx,
  * This function constructs a Certificate message containing the server's
  * certificate chain.
  *
- * @param ctx		Handshake context
+ * @param ctx		TLS context (must have a valid certChain in config)
  * @param out		Output buffer for Certificate message
  * @param outLen	Output length
  * @return			1 on success, 0 on error
  */
-int		tls13BuildCertificate(t_tlsHandshakeCtx *ctx, uint8_t *out, size_t *outLen);
+int		tls13BuildCertificate(t_tlsCtx *ctx, uint8_t *out, size_t *outLen);
 
 /**
  * @brief Builds a TLS 1.3 CertificateVerify message
