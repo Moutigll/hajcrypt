@@ -156,7 +156,8 @@ TEST_SRC = \
 	tests/src/chacha20Poly1305.test.c \
 	tests/src/ffdhe.test.c \
 	tests/src/ecdhe.test.c \
-	tests/src/ecdsa.test.c
+	tests/src/ecdsa.test.c \
+	tests/src/aesgcm.test.c \
 
 CONST_OBJ = $(patsubst $(CONST_DIR)/%.c, $(BUILD_DIR)/consts/%.o, $(CONST_SRC))
 LIB_SRC_OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(LIB_SRC))

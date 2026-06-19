@@ -175,4 +175,9 @@ int testEcdsaGenerateKeypair(void);
 int testEcdsaSignAndVerify(void);
 int testEcdsaRoundtrip(void);
 
+/* AES-GCM tests */
+int testAesGcm128(void);
+int testAesGcm192(void);
+int testAesGcm256(void);
+
 #endif /* HAJCRYPT_TEST_H */

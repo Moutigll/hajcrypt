@@ -268,6 +268,7 @@ uint8x16_t aesEncryptOneNeon(uint8x16_t input, const uint8x16_t *rk, int nr)
  * @param	nr	Number of rounds
  * @param	pctr	Counter value (modified)
  * @param	Hp	Precomputed H^1..H^8 in bit-reflected domain
+ * @param	dir	Encryption or decryption (determines which data is GHASHed)
  * @note	Accumulates using Karatsuba without reduction per block
  */
 __attribute__((target("aes")))
@@ -277,7 +278,8 @@ static void gcm8Blocks(uint8x16_t		*acc,
 					   const uint8x16_t	*rk,
 					   int				nr,
 					   uint8x16_t		*pctr,
-					   const uint8x16_t	Hp[8])
+					   const uint8x16_t	Hp[8],
+					   t_cipherDirection dir)
 {
 	uint8x16_t	c0 = *pctr;
 	uint8x16_t	c1 = ctrIncNeon(c0, 1), c2 = ctrIncNeon(c0, 2);
@@ -310,26 +312,47 @@ static void gcm8Blocks(uint8x16_t		*acc,
 	c6 = veorq_u8(vaeseq_u8(c6, kp), kf);
 	c7 = veorq_u8(vaeseq_u8(c7, kp), kf);
 
-	c0 = veorq_u8(c0, vld1q_u8(in + 0*16));
-	c1 = veorq_u8(c1, vld1q_u8(in + 1*16));
-	c2 = veorq_u8(c2, vld1q_u8(in + 2*16));
-	c3 = veorq_u8(c3, vld1q_u8(in + 3*16));
-	c4 = veorq_u8(c4, vld1q_u8(in + 4*16));
-	c5 = veorq_u8(c5, vld1q_u8(in + 5*16));
-	c6 = veorq_u8(c6, vld1q_u8(in + 6*16));
-	c7 = veorq_u8(c7, vld1q_u8(in + 7*16));
+	/* Load input blocks */
+	uint8x16_t in0 = vld1q_u8(in + 0*16);
+	uint8x16_t in1 = vld1q_u8(in + 1*16);
+	uint8x16_t in2 = vld1q_u8(in + 2*16);
+	uint8x16_t in3 = vld1q_u8(in + 3*16);
+	uint8x16_t in4 = vld1q_u8(in + 4*16);
+	uint8x16_t in5 = vld1q_u8(in + 5*16);
+	uint8x16_t in6 = vld1q_u8(in + 6*16);
+	uint8x16_t in7 = vld1q_u8(in + 7*16);
 
-	/* Store ciphertext blocks */
-	vst1q_u8(out + 0*16, c0); vst1q_u8(out + 1*16, c1);
-	vst1q_u8(out + 2*16, c2); vst1q_u8(out + 3*16, c3);
-	vst1q_u8(out + 4*16, c4); vst1q_u8(out + 5*16, c5);
-	vst1q_u8(out + 6*16, c6); vst1q_u8(out + 7*16, c7);
+	/* Generate output blocks (keystream ^ input) */
+	uint8x16_t out0 = veorq_u8(c0, in0);
+	uint8x16_t out1 = veorq_u8(c1, in1);
+	uint8x16_t out2 = veorq_u8(c2, in2);
+	uint8x16_t out3 = veorq_u8(c3, in3);
+	uint8x16_t out4 = veorq_u8(c4, in4);
+	uint8x16_t out5 = veorq_u8(c5, in5);
+	uint8x16_t out6 = veorq_u8(c6, in6);
+	uint8x16_t out7 = veorq_u8(c7, in7);
 
-	/* Convert ciphertext blocks to bit-reflected domain for GHASH */
-	c0 = vrbitq_u8(c0); c1 = vrbitq_u8(c1);
-	c2 = vrbitq_u8(c2); c3 = vrbitq_u8(c3);
-	c4 = vrbitq_u8(c4); c5 = vrbitq_u8(c5);
-	c6 = vrbitq_u8(c6); c7 = vrbitq_u8(c7);
+	/* Store output */
+	vst1q_u8(out + 0*16, out0); vst1q_u8(out + 1*16, out1);
+	vst1q_u8(out + 2*16, out2); vst1q_u8(out + 3*16, out3);
+	vst1q_u8(out + 4*16, out4); vst1q_u8(out + 5*16, out5);
+	vst1q_u8(out + 6*16, out6); vst1q_u8(out + 7*16, out7);
+
+	/* Select ciphertext for GHASH (output in encryption, input in decryption) */
+	uint8x16_t ct0 = (dir == CIPHER_ENCRYPT) ? out0 : in0;
+	uint8x16_t ct1 = (dir == CIPHER_ENCRYPT) ? out1 : in1;
+	uint8x16_t ct2 = (dir == CIPHER_ENCRYPT) ? out2 : in2;
+	uint8x16_t ct3 = (dir == CIPHER_ENCRYPT) ? out3 : in3;
+	uint8x16_t ct4 = (dir == CIPHER_ENCRYPT) ? out4 : in4;
+	uint8x16_t ct5 = (dir == CIPHER_ENCRYPT) ? out5 : in5;
+	uint8x16_t ct6 = (dir == CIPHER_ENCRYPT) ? out6 : in6;
+	uint8x16_t ct7 = (dir == CIPHER_ENCRYPT) ? out7 : in7;
+
+	/* Bit-reflect ciphertexts for GHASH domain */
+	ct0 = vrbitq_u8(ct0); ct1 = vrbitq_u8(ct1);
+	ct2 = vrbitq_u8(ct2); ct3 = vrbitq_u8(ct3);
+	ct4 = vrbitq_u8(ct4); ct5 = vrbitq_u8(ct5);
+	ct6 = vrbitq_u8(ct6); ct7 = vrbitq_u8(ct7);
 
 	/* Accumulate GHASH using Karatsuba without reduction for each block */
 	uint8x16_t sum_lo = vdupq_n_u8(0);
@@ -338,42 +361,42 @@ static void gcm8Blocks(uint8x16_t		*acc,
 	uint8x16_t lo, mid, hi;
 
 	/* Process blocks in reverse order for better accumulation */
-	gcmMulNoreduce(veorq_u8(*acc, c0), Hp[7], &lo, &mid, &hi);
+	gcmMulNoreduce(veorq_u8(*acc, ct0), Hp[7], &lo, &mid, &hi);
 	sum_lo = veorq_u8(sum_lo, lo);
 	sum_mid = veorq_u8(sum_mid, mid);
 	sum_hi = veorq_u8(sum_hi, hi);
 
-	gcmMulNoreduce(c1, Hp[6], &lo, &mid, &hi);
+	gcmMulNoreduce(ct1, Hp[6], &lo, &mid, &hi);
 	sum_lo = veorq_u8(sum_lo, lo);
 	sum_mid = veorq_u8(sum_mid, mid);
 	sum_hi = veorq_u8(sum_hi, hi);
 
-	gcmMulNoreduce(c2, Hp[5], &lo, &mid, &hi);
+	gcmMulNoreduce(ct2, Hp[5], &lo, &mid, &hi);
 	sum_lo = veorq_u8(sum_lo, lo);
 	sum_mid = veorq_u8(sum_mid, mid);
 	sum_hi = veorq_u8(sum_hi, hi);
 
-	gcmMulNoreduce(c3, Hp[4], &lo, &mid, &hi);
+	gcmMulNoreduce(ct3, Hp[4], &lo, &mid, &hi);
 	sum_lo = veorq_u8(sum_lo, lo);
 	sum_mid = veorq_u8(sum_mid, mid);
 	sum_hi = veorq_u8(sum_hi, hi);
 
-	gcmMulNoreduce(c4, Hp[3], &lo, &mid, &hi);
+	gcmMulNoreduce(ct4, Hp[3], &lo, &mid, &hi);
 	sum_lo = veorq_u8(sum_lo, lo);
 	sum_mid = veorq_u8(sum_mid, mid);
 	sum_hi = veorq_u8(sum_hi, hi);
 
-	gcmMulNoreduce(c5, Hp[2], &lo, &mid, &hi);
+	gcmMulNoreduce(ct5, Hp[2], &lo, &mid, &hi);
 	sum_lo = veorq_u8(sum_lo, lo);
 	sum_mid = veorq_u8(sum_mid, mid);
 	sum_hi = veorq_u8(sum_hi, hi);
 
-	gcmMulNoreduce(c6, Hp[1], &lo, &mid, &hi);
+	gcmMulNoreduce(ct6, Hp[1], &lo, &mid, &hi);
 	sum_lo = veorq_u8(sum_lo, lo);
 	sum_mid = veorq_u8(sum_mid, mid);
 	sum_hi = veorq_u8(sum_hi, hi);
 
-	gcmMulNoreduce(c7, Hp[0], &lo, &mid, &hi);
+	gcmMulNoreduce(ct7, Hp[0], &lo, &mid, &hi);
 	sum_lo = veorq_u8(sum_lo, lo);
 	sum_mid = veorq_u8(sum_mid, mid);
 	sum_hi = veorq_u8(sum_hi, hi);
@@ -391,15 +414,17 @@ static void gcm8Blocks(uint8x16_t		*acc,
  * @param	nr	Number of rounds
  * @param	pctr	Counter value (modified)
  * @param	Hp	Precomputed H^1..H^8 in bit-reflected domain
+ * @param	dir	Encryption or decryption (determines which data is GHASHed)
  */
 __attribute__((target("aes")))
 static void gcm4Blocks(uint8x16_t			*acc,
-					    const uint8_t		*in,
-					    uint8_t				*out,
-					    const uint8x16_t	*rk,
-					    int					nr,
-					    uint8x16_t			*pctr,
-					    const uint8x16_t	Hp[8])
+					   const uint8_t		*in,
+					   uint8_t				*out,
+					   const uint8x16_t	*rk,
+					   int					nr,
+					   uint8x16_t			*pctr,
+					   const uint8x16_t	Hp[8],
+					   t_cipherDirection	dir)
 {
 	uint8x16_t c0 = *pctr;
 	uint8x16_t c1 = ctrIncNeon(c0, 1);
@@ -421,38 +446,48 @@ static void gcm4Blocks(uint8x16_t			*acc,
 	c2 = veorq_u8(vaeseq_u8(c2, kp), kf);
 	c3 = veorq_u8(vaeseq_u8(c3, kp), kf);
 
-	c0 = veorq_u8(c0, vld1q_u8(in + 0*16));
-	c1 = veorq_u8(c1, vld1q_u8(in + 1*16));
-	c2 = veorq_u8(c2, vld1q_u8(in + 2*16));
-	c3 = veorq_u8(c3, vld1q_u8(in + 3*16));
+	uint8x16_t in0 = vld1q_u8(in + 0*16);
+	uint8x16_t in1 = vld1q_u8(in + 1*16);
+	uint8x16_t in2 = vld1q_u8(in + 2*16);
+	uint8x16_t in3 = vld1q_u8(in + 3*16);
 
-	vst1q_u8(out + 0*16, c0); vst1q_u8(out + 1*16, c1);
-	vst1q_u8(out + 2*16, c2); vst1q_u8(out + 3*16, c3);
+	uint8x16_t out0 = veorq_u8(c0, in0);
+	uint8x16_t out1 = veorq_u8(c1, in1);
+	uint8x16_t out2 = veorq_u8(c2, in2);
+	uint8x16_t out3 = veorq_u8(c3, in3);
 
-	c0 = vrbitq_u8(c0); c1 = vrbitq_u8(c1);
-	c2 = vrbitq_u8(c2); c3 = vrbitq_u8(c3);
+	vst1q_u8(out + 0*16, out0); vst1q_u8(out + 1*16, out1);
+	vst1q_u8(out + 2*16, out2); vst1q_u8(out + 3*16, out3);
+
+	uint8x16_t ct0 = (dir == CIPHER_ENCRYPT) ? out0 : in0;
+	uint8x16_t ct1 = (dir == CIPHER_ENCRYPT) ? out1 : in1;
+	uint8x16_t ct2 = (dir == CIPHER_ENCRYPT) ? out2 : in2;
+	uint8x16_t ct3 = (dir == CIPHER_ENCRYPT) ? out3 : in3;
+
+	ct0 = vrbitq_u8(ct0); ct1 = vrbitq_u8(ct1);
+	ct2 = vrbitq_u8(ct2); ct3 = vrbitq_u8(ct3);
 
 	uint8x16_t sum_lo = vdupq_n_u8(0);
 	uint8x16_t sum_mid = vdupq_n_u8(0);
 	uint8x16_t sum_hi = vdupq_n_u8(0);
 	uint8x16_t lo, mid, hi;
 
-	gcmMulNoreduce(veorq_u8(*acc, c0), Hp[3], &lo, &mid, &hi);
+	gcmMulNoreduce(veorq_u8(*acc, ct0), Hp[3], &lo, &mid, &hi);
 	sum_lo = veorq_u8(sum_lo, lo);
 	sum_mid = veorq_u8(sum_mid, mid);
 	sum_hi = veorq_u8(sum_hi, hi);
 
-	gcmMulNoreduce(c1, Hp[2], &lo, &mid, &hi);
+	gcmMulNoreduce(ct1, Hp[2], &lo, &mid, &hi);
 	sum_lo = veorq_u8(sum_lo, lo);
 	sum_mid = veorq_u8(sum_mid, mid);
 	sum_hi = veorq_u8(sum_hi, hi);
 
-	gcmMulNoreduce(c2, Hp[1], &lo, &mid, &hi);
+	gcmMulNoreduce(ct2, Hp[1], &lo, &mid, &hi);
 	sum_lo = veorq_u8(sum_lo, lo);
 	sum_mid = veorq_u8(sum_mid, mid);
 	sum_hi = veorq_u8(sum_hi, hi);
 
-	gcmMulNoreduce(c3, Hp[0], &lo, &mid, &hi);
+	gcmMulNoreduce(ct3, Hp[0], &lo, &mid, &hi);
 	sum_lo = veorq_u8(sum_lo, lo);
 	sum_mid = veorq_u8(sum_mid, mid);
 	sum_hi = veorq_u8(sum_hi, hi);
@@ -642,26 +677,26 @@ void aesGcmUpdate(void			*vctx,
 
 	while (fullBlocks >= 8) {
 		gcm8Blocks(&acc_vec, in + offset, out + offset,
-			    rk, ctx->nr, &ctr_vec, Hp);
+			    rk, ctx->nr, &ctr_vec, Hp, ctx->dir);
 		offset     += 8 * 16;
 		fullBlocks -= 8;
 	}
 
 	if (fullBlocks >= 4) {
 		gcm4Blocks(&acc_vec, in + offset, out + offset,
-			    rk, ctx->nr, &ctr_vec, Hp);
+			    rk, ctx->nr, &ctr_vec, Hp, ctx->dir);
 		offset     += 4 * 16;
 		fullBlocks -= 4;
 	}
 
 	while (fullBlocks--) {
-		uint8x16_t plain = vld1q_u8(in + offset);
+		uint8x16_t block_in = vld1q_u8(in + offset);
 		uint8x16_t ks = aesEncryptOneNeon(ctr_vec, rk, ctx->nr);
-		uint8x16_t cipher = veorq_u8(plain, ks);
-		vst1q_u8(out + offset, cipher);
+		uint8x16_t block_out = veorq_u8(block_in, ks);
+		vst1q_u8(out + offset, block_out);
 
-		uint8x16_t ct = vrbitq_u8(cipher);
-		acc_vec = gfmulR(veorq_u8(acc_vec, ct), Hp[0]);
+		const uint8x16_t ct = (ctx->dir == CIPHER_ENCRYPT) ? block_out : block_in;
+		acc_vec = gfmulR(veorq_u8(acc_vec, vrbitq_u8(ct)), Hp[0]);
 
 		ctr_vec = ctrIncNeon(ctr_vec, 1);
 		offset += 16;

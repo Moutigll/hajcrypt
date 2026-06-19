@@ -95,6 +95,9 @@ static testEntry_t all_tests[] = {
 	{"ECDSA generate keypair", testEcdsaGenerateKeypair},
 	{"ECDSA sign and verify", testEcdsaSignAndVerify},
 	{"ECDSA roundtrip", testEcdsaRoundtrip},
+	{"AES-GCM encryption and decryption (128-bit)", testAesGcm128},
+	{"AES-GCM encryption and decryption (192-bit)", testAesGcm192},
+	{"AES-GCM encryption and decryption (256-bit)", testAesGcm256},
 	{NULL, NULL}
 };
 

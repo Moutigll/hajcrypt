@@ -97,14 +97,6 @@ int bigIntCmpConstTime(const t_bigInt *a, const t_bigInt *b)
 	return (diff == 0) ? 1 : 0;
 }
 
-static int rsaFaultCheck(const t_bigInt *m, const t_bigInt *c, const t_rsaKey *key, t_bigInt *fcheck)
-{
-	/* fcheck = m^e mod n */
-	bigIntModExp(fcheck, m, key->e, key->n);
-
-	return (bigIntCmpConstTime(fcheck, c) == 0);
-}
-
 static int rsaPrivateOp(const uint8_t *data,   size_t dataLen, const t_rsaKey *key, uint8_t *out, size_t *outLen)
 {
 	t_crtPool   pool;
@@ -159,12 +151,6 @@ static int rsaPrivateOp(const uint8_t *data,   size_t dataLen, const t_rsaKey *k
 
 	bigIntMul(pool.tmp, key->q, pool.h);			/* tmp = q * h		  */
 	bigIntAdd(pool.m, pool.m2, pool.tmp);		   /* m   = m2 + q*h	   */
-
-	if (!rsaFaultCheck(pool.m, pool.c, key, pool.fcheck))
-	{
-		HAJCRYPT_DPRINT(P_RED "rsaPrivateOpCRT: FAULT DETECTED, aborting\n" P_RESET);
-		goto exit;
-	}
 
 	k		= rsaModulusBytes(key);
 	*outLen	= bigIntToBytes(pool.m, out, k);
