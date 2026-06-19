@@ -4,18 +4,6 @@
 # include "btls.h"
 
 /**
- * @brief Initialises a TLS handshake context
- *
- * This function initialises the handshake context with the specified role
- * and hash algorithm. It must be called before any handshake operations.
- *
- * @param ctx		Handshake context to initialise
- * @param isClient	1 for client mode, 0 for server mode
- * @param hash		Hash algorithm for transcript (SHA-256 or SHA-384)
- */
-void	tlsHandshakeInit(t_tlsHandshakeCtx *ctx, int isClient, const t_hash *hash);
-
-/**
  * @brief Frees a TLS handshake context
  *
  * This function securely zeroises and frees all resources associated with
@@ -40,6 +28,17 @@ void	tlsHandshakeFree(t_tlsHandshakeCtx *ctx);
  */
 int		transcriptUpdate(t_tlsHandshakeCtx *ctx, uint8_t msgType, const uint8_t *data, size_t dataLen);
 
+/**
+ * @brief Updates the transcript hash with a raw handshake message
+ *
+ * This function adds a complete handshake message (including its 4-byte
+ * header) to the running transcript hash.
+ *
+ * @param ctx		Handshake context
+ * @param fullHandshakeMsg	Complete handshake message (header + body)
+ * @param fullLen	Length of the complete handshake message
+ * @return			1 on success, 0 on error
+ */
 int		transcriptUpdateRaw(t_tlsHandshakeCtx *ctx, const uint8_t *fullHandshakeMsg, size_t fullLen);
 
 /**
@@ -52,19 +51,6 @@ int		transcriptUpdateRaw(t_tlsHandshakeCtx *ctx, const uint8_t *fullHandshakeMsg
  * @param out		Output buffer for hash digest
  */
 void	transcriptGetHash(t_tlsHandshakeCtx *ctx, uint8_t *out);
-
-/**
- * @brief Checks if the handshake is complete
- *
- * This function returns whether the handshake has successfully completed
- * and the connection is ready for application data.
- *
- * @param ctx		Handshake context
- * @return			1 if connected, 0 otherwise
- */
-int		tlsHandshakeIsConnected(const t_tlsHandshakeCtx *ctx);
-
-
 
 
 
@@ -87,7 +73,19 @@ int		tlsHandshakeIsConnected(const t_tlsHandshakeCtx *ctx);
  * @param ctx				TLS context (contains handshake state)
  * @return					1 on success, 0 on error
  */
-int		tls13ServerHandshake(t_tlsCtx *ctx);
+int tls13ServerSendFlight(t_tlsCtx *ctx);
+
+/**
+ * @brief Waits for and processes the client's Finished message (server side)
+ *
+ * This function reads the client's Finished message, verifies it against
+ * the expected verify_data derived from the handshake secrets, and updates
+ * the handshake state to connected if successful.
+ *
+ * @param ctx		TLS context
+ * @return			1 on success, 0 on error
+ */
+int tls13ServerWaitClientFinished(t_tlsCtx *ctx);
 
 /**
  * @brief Performs TLS 1.3 handshake from client side
@@ -115,19 +113,6 @@ int		tls13ClientHandshake(t_tlsCtx *ctx);
  */
 int		tls13SendEncryptedMessage(t_tlsCtx *ctx, const uint8_t *msg, size_t msgLen, uint8_t contentType);
 
-/**
- * @brief Reads an encrypted handshake message (TLS 1.3)
- *
- * This function reads and decrypts an encrypted handshake message using
- * the current handshake traffic keys.
- *
- * @param ctx		TLS context
- * @param msg		Output buffer for the message
- * @param msgLen	Output message length
- * @param expectedContentType If non-zero, the expected content type of the decrypted message (e.g. TLS_RT_HANDSHAKE)
- * @return			1 on success, 0 on error
- */
-int		tls13ReadEncryptedHandshake(t_tlsCtx *ctx, uint8_t *msg, size_t *msgLen, uint8_t expectedContentType);
 
 /**
  * @brief Builds a TLS 1.3 Finished message
@@ -160,8 +145,8 @@ int		tls13BuildFinished(t_tlsHandshakeCtx	*ctx,
  * @return				1 if valid, 0 otherwise
  */
 int		tls13VerifyFinished(t_tlsHandshakeCtx	*ctx,
-							const uint8_t		*trafficSecret,	size_t	secretLen,
-							const uint8_t		*finished,		size_t	finishedLen);
+						   const uint8_t		*trafficSecret,	size_t	secretLen,
+						   const uint8_t		*finished,		size_t	finishedLen);
 
 /**
  * @brief Builds a TLS 1.3 Certificate message
@@ -381,28 +366,15 @@ int		handshakeDecode(const uint8_t *data, size_t dataLen, uint8_t *msgType, cons
  *
  * This function reads a complete handshake message from the TLS connection,
  * optionally decrypting it if encrypted.
+ * If we only recieved a partial message, or there is no data available, it returns TLS_ERR_WANT_READ.
  *
  * @param ctx			TLS context
  * @param msg			Output buffer for handshake message
  * @param msgLen		Output message length
  * @param encrypted		1 if record is encrypted, 0 for plaintext
- * @return				1 on success, 0 on error
+ * @return				1 on success, TLS_ERR_WANT_READ if more data is needed, 0 on error
  */
 int		tlsReadHandshakeMessage(t_tlsCtx *ctx, uint8_t *msg, size_t *msgLen, int encrypted);
-
-/**
- * @brief Writes a handshake message (plaintext or encrypted)
- *
- * This function writes a handshake message to the TLS connection,
- * optionally encrypting it if required.
- *
- * @param ctx			TLS context
- * @param msg			Handshake message to send
- * @param msgLen		Message length
- * @param encrypted		1 to encrypt, 0 to send plaintext
- * @return				1 on success, 0 on error
- */
-int		tlsWriteHandshakeMessage(t_tlsCtx *ctx, const uint8_t *msg, size_t msgLen, int encrypted);
 
 /**
  * @brief Negotiates TLS version

@@ -288,7 +288,7 @@ void tlsPrintParsedExtensions(const t_tlsExtensions *ext)
 		          colorPalette[color_idx++ % num_colors]);
 		ft_printf("\t\t\t");
 		for (size_t i = 0; i < ext->numSignatureAlgsCert; i++) {
-			printSigAlgList(&ext->signatureAlgsCert[i], ext->numSignatureAlgsCert);
+			printSigAlgList(&ext->signatureAlgsCert[i], 1);
 			if (i + 1 < ext->numSignatureAlgsCert)
 				ft_printf("%s", (i + 1) % 3 == 0 ? ",\n\t\t\t" : ", ");
 		}

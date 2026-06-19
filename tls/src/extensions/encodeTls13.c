@@ -189,7 +189,6 @@ void encKeyShare(uint8_t *out, size_t *pos, const t_tlsExtensions *e, int isServ
 void encTransparencyInfo(uint8_t *out, size_t *pos, const t_tlsExtensions *e)
 {
 	(void)out; (void)pos; (void)e;
-	BTLS_DEBUG("Encoding transparency_info: not implemented");
 }
 
 void encConnectionId(uint8_t *out, size_t *pos, const t_tlsExtensions *e)

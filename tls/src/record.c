@@ -201,7 +201,9 @@ int	tlsRecordEncrypt(t_tlsRecordCtx	*ctx,
 	return (1);
 }
 
-int	tlsRecordDecrypt(t_tlsRecordCtx	*ctx,
+#include "../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
+
+int tlsRecordDecrypt(t_tlsRecordCtx	*ctx,
 					 const uint8_t	*ciphertext,	size_t	ciphertextLen,
 					 int			isClient,
 					 uint8_t		*fragment,		size_t	*fragmentLen,
@@ -216,21 +218,23 @@ int	tlsRecordDecrypt(t_tlsRecordCtx	*ctx,
 	const uint8_t	*tag;
 	size_t			encryptedLen;
 	size_t			innerPlainLen;
+	size_t			realLen;
 	uint8_t			*innerPlain;
 	int				ret;
 
 	if (!ctx || !ciphertext || !fragment || !fragmentLen || !innerType)
-		return (0);
+		{ BTLS_DEBUG("Missing decrypt parameters"); return (0); }
 	if (ciphertextLen < TLS_RECORD_HEADER_SIZE + ctx->aeadCtx.tagLen)
-		return (0);
+		{ BTLS_DEBUG("Ciphertext too short"); return (0); }
 
 	/* Extract record header */
 	ft_memcpy(header, ciphertext, TLS_RECORD_HEADER_SIZE);
 	encryptedLen = ((size_t)header[3] << 8) | header[4];
+	
 	if (ciphertextLen != TLS_RECORD_HEADER_SIZE + encryptedLen)
-		return (0);
+		{ BTLS_DEBUG("Length mismatch"); return (0); }
 	if (encryptedLen < ctx->aeadCtx.tagLen + 1)
-		return (0);
+		{ BTLS_DEBUG("Encrypted length too short"); return (0); }
 
 	encrypted = ciphertext + TLS_RECORD_HEADER_SIZE;
 	innerPlainLen = encryptedLen - ctx->aeadCtx.tagLen;
@@ -238,7 +242,7 @@ int	tlsRecordDecrypt(t_tlsRecordCtx	*ctx,
 
 	innerPlain = ft_calloc(1, innerPlainLen);
 	if (!innerPlain)
-		return (0);
+		{ BTLS_DEBUG("Memory allocation failed"); return (0); }
 
 	/* Determine sequence number */
 	if (isClient)
@@ -246,8 +250,8 @@ int	tlsRecordDecrypt(t_tlsRecordCtx	*ctx,
 	else
 		seqNum = ctx->seqNumClient;
 
-	/* AAD uses the outer record type (always 0x17) and the length from the header */
-	buildAdditionalData(TLS_RT_APPLICATION_DATA, TLS_LEGACY_VERSION, encryptedLen, additionalData, &adLen);
+	adLen = TLS_RECORD_HEADER_SIZE;
+	ft_memcpy(additionalData, header, adLen);
 
 	/* Per-record nonce */
 	buildNonce(ctx->aeadCtx.iv, ctx->aeadCtx.ivLen, seqNum, nonce);
@@ -263,19 +267,22 @@ int	tlsRecordDecrypt(t_tlsRecordCtx	*ctx,
 	{
 		secureZeroMemory(innerPlain, innerPlainLen);
 		free(innerPlain);
-		return (0);
+		{ BTLS_DEBUG("AEAD decryption failed"); return (0); }
 	}
 
-	/* Inner plaintext: fragment (all bytes except last) || type (last byte) */
-	if (innerPlainLen < 1)
+	realLen = innerPlainLen;
+	while (realLen > 0 && innerPlain[realLen - 1] == 0x00) /* Remove padding */
+		realLen--;
+
+	if (realLen == 0)
 	{
 		secureZeroMemory(innerPlain, innerPlainLen);
 		free(innerPlain);
-		return (0);
+		{ BTLS_DEBUG("Inner plaintext is only padding"); return (0); }
 	}
 
-	*innerType = innerPlain[innerPlainLen - 1];
-	*fragmentLen = innerPlainLen - 1;
+	*innerType = innerPlain[realLen - 1];
+	*fragmentLen = realLen - 1;
 	ft_memcpy(fragment, innerPlain, *fragmentLen);
 
 	secureZeroMemory(innerPlain, innerPlainLen);

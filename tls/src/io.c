@@ -1,201 +1,302 @@
 #include <errno.h>
+#include <string.h>
 #include <sys/socket.h>
 
+#include "../../hajlib/include/hprintf.h"
 #include "../../hajlib/include/hmemory.h"
-#include "../includes/constants.h"
+#include "../includes/btls.h"
 
 #include "../includes/io.h"
+
+
+static const char *tlsRecordTypeToString(uint8_t type)
+{
+	switch (type) {
+		case TLS_RT_CHANGE_CIPHER_SPEC:	return "ChangeCipherSpec";
+		case TLS_RT_ALERT:				return "Alert";
+		case TLS_RT_HANDSHAKE:			return "Handshake";
+		case TLS_RT_APPLICATION_DATA:	return "ApplicationData";
+		default:						return "Unknown";
+	}
+}
+
+static void printHexRaw(const uint8_t *data, size_t len)
+{
+	return;
+	if (!data || len == 0) return;
+	BTLS_DEBUG("Printing record type %s (%zu bytes):", tlsRecordTypeToString(data[0]), len);
+	for (size_t i = 0; i < len; i++)
+	{
+		if (i % 16 == 0)
+			ft_printf("%04zx: ", i);
+		ft_printf("%02x ", data[i]);
+		if ((i + 1) % 8 == 0)
+			ft_printf(" ");
+		if ((i + 1) % 16 == 0 || i + 1 == len)
+		{
+			size_t j;
+			for (j = i - (i % 16); j <= i; j++)
+			{
+				if (j % 16 == 0)
+					ft_printf(" ");
+				if (data[j] >= 32 && data[j] <= 126)
+					ft_printf("%c", data[j]);
+				else
+					ft_printf(".");
+			}
+			ft_printf("\n");
+		}
+	}
+}
+
 
 void	tlsIoInit(t_tlsIoctx *io, int socket, int isBlocking)
 {
 	if (!io) return;
 	ft_bzero(io, sizeof(t_tlsIoctx));
-	io->socket = socket;
-	io->isBlocking = isBlocking;
+	io->socket		= socket;
+	io->isBlocking	= isBlocking;
 }
 
-int tlsIoHasPending(t_tlsIoctx *io)
+int		tlsIoHasPending(t_tlsIoctx *io)
 {
 	if (!io) return (0);
-	return ((io->readBufLen - io->readBufPos > 0) || (io->writeBufLen > 0));
+	return ((io->readBufLen - io->readBufPos > 0)
+		|| (io->writeBufLen - io->writeBufPos > 0));
 }
 
 ssize_t	tlsIoReadRaw(t_tlsIoctx *io, uint8_t *buf, size_t len)
 {
-	ssize_t	n;
+	ssize_t n;
 
 	if (!io || !buf) return (-1);
-	
+
 	n = recv(io->socket, buf, len, 0);
-	if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
-		return (0);	/* Would block, return 0 */
+	if (n < 0) {
+		if (errno == EAGAIN || errno == EWOULDBLOCK) { 
+			io->ioError = TLS_ERR_WANT_READ;
+			return (0);
+		}
+		io->ioError = TLS_ERR_IO;
+		return (-1);
+	}
+	if (n == 0) {
+		io->ioError = TLS_ERR_EOF;
+		return (0);
+	}
+	printHexRaw(buf, (size_t)n);
 	return (n);
 }
 
 ssize_t	tlsIoWriteRaw(t_tlsIoctx *io, const uint8_t *buf, size_t len)
 {
-	ssize_t	n;
+	ssize_t n;
 
 	if (!io || !buf) return (-1);
-	
+
 	n = send(io->socket, buf, len, 0);
-	if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
-		return (0);	/* Would block, return 0 */
+	if (n < 0) {
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			io->ioError = TLS_ERR_WANT_WRITE;
+			return (0);
+		}
+		io->ioError = TLS_ERR_IO;
+		return (-1);
+	}
+	printHexRaw(buf, (size_t)n);
 	return (n);
 }
 
-int	tlsIoFlush(t_tlsIoctx *io)
+/**
+ * @brief Compact the write buffer by moving unsent data to the beginning.
+ *
+ * This function is called when there is not enough space in the write buffer
+ * to accommodate a new TLS record. It moves any unsent data to the beginning
+ * of the buffer, freeing up space at the end for new data.
+ *
+ * @param io	I/O context
+ */
+static void tlsIoCompactWriteBuf(t_tlsIoctx *io)
 {
-	size_t	written;
-	ssize_t	n;
+	size_t remaining;
+
+	if (io->writeBufPos == 0)
+		return;
+
+	remaining = io->writeBufLen - io->writeBufPos;
+	if (remaining > 0)
+		ft_memmove(io->writeBuf, io->writeBuf + io->writeBufPos, remaining);
+
+	io->writeBufLen = remaining;
+	io->writeBufPos = 0;
+}
+
+int tlsIoFlush(t_tlsIoctx *io)
+{
+	ssize_t n;
 
 	if (!io || io->writeBufLen == 0)
 		return (0);
-	
-	written = 0;
-	while (written < io->writeBufLen)
+	while (io->writeBufPos < io->writeBufLen)
 	{
-		n = tlsIoWriteRaw(io, io->writeBuf + written, io->writeBufLen - written);
+		n = tlsIoWriteRaw(io,
+						  io->writeBuf + io->writeBufPos,
+						  io->writeBufLen - io->writeBufPos);
 		if (n < 0)
 			return (-1);
 		if (n == 0 && !io->isBlocking)
-		{
-			/* Partial write in non-blocking mode */
-			ft_memmove(io->writeBuf, io->writeBuf + written, io->writeBufLen - written);
-			io->writeBufLen -= written;
 			return (0);
-		}
-		written += n;
+		io->writeBufPos += (size_t)n;
 	}
-	io->writeBufLen = 0;
+
+	io->writeBufLen  = 0;
+	io->writeBufPos  = 0;
 	return (0);
+}
+
+int tlsIoWriteRecord(t_tlsIoctx *io, uint8_t contentType, const uint8_t *data, size_t dataLen)
+{
+	size_t	needed;
+	size_t	available;
+	size_t	offset;
+
+	if (!io || !data)
+		return (-1);
+
+	if (contentType != 0)
+		needed = TLS_RECORD_HEADER_SIZE + dataLen;  /* header + fragment */
+	else
+		needed = dataLen;						   /* no header, just raw data */
+
+	available = TLS_WRITE_BUFFER_SIZE - (io->writeBufLen - io->writeBufPos);
+
+	if (needed > available) {
+		if (tlsIoFlush(io) != 0)
+			return (-1);
+
+		available = TLS_WRITE_BUFFER_SIZE - (io->writeBufLen - io->writeBufPos);
+
+		if (needed > available) {
+			tlsIoCompactWriteBuf(io);
+			available = TLS_WRITE_BUFFER_SIZE - (io->writeBufLen - io->writeBufPos);
+
+			if (needed > available) {
+				io->ioError = TLS_ERR_INTERNAL;
+				return (-1);
+			}
+		}
+	}
+
+	offset = io->writeBufLen;
+
+	if (contentType != 0) {
+		BTLS_DEBUG("Writing TLS record header: type=%s, length=%zu", tlsRecordTypeToString(contentType), dataLen);
+		io->writeBuf[offset + 0] = contentType;
+		io->writeBuf[offset + 1] = 0x03;
+		io->writeBuf[offset + 2] = 0x03;
+		io->writeBuf[offset + 3] = (dataLen >> 8) & 0xFF;
+		io->writeBuf[offset + 4] = dataLen & 0xFF;
+	}
+
+	if (contentType != 0)
+		/* With header: we copy the data after the 5-byte header */
+		ft_memcpy(io->writeBuf + offset + TLS_RECORD_HEADER_SIZE, data, dataLen);
+	else
+		/* Without header: we copy the data directly */
+		ft_memcpy(io->writeBuf + offset, data, dataLen);
+
+	io->writeBufLen += needed;
+	return (1);
 }
 
 ssize_t tlsIoDrainReadBuffer(t_tlsIoctx *io, uint8_t *buf, size_t len)
 {
 	size_t available;
-	
+
 	if (!io || !buf) return (-1);
-	
+
 	available = io->readBufLen - io->readBufPos;
 	if (available == 0) return (0);
-	
-	if (len > available) len = available;
+
+	if (len > available)
+		len = available;
+
 	ft_memcpy(buf, io->readBuf + io->readBufPos, len);
 	io->readBufPos += len;
-	
-	/* If buffer is fully consumed, reset it */
-	if (io->readBufPos >= io->readBufLen) {
+
+	if (io->readBufPos >= io->readBufLen)
+	{
 		io->readBufLen = 0;
 		io->readBufPos = 0;
 	}
-	
-	return (len);
+
+	return ((ssize_t)len);
 }
 
-int	tlsIoReadRecord(t_tlsIoctx *io, uint8_t *contentType, uint8_t *data, size_t *dataLen)
+/**
+ * @brief Compact the read buffer by moving unread data to the beginning.
+ *
+ * This function is called when there is not enough space in the read buffer
+ * to accommodate a new TLS record. It moves any unread data to the beginning
+ * of the buffer, freeing up space at the end for new data.
+ *
+ * @param io	I/O context
+ */
+static void tlsIoCompactReadBuf(t_tlsIoctx *io)
 {
-	uint8_t	header[TLS_RECORD_HEADER_SIZE];
-	size_t	recordLen;
-	ssize_t	n;
-	size_t	totalRead;
+	size_t remaining;
 
-	if (!io || !contentType || !data || !dataLen)
-		return (-1);
-	
-	/* Use buffered data first */
-	if (io->readBufPos >= io->readBufLen)
-	{
-		/* Refill buffer */
-		n = tlsIoReadRaw(io, io->readBuf, TLS_READ_BUFFER_SIZE);
-		if (n <= 0)
-			return (n);
-		io->readBufLen = n;
-		io->readBufPos = 0;
-	}
-	
-	/* Ensure we have at least header size */
-	if (io->readBufLen - io->readBufPos < TLS_RECORD_HEADER_SIZE)
-	{
-		/* Need more data */
-		ft_memmove(io->readBuf, io->readBuf + io->readBufPos,
-				   io->readBufLen - io->readBufPos);
-		io->readBufLen -= io->readBufPos;
-		io->readBufPos = 0;
-		
-		n = tlsIoReadRaw(io, io->readBuf + io->readBufLen, TLS_READ_BUFFER_SIZE - io->readBufLen);
-		if (n <= 0)
-			return (n);
-		io->readBufLen += n;
-	}
-	
-	/* Read header */
-	ft_memcpy(header, io->readBuf + io->readBufPos, TLS_RECORD_HEADER_SIZE);
-	io->readBufPos += TLS_RECORD_HEADER_SIZE;
-	
-	*contentType = header[0];
-	recordLen = ((size_t)header[3] << 8) | header[4];
-	
-	if (recordLen > *dataLen)
-	{
-		/* Buffer too small, return error */
-		return (-1);
-	}
-	
-	/* Ensure we have the full record in buffer */
-	totalRead = 0;
-	while (io->readBufLen - io->readBufPos < recordLen)
-	{
-		/* Move remaining data to beginning */
-		ft_memmove(io->readBuf, io->readBuf + io->readBufPos,
-				   io->readBufLen - io->readBufPos);
-		io->readBufLen -= io->readBufPos;
-		io->readBufPos = 0;
-		
-		n = tlsIoReadRaw(io, io->readBuf + io->readBufLen, TLS_READ_BUFFER_SIZE - io->readBufLen);
-		if (n <= 0)
-			return (n);
-		io->readBufLen += n;
-		totalRead++;
-		if (totalRead > TLS_IO_MAX_RETRIES)  /* Prevent infinite loop */
-			return (-1);
-	}
-	
-	/* Copy record data */
-	ft_memcpy(data, io->readBuf + io->readBufPos, recordLen);
-	io->readBufPos += recordLen;
-	*dataLen = recordLen;
-	
-	return (1);
+	if (io->readBufPos == 0)
+		return;
+
+	remaining = io->readBufLen - io->readBufPos;
+	if (remaining > 0)
+		ft_memmove(io->readBuf, io->readBuf + io->readBufPos, remaining);
+
+	io->readBufLen = remaining;
+	io->readBufPos = 0;
 }
 
-int	tlsIoWriteRecord(t_tlsIoctx *io, uint8_t contentType, const uint8_t *data, size_t dataLen)
+int tlsIoReadRecord(t_tlsIoctx *io, uint8_t *data, size_t *dataLen)
 {
-	uint8_t	header[TLS_RECORD_HEADER_SIZE];
-	
-	if (!io || !data)
+	size_t  recordLen;
+	ssize_t n;
+
+	if (!io || !data || !dataLen)
 		return (-1);
-	
-	/* Build header */
-	header[0] = contentType;
-	header[1] = 0x03;  /* legacy_version major */
-	header[2] = 0x03;  /* legacy_version minor */
-	header[3] = (dataLen >> 8) & 0xFF;
-	header[4] = dataLen & 0xFF;
-	
-	/* Ensure buffer has space */
-	if (io->writeBufLen + TLS_RECORD_HEADER_SIZE + dataLen > TLS_WRITE_BUFFER_SIZE)
+
+	while (io->readBufLen - io->readBufPos < TLS_RECORD_HEADER_SIZE)
 	{
-		/* Flush buffer first */
-		if (tlsIoFlush(io) != 0)
-			return (-1);
+		tlsIoCompactReadBuf(io);
+		n = tlsIoReadRaw(io, io->readBuf + io->readBufLen, TLS_READ_BUFFER_SIZE - io->readBufLen);
+		if (n <= 0) return ((int)n);
+		io->readBufLen += (size_t)n;
 	}
-	
-	/* Add to buffer */
-	ft_memcpy(io->writeBuf + io->writeBufLen, header, TLS_RECORD_HEADER_SIZE);
-	io->writeBufLen += TLS_RECORD_HEADER_SIZE;
-	ft_memcpy(io->writeBuf + io->writeBufLen, data, dataLen);
-	io->writeBufLen += dataLen;
-	
+
+	recordLen = ((size_t)io->readBuf[io->readBufPos + 3] << 8) | io->readBuf[io->readBufPos + 4];
+
+	if (recordLen > TLS_MAX_FRAGMENT_LEN) {
+		io->ioError = TLS_ERR_PROTOCOL;
+		return (-1);
+	}
+
+	size_t totalLen = TLS_RECORD_HEADER_SIZE + recordLen;
+	if (totalLen > *dataLen) {
+		io->ioError = TLS_ERR_INTERNAL;
+		return (-1);
+	}
+
+	while (io->readBufLen - io->readBufPos < totalLen)
+	{
+		tlsIoCompactReadBuf(io);
+		n = tlsIoReadRaw(io, io->readBuf + io->readBufLen, TLS_READ_BUFFER_SIZE - io->readBufLen);
+		if (n <= 0) return ((int)n);
+		io->readBufLen += (size_t)n;
+	}
+
+	ft_memcpy(data, io->readBuf + io->readBufPos, totalLen);
+	io->readBufPos += totalLen;
+	*dataLen = totalLen;
+
 	return (1);
 }

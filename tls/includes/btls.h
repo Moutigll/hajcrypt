@@ -1,17 +1,15 @@
 #ifndef BTLS_H
 # define BTLS_H
 
-# include "../../includes/asymmetric/pkey.h"
-# include "../../includes/asymmetric/kex.h"
-# include "../../includes/hash/hash.h"
 # include "../../includes/x509/cert.h"
 
+# include "keySchedule.h"
+# include "record.h"
+# include "hello.h"
 # include "io.h"
-#include "record.h"
-#include "keySchedule.h"
 
 /**
- * @brief TLS version negotiation
+ * @brief TLS version negotiation preferences
  *
  * This enumeration controls which TLS versions are supported and which
  * is preferred when multiple versions are enabled. TLS 1.3 is the default
@@ -38,103 +36,32 @@ typedef enum e_tlsHandshakeState
 {
 	/* Initial states */
 	TLS_HS_STATE_IDLE = 0,
+	TLS_HS_STATE_SERVER_WAIT_CLIENT_HELLO,		/* Waiting for ClientHello */
+	TLS_HS_STATE_CLIENT_SEND_HELLO,				/* Want to send ClientHello */
 
 	/* TLS 1.3 - Server side */
-	TLS_HS_STATE_TLS13_SERVER_HELLO_SENT,
-	TLS_HS_STATE_TLS13_EE_SENT,			/* EncryptedExtensions */
-	TLS_HS_STATE_TLS13_CERT_SENT,		/* Certificate */
-	TLS_HS_STATE_TLS13_CV_SENT,			/* CertificateVerify */
-	TLS_HS_STATE_TLS13_FINISHED_SENT,
-	TLS_HS_STATE_TLS13_FINISHED_RECVD,
+	TLS_HS_STATE_13_SERVER_SEND_FLIGHT,			/* Server wants to send ServerHello+EncryptedExtensions+Cert+CertVerify+Finished */
+	TLS_HS_STATE_13_SERVER_WAIT_CLIENT_FINISHED,	/* Server waiting to receive Client Finished */
 
 	/* TLS 1.3 - Client side */
-	TLS_HS_STATE_TLS13_CLIENT_HELLO_SENT,
-	TLS_HS_STATE_TLS13_SERVER_HELLO_RECVD,
-	TLS_HS_STATE_TLS13_EE_RECVD,
-	TLS_HS_STATE_TLS13_CERT_RECVD,
-	TLS_HS_STATE_TLS13_CV_RECVD,
-	TLS_HS_STATE_TLS13_FINISHED_RECVD_CLIENT,
-	TLS_HS_STATE_TLS13_FINISHED_SENT_CLIENT,
+	TLS_HS_STATE_13_CLIENT_WAIT_FLIGHT,			/* Waiting for ServerHello+EncryptedExtensions+Cert+CertVerify+Finished */
+	TLS_HS_STATE_13_CLIENT_SEND_FINISHED,		/* Client ready to send Client Finished */
 
 	/* TLS 1.2 - Server side */
-	TLS_HS_STATE_TLS12_SERVER_HELLO_SENT,
-	TLS_HS_STATE_TLS12_CERT_SENT,
-	TLS_HS_STATE_TLS12_SKE_SENT,		/* ServerKeyExchange */
-	TLS_HS_STATE_TLS12_SHD_SENT,		/* ServerHelloDone */
-	TLS_HS_STATE_TLS12_CERT_RECVD,
-	TLS_HS_STATE_TLS12_CKE_RECVD,		/* ClientKeyExchange */
-	TLS_HS_STATE_TLS12_CV_RECVD,		/* CertificateVerify */
-	TLS_HS_STATE_TLS12_CCS_RECVD,		/* ChangeCipherSpec */
-	TLS_HS_STATE_TLS12_FINISHED_RECVD,
-	TLS_HS_STATE_TLS12_CCS_SENT,
-	TLS_HS_STATE_TLS12_FINISHED_SENT,
+	TLS_HS_STATE_12_SERVER_SEND_CLEAR_FLIGHT,	/* Server wants to send ServerHello+Certificate+ServerHelloDone (cleartext) */
+	TLS_HS_STATE_12_SERVER_WAIT_CLIENT_FLIGHT,	/* Server waiting to receive ClientKeyExchange+ChangeCipherSpec+Finished */
+	TLS_HS_STATE_12_SERVER_SEND_CCS_FINISHED,	/* Server ready to send ChangeCipherSpec+Finished (encrypted) */
 
 	/* TLS 1.2 - Client side */
-	TLS_HS_STATE_TLS12_CLIENT_HELLO_SENT,
-	TLS_HS_STATE_TLS12_SERVER_HELLO_RECVD,
-	TLS_HS_STATE_TLS12_CERT_RECVD_CLIENT,
-	TLS_HS_STATE_TLS12_SKE_RECVD,
-	TLS_HS_STATE_TLS12_CR_RECVD,		/* CertificateRequest */
-	TLS_HS_STATE_TLS12_SHD_RECVD,		/* ServerHelloDone */
-	TLS_HS_STATE_TLS12_CERT_SENT_CLIENT,
-	TLS_HS_STATE_TLS12_CKE_SENT,
-	TLS_HS_STATE_TLS12_CV_SENT_CLIENT,
-	TLS_HS_STATE_TLS12_CCS_SENT_CLIENT,
-	TLS_HS_STATE_TLS12_FINISHED_SENT_CLIENT,
-	TLS_HS_STATE_TLS12_CCS_RECVD_CLIENT,
-	TLS_HS_STATE_TLS12_FINISHED_RECVD_CLIENT,
+	TLS_HS_STATE_12_CLIENT_WAIT_CLEAR_FLIGHT,	/* Client waiting to receive ServerHello+Certificate+ServerHelloDone (cleartext) */
+	TLS_HS_STATE_12_CLIENT_SEND_CCS_FINISHED,	/* Client ready to send ClientKeyExchange+ChangeCipherSpec+Finished */
+	TLS_HS_STATE_12_CLIENT_WAIT_CCS_FINISHED,	/* Client waiting to receive ChangeCipherSpec+Finished (encrypted) */
 
 	/* Final states */
-	TLS_HS_STATE_CONNECTED,
-	TLS_HS_STATE_ERROR
+	TLS_HS_STATE_13_CONNECTED,					/* Handshake completed */
+	TLS_HS_STATE_12_CONNECTED,					/* Handshake completed */
+	TLS_HS_STATE_ERROR							/* Handshake failed, can be send at any time */
 }	t_tlsHandshakeState;
-
-/**
- * @brief TLS handshake context structure
- *
- * This structure holds all state for a TLS handshake including the current
- * state machine position, protocol version, cipher suite, transcript hash,
- * key schedule secrets, record protection contexts, key exchange material,
- * and certificate chains.
- */
-typedef struct s_tlsHandshakeCtx
-{
-	/* State */
-	t_tlsHandshakeState	state;				/* Current handshake state */
-	int					isClient;			/* 1 for client, 0 for server */
-	uint16_t			version;			/* Negotiated TLS version */
-
-	/* Transcript hash */
-	t_hash				transcriptHash;		/* Hash algorithm for transcript */
-	uint8_t				transcript[256];		/* Running transcript hash */
-
-	uint8_t				clientRandom[32];		/* Client random (from ClientHello) */
-	uint8_t				serverRandom[32];		/* Server random (from ServerHello) */
-
-	/* Negotiation */
-	uint16_t			cipherSuite;		/* Negotiated cipher suite */
-
-	/* Key schedule (TLS 1.3) */
-	t_tls13Secrets		secrets;			/* Derived secrets */
-
-	/* Record layer */
-	t_tlsRecordCtx		handshakeSendCtx;	/* Sending handshake traffic */
-	t_tlsRecordCtx		handshakeRecvCtx;	/* Receiving handshake traffic */
-	t_tlsRecordCtx		appSendCtx;			/* Sending application data */
-	t_tlsRecordCtx		appRecvCtx;			/* Receiving application data */
-
-	/* Key exchange */
-	t_kexCtx			*keyExchangeCtx;	/* Key exchange context */
-	uint8_t				sharedSecret[64];	/* Computed shared secret */
-	size_t				sharedSecretLen;	/* Length of shared secret */
-
-	/* Our certificate chain */
-	t_certChain			*certChain;			/* Our certificate chain (leaf first) */
-	t_pkey				*privateKey;		/* Our private key */
-
-	/* Peer certificate (received) */
-	t_certChain			*peerCertChain;		/* Peer certificate chain (leaf first) */
-}	t_tlsHandshakeCtx;
 
 /**
  * @brief Supported ALPN protocols (Application-Layer Protocol Negotiation)
@@ -322,7 +249,7 @@ typedef struct s_tlsCertVerify
 }	t_tlsCertVerify;
 
 /**
- * @brief TLS connection parameters (user-configurable)
+ * @brief TLS connection parameters (user‑configurable)
  *
  * This structure groups all configurable parameters for a TLS connection.
  * Default values are set by tlsInit() and can be overridden by the user
@@ -356,7 +283,81 @@ typedef struct s_tlsParams
 }	t_tlsParams;
 
 /**
- * @brief TLS connection context (user-facing API)
+ * @brief TLS handshake context structure
+ *
+ * This structure holds all state for a TLS handshake including the current
+ * state machine position, protocol version, cipher suite, transcript hash,
+ * key schedule secrets, record protection contexts, key exchange material,
+ * and certificate chains.
+ */
+typedef struct s_tlsHandshakeCtx
+{
+	/* State */
+	t_tlsHandshakeState	state;				/* Current handshake state */
+	int					isClient;			/* 1 for client, 0 for server */
+	uint16_t			version;			/* Negotiated TLS version */
+	int					flightBuffered;		/* 1 if flight is buffered */
+
+	/* Hello messages */
+	t_tlsHello			peerHello;			/* Parsed peer Hello message */
+	char				peerHelloMsg[TLS_MAX_FRAGMENT_LEN];	/* Raw peer Hello message */
+	size_t				peerHelloMsgLen;	/* Length of raw peer Hello message */
+
+	/* Transcript hash */
+	t_hash				transcriptHash;		/* Hash algorithm for transcript */
+	uint8_t				transcript[256];	/* Running transcript hash */
+	uint8_t				clientRandom[32];	/* Client random (from ClientHello) */
+	uint8_t				serverRandom[32];	/* Server random (from ServerHello) */
+
+	/* Negotiation */
+	uint16_t			cipherSuite;		/* Negotiated cipher suite */
+
+	/* Key schedule (TLS 1.3) */
+	t_tls13Secrets		secrets;			/* Derived secrets */
+
+	/* Record layer */
+	t_tlsRecordCtx		handshakeSendCtx;	/* Sending handshake traffic */
+	t_tlsRecordCtx		handshakeRecvCtx;	/* Receiving handshake traffic */
+	t_tlsRecordCtx		appSendCtx;			/* Sending application data */
+	t_tlsRecordCtx		appRecvCtx;			/* Receiving application data */
+
+	/* Key exchange */
+	t_kexCtx			*keyExchangeCtx;	/* Key exchange context */
+	uint8_t				sharedSecret[64];	/* Computed shared secret */
+	size_t				sharedSecretLen;	/* Length of shared secret */
+
+	/* Our certificate chain */
+	t_certChain			*certChain;			/* Our certificate chain (leaf first) */
+	t_pkey				*privateKey;		/* Our private key */
+	int					certIsShared;		/* 1 if these pointers belong to shared context */
+
+	/* Peer certificate (received) */
+	t_certChain			*peerCertChain;		/* Peer certificate chain (leaf first) */
+}	t_tlsHandshakeCtx;
+
+/* ============================================================================
+ * Shared Context (holds server‑wide configuration and credentials)
+ * ============================================================================ */
+
+/**
+ * @brief Shared TLS context (server‑side configuration)
+ *
+ * This structure holds server‑wide configuration and resources that are
+ * shared across all connections. It must be initialised once per server
+ * and is used by all client connections created via tlsClientCtxInit().
+ * Although named "server", it can be used in client‑only scenarios as
+ * a configuration container if the user provides the certificate and key.
+ */
+typedef struct s_tlsSharedCtx
+{
+	t_tlsParams		params;			/* Global server parameters */
+	t_certChain		*certChain;		/* Server certificate chain */
+	t_pkey			*privateKey;	/* Server private key */
+	int				isLoaded;		/* 1 if properly initialised */
+}	t_tlsSharedCtx;
+
+/**
+ * @brief TLS connection context (user‑facing API)
  *
  * This structure holds everything needed for a TLS connection:
  * configuration parameters, handshake state, I/O buffers, and
@@ -365,20 +366,16 @@ typedef struct s_tlsParams
  */
 typedef struct s_tlsCtx
 {
-	t_tlsParams			params;			/* Configuration (set by user) */
-	t_tlsIoctx			io;				/* I/O context */
-	t_tlsHandshakeCtx	handshake;		/* Handshake state */
-	int					isConnected;	/* 1 if handshake complete */
-	int					isServer;		/* 1 for server, 0 for client */
-	uint8_t				appDataBuf[TLS_MAX_FRAGMENT_LEN];	/* Application data buffer */
-	size_t				appDataLen;		/* Length of application data */
-	int					lastError;		/* Last error code */
-	char				*errorMsg;		/* Human-readable error message */
+	const t_tlsSharedCtx	*shared;	/* Global shared context (read‑only) */
+	t_tlsIoctx				io;			/* I/O context */
+	t_tlsHandshakeCtx		handshake;	/* Handshake state */
+	int						isConnected;/* 1 if handshake complete */
+	int						isServer;	/* 1 for server, 0 for client */
+	uint8_t					appDataBuf[TLS_MAX_FRAGMENT_LEN];	/* Application data buffer */
+	size_t					appDataLen;	/* Length of application data */
+	int						lastError;	/* Last error code */
+	char					*errorMsg;	/* Human‑readable error message */
 }	t_tlsCtx;
-
-
-
-/* --------------- Error Codes --------------- */
 
 /* Success */
 # define TLS_SUCCESS				0
@@ -387,7 +384,7 @@ typedef struct s_tlsCtx
 # define TLS_ERR_INTERNAL			-1		/* Internal error (memory, etc.) */
 # define TLS_ERR_HANDSHAKE			-2		/* Handshake failed */
 # define TLS_ERR_PROTOCOL			-3		/* Protocol error */
-# define TLS_ERR_WOULD_BLOCK		-4		/* Non-blocking mode would block */
+# define TLS_ERR_WOULD_BLOCK		-4		/* Non‑blocking mode would block */
 
 /* Authentication errors */
 # define TLS_ERR_CERT				-10		/* Certificate error */
@@ -395,7 +392,7 @@ typedef struct s_tlsCtx
 # define TLS_ERR_CERT_REVOKED		-12		/* Certificate revoked */
 # define TLS_ERR_CERT_UNKNOWN_CA	-13		/* Unknown CA */
 # define TLS_ERR_HOSTNAME_MISMATCH	-14		/* Hostname doesn't match certificate */
-# define TLS_ERR_SELF_SIGNED		-15		/* Self-signed certificate (not allowed) */
+# define TLS_ERR_SELF_SIGNED		-15		/* Self‑signed certificate (not allowed) */
 
 /* Crypto errors */
 # define TLS_ERR_DECRYPT			-20		/* Decryption failed */
@@ -405,10 +402,78 @@ typedef struct s_tlsCtx
 /* Network errors */
 # define TLS_ERR_EOF				-30		/* Connection closed by peer */
 # define TLS_ERR_TIMEOUT			-31		/* Operation timed out */
+# define TLS_ERR_IO					-40		/* I/O error */
+# define TLS_ERR_WANT_READ			-41		/* Non‑blocking: need read */
+# define TLS_ERR_WANT_WRITE			-42		/* Non‑blocking: need write */
 
+/**
+ * @brief Initialises a shared TLS context with certificate and key files
+ *
+ * This function loads the server's certificate chain and private key from
+ * files. The certificate file can be PEM (single or concatenated) or DER.
+ * The private key must be PEM format. The loaded resources are shared by
+ * all connections created from this shared context.
+ *
+ * @param shared		Shared context to initialise
+ * @param certFile		Path to certificate chain file (PEM or DER)
+ * @param keyFile		Path to private key file (PEM)
+ * @param keyPassword	Password for the private key file (if encrypted)
+ * @return				1 on success, 0 on error
+ */
+int		tlsSharedCtxInit(t_tlsSharedCtx *shared, const char *certFile, const char *keyFile, const char *keyPassword);
 
+/**
+ * @brief Frees a shared TLS context
+ *
+ * This function frees all resources associated with the shared context,
+ * including certificate chain and private key.
+ *
+ * @param shared		Shared context to free
+ */
+void	tlsSharedCtxFree(t_tlsSharedCtx *shared);
 
-/* --------------- Public API --------------- */
+/**
+ * @brief Sets the version preference for a shared context
+ *
+ * @param shared		Shared context
+ * @param pref			Version preference value
+ */
+void	tlsSharedCtxSetVersionPref(t_tlsSharedCtx *shared, t_tlsVersionPref pref);
+
+/**
+ * @brief Enables or disables middlebox compatibility mode
+ *
+ * Middlebox compatibility mode adds dummy sessions and ChangeCipherSpec
+ * messages to work around broken middleboxes that expect TLS 1.2 behaviour.
+ *
+ * @param shared		Shared context
+ * @param enabled		1 to enable, 0 to disable
+ */
+void	tlsSharedCtxSetMiddleboxCompat(t_tlsSharedCtx *shared, int enabled);
+
+/**
+ * @brief Configures certificate verification options for a shared context
+ *
+ * @param shared			Shared context
+ * @param verifyPeer		1 to verify peer's certificate
+ * @param allowSelfSigned	1 to allow self‑signed certificates
+ * @param depth				Maximum verification depth
+ */
+void	tlsSharedCtxSetCertVerify(t_tlsSharedCtx *shared, int verifyPeer, int allowSelfSigned, int depth);
+
+/**
+ * @brief Initialises a TLS client context attached to a shared context
+ *
+ * This function initialises a client TLS context with the provided
+ * shared context and socket. The shared context must have been properly
+ * initialised with tlsSharedCtxInit().
+ *
+ * @param ctx		TLS context to initialise
+ * @param shared	Shared context (read‑only)
+ * @param socket	Connected socket file descriptor
+ * @return			1 on success, 0 on error
+ */
+int		tlsClientCtxInit(t_tlsCtx *ctx, const t_tlsSharedCtx *shared, int socket);
 
 /**
  * @brief Initialize TLS context with default parameters
@@ -417,7 +482,7 @@ typedef struct s_tlsCtx
  * on the role (client or server) and the provided connected socket.
  * The default parameters include TLS 1.3 only, blocking mode, and no
  * custom extensions. The context must be freed with tlsFree() when no
- * longer needed.
+ * longer needed. For server use, you must later call tlsSetServerCert().
  *
  * @param ctx		TLS context (must be allocated by caller)
  * @param isClient	1 for client mode, 0 for server mode
@@ -441,6 +506,22 @@ int		tlsInit(t_tlsCtx *ctx, int isClient, int socket);
 int		tlsInitWithParams(t_tlsCtx *ctx, const t_tlsParams *params);
 
 /**
+ * @brief Set server certificate and private key from files
+ *
+ * This function loads the server's certificate chain and private key
+ * directly from files. The certificate file can be PEM (single or
+ * concatenated) or DER. The private key must be PEM format.
+ * Ownership of both is transferred to the TLS context.
+ *
+ * @param ctx			TLS context
+ * @param certFile		Path to certificate chain file (PEM or DER)
+ * @param keyFile		Path to private key file (PEM)
+ * @param keyPassword	Password for the private key file (if encrypted)
+ * @return				TLS_SUCCESS on success, error code otherwise
+ */
+int		tlsSetServerCert(t_tlsCtx *ctx, const char *certFile, const char *keyFile, const char *keyPassword);
+
+/**
  * @brief Free TLS context and close connection
  *
  * This function frees all resources associated with the TLS context,
@@ -450,6 +531,93 @@ int		tlsInitWithParams(t_tlsCtx *ctx, const t_tlsParams *params);
  * @param ctx		TLS context
  */
 void	tlsFree(t_tlsCtx *ctx);
+
+/**
+ * @brief Perform TLS handshake as client
+ *
+ * This function initiates the TLS handshake from the client side.
+ * It sends a ClientHello and processes server responses until the
+ * handshake completes or an error occurs.
+ *
+ * In non‑blocking mode, this function may return TLS_ERR_WANT_READ
+ * or TLS_ERR_WANT_WRITE to indicate that the caller should wait for
+ * the socket to become readable or writable and then call tlsConnect()
+ * again to resume the handshake.
+ *
+ * @param ctx		TLS context
+ * @return			TLS_SUCCESS on success, error code otherwise
+ */
+int		tlsConnect(t_tlsCtx *ctx);
+
+/**
+ * @brief Perform TLS handshake as server
+ *
+ * This function performs the TLS handshake from the server side.
+ * It waits for a ClientHello from the client and responds with the
+ * appropriate handshake messages (ServerHello, Certificate, etc.).
+ *
+ * In non‑blocking mode, this function may return TLS_ERR_WANT_READ
+ * or TLS_ERR_WANT_WRITE to indicate that the caller should wait for
+ * the socket to become readable or writable and then call tlsAccept()
+ * again to resume the handshake.
+ *
+ * @param ctx		TLS context
+ * @return			TLS_SUCCESS on success, error code otherwise
+ */
+int		tlsAccept(t_tlsCtx *ctx);
+
+/**
+ * @brief Check if TLS connection is established
+ *
+ * This function returns whether the TLS handshake has completed
+ * successfully and the connection is ready for application data.
+ *
+ * @param ctx		TLS context
+ * @return			1 if connected, 0 otherwise
+ */
+int		tlsIsConnected(t_tlsCtx *ctx);
+
+/**
+ * @brief Read application data from TLS connection
+ *
+ * This function reads decrypted application data from the TLS connection.
+ * It may return fewer bytes than requested. In non‑blocking mode, it may
+ * return TLS_ERR_WANT_READ if no data is available and the socket would
+ * block, or TLS_ERR_WANT_WRITE if a write is needed to continue.
+ *
+ * @param ctx		TLS context
+ * @param buf		Output buffer
+ * @param len		Maximum bytes to read
+ * @return			Number of bytes read, 0 on EOF, negative on error
+ */
+ssize_t	tlsRead(t_tlsCtx *ctx, uint8_t *buf, size_t len);
+
+/**
+ * @brief Write application data to TLS connection
+ *
+ * This function encrypts and writes application data to the TLS connection.
+ * It may write fewer bytes than requested if the record size limit is reached.
+ * In non‑blocking mode, it may return TLS_ERR_WANT_WRITE if the socket
+ * would block, or TLS_ERR_WANT_READ if a read is needed to continue.
+ *
+ * @param ctx		TLS context
+ * @param buf		Data to write
+ * @param len		Number of bytes to write
+ * @return			Number of bytes written, negative on error
+ */
+ssize_t	tlsWrite(t_tlsCtx *ctx, const uint8_t *buf, size_t len);
+
+/**
+ * @brief Shutdown TLS connection (send close_notify)
+ *
+ * This function sends a close_notify alert to the peer and then closes
+ * the underlying socket. This is the proper way to shut down a TLS
+ * connection, ensuring both peers know the connection is ending.
+ *
+ * @param ctx		TLS context
+ * @return			TLS_SUCCESS on success, error code otherwise
+ */
+int		tlsShutdown(t_tlsCtx *ctx);
 
 /**
  * @brief Get last error code
@@ -463,9 +631,9 @@ void	tlsFree(t_tlsCtx *ctx);
 int		tlsLastError(t_tlsCtx *ctx);
 
 /**
- * @brief Get human-readable error message
+ * @brief Get human‑readable error message
  *
- * This function returns a human-readable string describing the last
+ * This function returns a human‑readable string describing the last
  * error that occurred. The pointer remains valid until the next
  * operation that modifies the context.
  *
@@ -473,6 +641,18 @@ int		tlsLastError(t_tlsCtx *ctx);
  * @return			Pointer to error string (do not free)
  */
 const char	*tlsErrorString(t_tlsCtx *ctx);
+
+/**
+ * @brief Sets an error on the TLS context
+ *
+ * This function records an error code and human‑readable message on the
+ * TLS context for later retrieval.
+ *
+ * @param ctx		TLS context
+ * @param errCode	Error code (TLS_ERR_*)
+ * @param errMsg	Human‑readable error message
+ */
+void	tlsSetError(t_tlsCtx *ctx, int errCode, const char *errMsg);
 
 /**
  * @brief Set SNI hostname (client side)
@@ -485,20 +665,20 @@ const char	*tlsErrorString(t_tlsCtx *ctx);
  * @param hostname	Server name (e.g., "www.example.com")
  * @return			1 on success, 0 on error
  */
-int		tlsSetSni(t_tlsCtx *ctx, const char *hostname);
+int		tlsSetSni(t_tlsSharedCtx *ctx, const char *hostname);
 
 /**
  * @brief Set ALPN protocols (client side)
  *
  * This function sets the list of supported application protocols for
- * ALPN negotiation. The protocols array should be NULL-terminated.
+ * ALPN negotiation. The protocols array should be NULL‑terminated.
  * The server will select one of these protocols during the handshake.
  *
  * @param ctx		TLS context
  * @param protocols	Array of protocol names (e.g., {"h2", "http/1.1", NULL})
  * @return			1 on success, 0 on error
  */
-int		tlsSetAlpn(t_tlsCtx *ctx, const char **protocols);
+int		tlsSetAlpn(t_tlsSharedCtx *ctx, const char **protocols);
 
 /**
  * @brief Get negotiated ALPN protocol
@@ -522,7 +702,7 @@ const char	*tlsGetAlpn(t_tlsCtx *ctx);
  * @param enabled	1 to request OCSP stapling, 0 to disable
  * @return			1 on success, 0 on error
  */
-int		tlsSetOcspStapling(t_tlsCtx *ctx, int enabled);
+int		tlsSetOcspStapling(t_tlsSharedCtx *ctx, int enabled);
 
 /**
  * @brief Get OCSP response (server side, after handshake)
@@ -550,7 +730,7 @@ int		tlsGetOcspResponse(t_tlsCtx *ctx, uint8_t **response, size_t *len);
  * @param caPath		Path to CA directory, or NULL
  * @return				1 on success, 0 on error
  */
-int		tlsSetVerify(t_tlsCtx *ctx, int verifyPeer, const char *caFile, const char *caPath);
+int		tlsSetVerify(t_tlsSharedCtx *ctx, int verifyPeer, const char *caFile, const char *caPath);
 
 /**
  * @brief Set hostname for certificate verification (client side)
@@ -562,116 +742,14 @@ int		tlsSetVerify(t_tlsCtx *ctx, int verifyPeer, const char *caFile, const char 
  * @param hostname	Expected hostname (must match certificate)
  * @return			1 on success, 0 on error
  */
-int		tlsSetVerifyHostname(t_tlsCtx *ctx, const char *hostname);
-
-/**
- * @brief Set server certificate and private key from files
- *
- * This function loads the server's certificate chain and private key
- * directly from files. The certificate file can be PEM (single or
- * concatenated) or DER. The private key must be PEM format.
- * Ownership of both is transferred to the TLS context.
- *
- * @param ctx           TLS context
- * @param certFile      Path to certificate chain file (PEM or DER)
- * @param keyFile       Path to private key file (PEM)
- * @param keyPassword   Password for the private key file (if encrypted)
- * @return              TLS_SUCCESS on success, error code otherwise
- */
-int     tlsSetServerCert(t_tlsCtx *ctx, const char *certFile, const char *keyFile, const char *keyPassword);
-
-/**
- * @brief Perform TLS handshake as client
- *
- * This function initiates the TLS handshake from the client side.
- * It sends a ClientHello and processes server responses until the
- * handshake completes or an error occurs.
- *
- * @param ctx		TLS context
- * @return			TLS_SUCCESS on success, error code otherwise
- */
-int		tlsConnect(t_tlsCtx *ctx);
-
-/**
- * @brief Perform TLS handshake as server
- *
- * This function performs the TLS handshake from the server side.
- * It waits for a ClientHello from the client and responds with the
- * appropriate handshake messages (ServerHello, Certificate, etc.).
- *
- * @param ctx		TLS context
- * @return			TLS_SUCCESS on success, error code otherwise
- */
-int		tlsAccept(t_tlsCtx *ctx);
-
-/**
- * @brief Read application data from TLS connection
- *
- * This function reads decrypted application data from the TLS connection.
- * It may return fewer bytes than requested. In non-blocking mode, it may
- * return TLS_ERR_WOULD_BLOCK if no data is available.
- *
- * @param ctx		TLS context
- * @param buf		Output buffer
- * @param len		Maximum bytes to read
- * @return			Number of bytes read, 0 on EOF, negative on error
- */
-ssize_t	tlsRead(t_tlsCtx *ctx, uint8_t *buf, size_t len);
-
-/**
- * @brief Write application data to TLS connection
- *
- * This function encrypts and writes application data to the TLS connection.
- * It may write fewer bytes than requested if the record size limit is reached.
- *
- * @param ctx		TLS context
- * @param buf		Data to write
- * @param len		Number of bytes to write
- * @return			Number of bytes written, negative on error
- */
-ssize_t	tlsWrite(t_tlsCtx *ctx, const uint8_t *buf, size_t len);
-
-/**
- * @brief Shutdown TLS connection (send close_notify)
- *
- * This function sends a close_notify alert to the peer and then closes
- * the underlying socket. This is the proper way to shut down a TLS
- * connection, ensuring both peers know the connection is ending.
- *
- * @param ctx		TLS context
- * @return			TLS_SUCCESS on success, error code otherwise
- */
-int		tlsShutdown(t_tlsCtx *ctx);
-
-/**
- * @brief Check if TLS connection is established
- *
- * This function returns whether the TLS handshake has completed
- * successfully and the connection is ready for application data.
- *
- * @param ctx		TLS context
- * @return			1 if connected, 0 otherwise
- */
-int		tlsIsConnected(t_tlsCtx *ctx);
-
-/**
- * @brief Get peer certificate chain (DER format)
- *
- * This function retrieves the peer's certificate chain after a successful
- * handshake. The chain is returned as a DER-encoded buffer.
- *
- * @param ctx		TLS context
- * @param certChain	Output pointer to certificate chain data
- * @return			1 if certificate is available, 0 otherwise
- */
-int		tlsGetPeerCertificate(t_tlsCtx *ctx, t_certChain **certChain);
+int		tlsSetVerifyHostname(t_tlsSharedCtx *ctx, const char *hostname);
 
 /**
  * @brief Export keying material (RFC 5705)
  *
  * This function allows applications to derive additional keys from the
  * TLS session using the exporter interface. It is useful for protocols
- * that need additional keys (e.g., WebRTC, DTLS-SRTP).
+ * that need additional keys (e.g., WebRTC, DTLS‑SRTP).
  *
  * @param ctx			TLS context
  * @param label			Exporter label
@@ -681,6 +759,8 @@ int		tlsGetPeerCertificate(t_tlsCtx *ctx, t_certChain **certChain);
  * @param outputLen		Desired length of output
  * @return				1 on success, 0 on error
  */
-int		tlsExportKeyingMaterial(t_tlsCtx *ctx, const char *label, const uint8_t *context, size_t contextLen, uint8_t *output, size_t outputLen);
+int		tlsExportKeyingMaterial(t_tlsCtx		*ctx,		const char	*label,
+								const uint8_t	*context,	size_t		contextLen,
+								uint8_t			*output,	size_t		outputLen);
 
 #endif /* BTLS_H */

@@ -4,9 +4,11 @@
 # include <stdint.h>
 # include <sys/types.h>
 
-/* Default buffer sizes */
-# define TLS_READ_BUFFER_SIZE	16384
-# define TLS_WRITE_BUFFER_SIZE	16384
+#include "constants.h"
+
+/* Buffer sizes for TLS I/O context, corresponding to maximum TLS record size (16KB) */
+# define TLS_READ_BUFFER_SIZE	TLS_MAX_FRAGMENT_LEN
+# define TLS_WRITE_BUFFER_SIZE	TLS_MAX_FRAGMENT_LEN
 
 # define TLS_IO_MAX_RETRIES 10
 
@@ -23,14 +25,21 @@
  */
 typedef struct s_tlsIoctx
 {
-	int		socket;			/* Socket file descriptor */
-	int		isBlocking;		/* 1 if socket is blocking, 0 for non-blocking */
-	uint8_t	readBuf[TLS_READ_BUFFER_SIZE];	/* Read buffer */
-	size_t	readBufLen;		/* Amount of data currently in read buffer */
-	size_t	readBufPos;		/* Current position in read buffer */
-	uint8_t	writeBuf[TLS_WRITE_BUFFER_SIZE];	/* Write buffer */
-	size_t	writeBufLen;	/* Amount of data pending to write */
-}	t_tlsIoctx;
+	int		socket;							/* Socket file descriptor */
+	int		isBlocking;						/* 1 = blocking, 0 = non-blocking */
+	
+	/* ---- Reading ---- */
+	uint8_t	readBuf[TLS_READ_BUFFER_SIZE];	/* Read buffer for incoming data */
+	size_t	readBufLen;						 /* Octets disponibles dans readBuf */
+	size_t	readBufPos;						 /* Position de lecture dans readBuf */
+	
+	/* ---- Writing ---- */
+	uint8_t	writeBuf[TLS_WRITE_BUFFER_SIZE];	/* Buffer d'écriture */
+	size_t	writeBufLen;						/* Octets à envoyer (total) */
+	size_t	writeBufPos;						/* ◄── MANQUANT ! Déjà envoyés */
+	
+	int		ioError;							/* Dernière erreur I/O */
+}   t_tlsIoctx;
 
 /**
  * @brief Initialize I/O context with a socket
@@ -110,16 +119,16 @@ ssize_t	tlsIoDrainReadBuffer(t_tlsIoctx *io, uint8_t *buf, size_t len);
  * This function reads a complete TLS record from the socket, handling
  * record header parsing and fragmentation. It reads the 5-byte record
  * header first, then reads the fragment of the specified length. The
- * function may need to read multiple TLS records to assemble a complete
- * record if the data is fragmented across multiple socket reads.
+ * function may need to be called multiple times untils all the data
+ * has been recieved if the socket is non-blocking.
+ * The content type of the record is returned in the contentType parameter.
  *
  * @param io			I/O context
- * @param contentType	Output: TLS record content type (0x14-0x17)
  * @param data			Output buffer for record data
  * @param dataLen		[in] Buffer size, [out] Data length
  * @return				1 on success, 0 on EOF, -1 on error
  */
-int		tlsIoReadRecord(t_tlsIoctx *io, uint8_t *contentType, uint8_t *data, size_t *dataLen);
+int		tlsIoReadRecord(t_tlsIoctx *io, uint8_t *data, size_t *dataLen);
 
 /**
  * @brief Write a TLS record to socket

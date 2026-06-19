@@ -263,51 +263,45 @@ int tls13BuildFinished(t_tlsHandshakeCtx	*ctx,
 
 int tls13VerifyFinished(t_tlsHandshakeCtx	*ctx,
 						const uint8_t		*trafficSecret,	size_t	secretLen,
-						const uint8_t		*finished,		size_t	finishedLen)
+						const uint8_t		*verifyData,	size_t	verifyDataLen)
 {
-	uint8_t			msgType;
-	const uint8_t	*body;
-	size_t			bodyLen;
-	uint8_t			finishedKey[64];
-	uint8_t			verifyData[64];
-	uint8_t			transcriptHash[64];
-	t_hmacCtx		hmacCtx;
-	size_t			hashLen;
-	int				ret;
+	uint8_t		computedVerify[64];
+	uint8_t		transcriptHash[64];
+	uint8_t		finishedKey[64];
+	t_hmacCtx	hmacCtx;
+	size_t		hashLen;
+	int			ret;
 
-	if (!ctx || !trafficSecret || !finished)
+	if (!ctx || !trafficSecret || !verifyData)
 		return (0);
 
 	hashLen = ctx->transcriptHash.digestSize;
-
-	/* 1. Decode the received Finished message */
-	if (!handshakeDecode(finished, finishedLen, &msgType, &body, &bodyLen))
-		return (0);
-	if (msgType != TLS_HT_FINISHED || bodyLen != hashLen)
+	if (verifyDataLen != hashLen)
 		return (0);
 
-	/* 2. Derive finished_key */
+	/* 1. Derive finished_key */
 	if (!tlsHkdfExpandLabel(trafficSecret, secretLen,
 							TLS13_LABEL_FINISHED, NULL, 0,
 							finishedKey, hashLen, &ctx->transcriptHash))
 		return (0);
 
-	/* 3. Get transcript hash (before adding the Finished message) */
+	/* 2. Get transcript hash (before adding the Finished message) */
 	transcriptGetHash(ctx, transcriptHash);
 
-	/* 4. HMAC(finished_key, transcript_hash) */
+	/* 3. HMAC(finished_key, transcript_hash) */
 	hmacInit(&hmacCtx, &ctx->transcriptHash, finishedKey, hashLen);
 	hmacCtx.algo->update(hmacCtx.innerCtx, transcriptHash, hashLen);
-	hmacFinal(&hmacCtx, verifyData);
+	hmacFinal(&hmacCtx, computedVerify);
 
-	/* 5. Compare the computed verify_data with the received one */
-	ret = (ft_cmemcmp(verifyData, body, hashLen) == 0);
+	/* 4. Compare */
+	ret = ft_cmemcmp(computedVerify, verifyData, hashLen);
 
 	secureZeroMemory(finishedKey, sizeof(finishedKey));
-	secureZeroMemory(verifyData, sizeof(verifyData));
+	secureZeroMemory(computedVerify, sizeof(computedVerify));
 
 	if (ret)
-		transcriptUpdate(ctx, TLS_HT_FINISHED, finished + 4, finishedLen - 4);
+		if (!transcriptUpdate(ctx, TLS_HT_FINISHED, verifyData, verifyDataLen))
+			return (0);
 
 	return (ret);
 }
