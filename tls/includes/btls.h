@@ -64,223 +64,26 @@ typedef enum e_tlsHandshakeState
 }	t_tlsHandshakeState;
 
 /**
- * @brief Supported ALPN protocols (Application-Layer Protocol Negotiation)
+ * @brief TLS configuration (shared across all connections)
  *
- * This structure manages the list of application protocols supported by
- * the client (e.g., "h2", "http/1.1", "websocket"). The server selects
- * one of these protocols during the handshake. Defined in RFC 7301.
+ * All parameters and credentials are stored here. The application
+ * initialises a single instance with tlsConfigInit(), optionally loads
+ * a certificate and private key with tlsConfigLoadCertKey(), then
+ * passes a pointer to this config when calling tlsAccept() or tlsConnect().
+ * Fields can be modified directly by the caller after initialisation.
  */
-typedef struct s_tlsAlpn
+typedef struct s_tlsConfig
 {
-	const char		**protocols;	/* Array of protocol names (e.g., "h2", "http/1.1") */
-	size_t			numProtocols;	/* Number of protocols in array */
-	const char		*selected;		/* Selected protocol by server (client reads this) */
-}	t_tlsAlpn;
-
-/**
- * @brief Server Name Indication (SNI) configuration
- *
- * SNI allows the client to specify which virtual host it wants to connect
- * to, enabling a single IP address to host multiple TLS certificates.
- * Defined in RFC 6066.
- */
-typedef struct s_tlsSni
-{
-	char		*hostname;		/* Server name (e.g., "www.example.com") */
-	int			sendEmpty;		/* 1 to send empty SNI (disables SNI) */
-}	t_tlsSni;
-
-/**
- * @brief Maximum fragment length negotiation
- *
- * This extension allows peers to negotiate a smaller maximum fragment
- * length than the default 2^14 bytes (16384). Useful for constrained
- * environments such as embedded devices or low-memory systems.
- * Defined in RFC 6066.
- */
-typedef struct s_tlsMaxFragment
-{
-	int			enabled;		/* 1 to negotiate, 0 to use default */
-	uint16_t	length;			/* Desired max fragment length (512, 1024, 2048, 4096) */
-}	t_tlsMaxFragment;
-
-/**
- * @brief OCSP Stapling (Certificate Status Request)
- *
- * OCSP stapling allows the client to request that the server sends an
- * OCSP response stapled directly in the handshake, avoiding an extra
- * OCSP request to the CA. This improves privacy and performance.
- * Defined in RFC 6066 (status_request).
- */
-typedef struct s_tlsOcspStapling
-{
-	int		enabled;		/* 1 to enable OCSP stapling */
-	uint8_t	*response;		/* OCSP response (server fills, client reads) */
-	size_t	responseLen;	/* Length of OCSP response */
-}	t_tlsOcspStapling;
-
-/**
- * @brief Certificate compression (RFC 8879)
- *
- * Certificate compression reduces the size of the certificate chain
- * during the handshake, which is particularly beneficial for large
- * certificate chains. Supported algorithms include brotli, zlib, and zstd.
- */
-typedef struct s_tlsCertCompression
-{
-	int			enabled;		/* 1 to enable certificate compression */
-	uint16_t	algorithm;		/* 0 = brotli, 1 = zlib, 2 = zstd (RFC 8879) */
-	size_t		uncompressedLen;/* Original length (server uses to allocate) */
-}	t_tlsCertCompression;
-
-/**
- * @brief Record size limit (RFC 8449)
- *
- * This extension allows peers to negotiate a limit on the size of
- * individual TLS records. It can help with buffering constraints or
- * to reduce latency on high-bandwidth connections.
- */
-typedef struct s_tlsRecordSizeLimit
-{
-	int			enabled;		/* 1 to negotiate record size limit */
-	uint16_t	limit;			/* Max record size (default 16384) */
-}	t_tlsRecordSizeLimit;
-
-/**
- * @brief Post-Handshake Authentication
- *
- * Post-handshake authentication allows the server to request client
- * authentication after the initial handshake has completed. This is
- * useful for applications that need to authenticate the client only
- * for certain resources. Defined in RFC 8446 (post_handshake_auth).
- */
-typedef struct s_tlsPostHandshakeAuth
-{
-	int			enabled;		/* 1 to enable post-handshake auth */
-	int			requested;		/* Server sets this when requesting client cert */
-}	t_tlsPostHandshakeAuth;
-
-/**
- * @brief QUIC Transport Parameters (RFC 9001)
- *
- * This structure carries QUIC transport parameters inside the TLS handshake
- * for authenticated negotiation when using TLS over QUIC (HTTP/3).
- */
-typedef struct s_tlsQuicParams
-{
-	int			enabled;		/* 1 if using QUIC (not TCP) */
-	uint8_t		*params;		/* QUIC transport parameters (encoded) */
-	size_t		paramsLen;		/* Length of QUIC parameters */
-}	t_tlsQuicParams;
-
-/**
- * @brief Delegated Credentials (RFC 9345)
- *
- * Delegated credentials allow servers to delegate signing authority to
- * a separate key, which is useful for CDNs and load balancers that need
- * to terminate TLS without access to the private certificate key.
- */
-typedef struct s_tlsDelegatedCred
-{
-	int			enabled;		/* 1 to enable delegated credentials */
-	uint8_t		*credential;	/* Delegated credential (server sends) */
-	size_t		credLen;		/* Length of delegated credential */
-}	t_tlsDelegatedCred;
-
-/**
- * @brief Session Ticket (RFC 5077)
- *
- * Session tickets enable stateless session resumption. The server
- * generates a ticket containing session state, encrypted with a server
- * secret. The client stores the ticket and presents it later to resume
- * the session without a full handshake.
- */
-typedef struct s_tlsSessionTicket
-{
-	int			enabled;		/* 1 to enable session tickets */
-	uint8_t		*ticket;		/* Session ticket data (server generates) */
-	size_t		ticketLen;		/* Length of session ticket */
-	uint32_t	lifetime;		/* Ticket lifetime in seconds */
-}	t_tlsSessionTicket;
-
-/**
- * @brief Early Data (0-RTT) configuration
- *
- * Early data (0-RTT) allows sending application data before the handshake
- * completes, reducing latency for repeat connections. This requires a
- * previously established PSK (session ticket). Defined in RFC 8446 (early_data).
- */
-typedef struct s_tlsEarlyData
-{
-	int			enabled;		/* 1 to enable 0-RTT */
-	int			maxEarlyData;	/* Maximum amount of early data (server) */
-	uint8_t		*data;			/* Early data buffer (client) */
-	size_t		dataLen;		/* Length of early data */
-}	t_tlsEarlyData;
-
-/**
- * @brief Key Update configuration
- *
- * This structure controls automatic key update behavior. Periodic key
- * updates improve forward secrecy and limit the amount of data encrypted
- * under a single key. Defined in RFC 8446 (key_update).
- */
-typedef struct s_tlsKeyUpdate
-{
-	int			autoUpdate;		/* 1 to auto-update keys periodically */
-	uint64_t	updateInterval;	/* Update after this many records (0 = never) */
-}	t_tlsKeyUpdate;
-
-/**
- * @brief Certificate verification options
- *
- * This structure configures peer certificate validation behavior,
- * including whether to verify peer certificates, hostname matching,
- * CA trust store locations, and verification depth.
- */
-typedef struct s_tlsCertVerify
-{
-	int			verifyPeer;			/* 1 to verify peer's certificate */
-	int			verifyHostname;		/* 1 to verify hostname matches certificate */
-	int			allowSelfSigned;	/* 1 to allow self-signed certificates */
-	char		*caFile;			/* Path to CA bundle file (PEM) */
-	char		*caPath;			/* Path to CA directory (PEM) */
-	int			depth;				/* Maximum verification depth */
-}	t_tlsCertVerify;
-
-/**
- * @brief TLS connection parameters (user‑configurable)
- *
- * This structure groups all configurable parameters for a TLS connection.
- * Default values are set by tlsInit() and can be overridden by the user
- * before calling tlsConnect() or tlsAccept().
- */
-typedef struct s_tlsParams
-{
-	int						middleboxCompat;	/* 1 if operating in middlebox compatibility mode */
-	t_tlsVersionPref		versionPref;		/* Preferred TLS version */
-	int						isClient;			/* 1 for client, 0 for server */
-	int						socket;				/* Connected socket */
-	int						isBlocking;			/* 1 for blocking mode, 0 for non-blocking */
-	int						sendGrease;			/* 1 to include GREASE values when possible */
-	t_tlsAlpn				alpn;				/* ALPN negotiation */
-	t_tlsSni				sni;				/* SNI for virtual hosting */
-	t_tlsQuicParams			quic;				/* QUIC transport parameters */
-	int						isDtls;				/* 1 for DTLS (UDP), 0 for TLS (TCP) */
-	t_tlsMaxFragment		maxFragment;		/* Maximum fragment length */
-	t_tlsRecordSizeLimit	recordSizeLimit;	/* Record size limit */
-	t_tlsCertVerify			certVerify;			/* Certificate verification options */
-	t_tlsOcspStapling		ocspStapling;		/* OCSP stapling */
-	t_tlsCertCompression	certCompression;	/* Certificate compression */
-	t_tlsSessionTicket		sessionTicket;		/* Session tickets */
-	t_tlsEarlyData			earlyData;			/* 0-RTT early data */
-	t_tlsKeyUpdate			keyUpdate;			/* Key update configuration */
-	t_tlsPostHandshakeAuth	postHandshakeAuth;	/* Post-handshake authentication */
-	t_tlsDelegatedCred		delegatedCred;		/* Delegated credentials */
-	int						handshakeTimeout;	/* Handshake timeout (0 = none) */
-	int						readTimeout;		/* Read timeout (0 = none) */
-	int						writeTimeout;		/* Write timeout (0 = none) */
-}	t_tlsParams;
+	int					middleboxCompat;	/* 1 if operating in middlebox compatibility mode */
+	t_tlsVersionPref	versionPref;		/* Preferred TLS version */
+	int					isBlocking;			/* 1 for blocking mode, 0 for non-blocking */
+	int					sendGrease;			/* 1 to include GREASE values when possible */
+	int					verifyPeer;			/* 1 to verify peer's certificate */
+	int					allowSelfSigned;	/* 1 to allow self-signed certificates */
+	int					verifyDepth;		/* Maximum verification depth */
+	t_certChain			*certChain;			/* Certificate chain (leaf first) – NULL if none */
+	t_pkey				*privateKey;		/* Private key – NULL if none */
+}	t_tlsConfig;
 
 /**
  * @brief TLS handshake context structure
@@ -288,7 +91,7 @@ typedef struct s_tlsParams
  * This structure holds all state for a TLS handshake including the current
  * state machine position, protocol version, cipher suite, transcript hash,
  * key schedule secrets, record protection contexts, key exchange material,
- * and certificate chains.
+ * and the peer's certificate chain.
  */
 typedef struct s_tlsHandshakeCtx
 {
@@ -300,7 +103,7 @@ typedef struct s_tlsHandshakeCtx
 
 	/* Hello messages */
 	t_tlsHello			peerHello;			/* Parsed peer Hello message */
-	char				peerHelloMsg[TLS_MAX_FRAGMENT_LEN];	/* Raw peer Hello message */
+	uint8_t				peerHelloMsg[TLS_MAX_FRAGMENT_LEN];	/* Raw peer Hello message */
 	size_t				peerHelloMsgLen;	/* Length of raw peer Hello message */
 
 	/* Transcript hash */
@@ -326,55 +129,30 @@ typedef struct s_tlsHandshakeCtx
 	uint8_t				sharedSecret[64];	/* Computed shared secret */
 	size_t				sharedSecretLen;	/* Length of shared secret */
 
-	/* Our certificate chain */
-	t_certChain			*certChain;			/* Our certificate chain (leaf first) */
-	t_pkey				*privateKey;		/* Our private key */
-	int					certIsShared;		/* 1 if these pointers belong to shared context */
-
 	/* Peer certificate (received) */
 	t_certChain			*peerCertChain;		/* Peer certificate chain (leaf first) */
 }	t_tlsHandshakeCtx;
-
-/* ============================================================================
- * Shared Context (holds server‑wide configuration and credentials)
- * ============================================================================ */
-
-/**
- * @brief Shared TLS context (server‑side configuration)
- *
- * This structure holds server‑wide configuration and resources that are
- * shared across all connections. It must be initialised once per server
- * and is used by all client connections created via tlsClientCtxInit().
- * Although named "server", it can be used in client‑only scenarios as
- * a configuration container if the user provides the certificate and key.
- */
-typedef struct s_tlsSharedCtx
-{
-	t_tlsParams		params;			/* Global server parameters */
-	t_certChain		*certChain;		/* Server certificate chain */
-	t_pkey			*privateKey;	/* Server private key */
-	int				isLoaded;		/* 1 if properly initialised */
-}	t_tlsSharedCtx;
 
 /**
  * @brief TLS connection context (user‑facing API)
  *
  * This structure holds everything needed for a TLS connection:
- * configuration parameters, handshake state, I/O buffers, and
- * connection status. It is the main context object used by the
- * application when interacting with the TLS library.
+ * a pointer to the shared configuration, I/O context, handshake state,
+ * and connection status.  No manual initialisation is required before
+ * calling tlsAccept() or tlsConnect() – they will set up the context
+ * automatically.
  */
 typedef struct s_tlsCtx
 {
-	const t_tlsSharedCtx	*shared;	/* Global shared context (read‑only) */
-	t_tlsIoctx				io;			/* I/O context */
-	t_tlsHandshakeCtx		handshake;	/* Handshake state */
-	int						isConnected;/* 1 if handshake complete */
-	int						isServer;	/* 1 for server, 0 for client */
-	uint8_t					appDataBuf[TLS_MAX_FRAGMENT_LEN];	/* Application data buffer */
-	size_t					appDataLen;	/* Length of application data */
-	int						lastError;	/* Last error code */
-	char					*errorMsg;	/* Human‑readable error message */
+	const t_tlsConfig	*config;	/* Connection parameters (read‑only) */
+	t_tlsIoctx			io;			/* I/O context */
+	t_tlsHandshakeCtx	handshake;	/* Handshake state */
+	int					isConnected;/* 1 if handshake complete */
+	int					isServer;	/* 1 for server, 0 for client */
+	uint8_t				appDataBuf[TLS_MAX_FRAGMENT_LEN];	/* Application data buffer */
+	size_t				appDataLen;	/* Length of application data */
+	int					lastError;	/* Last error code */
+	char				*errorMsg;	/* Human‑readable error message */
 }	t_tlsCtx;
 
 /* Success */
@@ -407,164 +185,83 @@ typedef struct s_tlsCtx
 # define TLS_ERR_WANT_WRITE			-42		/* Non‑blocking: need write */
 
 /**
- * @brief Initialises a shared TLS context with certificate and key files
+ * @brief Initialises a TLS configuration with default values
  *
- * This function loads the server's certificate chain and private key from
- * files. The certificate file can be PEM (single or concatenated) or DER.
- * The private key must be PEM format. The loaded resources are shared by
- * all connections created from this shared context.
+ * All fields are set to safe defaults. The caller can then modify
+ * fields directly and optionally call tlsConfigLoadCertKey() to
+ * load a certificate / private key.
  *
- * @param shared		Shared context to initialise
+ * @param cfg		Configuration to initialise
+ * @return			1 on success, 0 on error
+ */
+int		tlsConfigInit(t_tlsConfig *cfg);
+
+/**
+ * @brief Frees resources owned by a TLS configuration
+ *
+ * Frees the certificate chain and private key if they were loaded.
+ * The configuration itself is not freed (caller owns the memory).
+ *
+ * @param cfg		Configuration to clean up
+ */
+void	tlsConfigFree(t_tlsConfig *cfg);
+
+/**
+ * @brief Loads a certificate chain and private key into the configuration
+ *
+ * The certificate file can be PEM (single or concatenated) or DER.
+ * The private key must be PEM format. Any previously loaded
+ * certificate/key is freed before loading the new one.
+ *
+ * @param cfg			Configuration to fill
  * @param certFile		Path to certificate chain file (PEM or DER)
  * @param keyFile		Path to private key file (PEM)
  * @param keyPassword	Password for the private key file (if encrypted)
  * @return				1 on success, 0 on error
  */
-int		tlsSharedCtxInit(t_tlsSharedCtx *shared, const char *certFile, const char *keyFile, const char *keyPassword);
-
-/**
- * @brief Frees a shared TLS context
- *
- * This function frees all resources associated with the shared context,
- * including certificate chain and private key.
- *
- * @param shared		Shared context to free
- */
-void	tlsSharedCtxFree(t_tlsSharedCtx *shared);
-
-/**
- * @brief Sets the version preference for a shared context
- *
- * @param shared		Shared context
- * @param pref			Version preference value
- */
-void	tlsSharedCtxSetVersionPref(t_tlsSharedCtx *shared, t_tlsVersionPref pref);
-
-/**
- * @brief Enables or disables middlebox compatibility mode
- *
- * Middlebox compatibility mode adds dummy sessions and ChangeCipherSpec
- * messages to work around broken middleboxes that expect TLS 1.2 behaviour.
- *
- * @param shared		Shared context
- * @param enabled		1 to enable, 0 to disable
- */
-void	tlsSharedCtxSetMiddleboxCompat(t_tlsSharedCtx *shared, int enabled);
-
-/**
- * @brief Configures certificate verification options for a shared context
- *
- * @param shared			Shared context
- * @param verifyPeer		1 to verify peer's certificate
- * @param allowSelfSigned	1 to allow self‑signed certificates
- * @param depth				Maximum verification depth
- */
-void	tlsSharedCtxSetCertVerify(t_tlsSharedCtx *shared, int verifyPeer, int allowSelfSigned, int depth);
-
-/**
- * @brief Initialises a TLS client context attached to a shared context
- *
- * This function initialises a client TLS context with the provided
- * shared context and socket. The shared context must have been properly
- * initialised with tlsSharedCtxInit().
- *
- * @param ctx		TLS context to initialise
- * @param shared	Shared context (read‑only)
- * @param socket	Connected socket file descriptor
- * @return			1 on success, 0 on error
- */
-int		tlsClientCtxInit(t_tlsCtx *ctx, const t_tlsSharedCtx *shared, int socket);
-
-/**
- * @brief Initialize TLS context with default parameters
- *
- * This function initialises a TLS context with default parameters based
- * on the role (client or server) and the provided connected socket.
- * The default parameters include TLS 1.3 only, blocking mode, and no
- * custom extensions. The context must be freed with tlsFree() when no
- * longer needed. For server use, you must later call tlsSetServerCert().
- *
- * @param ctx		TLS context (must be allocated by caller)
- * @param isClient	1 for client mode, 0 for server mode
- * @param socket	Connected socket file descriptor
- * @return			1 on success, 0 on error
- */
-int		tlsInit(t_tlsCtx *ctx, int isClient, int socket);
-
-/**
- * @brief Initialize TLS context with custom parameters
- *
- * This function allows the caller to set custom parameters before
- * initiating the handshake. It copies the provided parameters into
- * the context. Call this function instead of tlsInit() when custom
- * configuration is needed.
- *
- * @param ctx		TLS context (must be allocated by caller)
- * @param params	Custom parameters (copied internally)
- * @return			1 on success, 0 on error
- */
-int		tlsInitWithParams(t_tlsCtx *ctx, const t_tlsParams *params);
-
-/**
- * @brief Set server certificate and private key from files
- *
- * This function loads the server's certificate chain and private key
- * directly from files. The certificate file can be PEM (single or
- * concatenated) or DER. The private key must be PEM format.
- * Ownership of both is transferred to the TLS context.
- *
- * @param ctx			TLS context
- * @param certFile		Path to certificate chain file (PEM or DER)
- * @param keyFile		Path to private key file (PEM)
- * @param keyPassword	Password for the private key file (if encrypted)
- * @return				TLS_SUCCESS on success, error code otherwise
- */
-int		tlsSetServerCert(t_tlsCtx *ctx, const char *certFile, const char *keyFile, const char *keyPassword);
-
-/**
- * @brief Free TLS context and close connection
- *
- * This function frees all resources associated with the TLS context,
- * securely zeroes sensitive material, and closes the underlying socket.
- * After calling tlsFree(), the context must not be used again.
- *
- * @param ctx		TLS context
- */
-void	tlsFree(t_tlsCtx *ctx);
-
-/**
- * @brief Perform TLS handshake as client
- *
- * This function initiates the TLS handshake from the client side.
- * It sends a ClientHello and processes server responses until the
- * handshake completes or an error occurs.
- *
- * In non‑blocking mode, this function may return TLS_ERR_WANT_READ
- * or TLS_ERR_WANT_WRITE to indicate that the caller should wait for
- * the socket to become readable or writable and then call tlsConnect()
- * again to resume the handshake.
- *
- * @param ctx		TLS context
- * @return			TLS_SUCCESS on success, error code otherwise
- */
-int		tlsConnect(t_tlsCtx *ctx);
+int		tlsConfigLoadCertKey(t_tlsConfig *cfg, const char *certFile, const char *keyFile, const char *keyPassword);
 
 /**
  * @brief Perform TLS handshake as server
  *
- * This function performs the TLS handshake from the server side.
- * It waits for a ClientHello from the client and responds with the
- * appropriate handshake messages (ServerHello, Certificate, etc.).
+ * Creates a new TLS connection context attached to the given configuration
+ * and socket, then processes the handshake up to the point where the socket
+ * would block. The caller must provide a pointer to an uninitialised
+ * t_tlsCtx (zeroed or freshly allocated); it will be initialised internally.
+ * When the handshake completes, the context is ready for application data.
  *
  * In non‑blocking mode, this function may return TLS_ERR_WANT_READ
  * or TLS_ERR_WANT_WRITE to indicate that the caller should wait for
  * the socket to become readable or writable and then call tlsAccept()
- * again to resume the handshake.
+ * again to resume the handshake (the same context pointer must be reused).
  *
- * @param ctx		TLS context
+ * @param ctx		Pointer to an uninitialised t_tlsCtx
+ * @param cfg		Shared configuration (read‑only)
+ * @param socket	Connected socket file descriptor
  * @return			TLS_SUCCESS on success, error code otherwise
  */
-int		tlsAccept(t_tlsCtx *ctx);
+int		tlsAccept(t_tlsCtx *ctx, const t_tlsConfig *cfg, int socket);
+
+/**
+ * @brief Perform TLS handshake as client
+ *
+ * Creates a new TLS connection context attached to the given configuration
+ * and socket, then processes the handshake up to the point where the socket
+ * would block. The caller must provide a pointer to an uninitialised
+ * t_tlsCtx (zeroed or freshly allocated); it will be initialised internally.
+ * When the handshake completes, the context is ready for application data.
+ *
+ * In non‑blocking mode, this function may return TLS_ERR_WANT_READ
+ * or TLS_ERR_WANT_WRITE to indicate that the caller should wait for
+ * the socket to become readable or writable and then call tlsConnect()
+ * again to resume the handshake (the same context pointer must be reused).
+ *
+ * @param ctx		Pointer to an uninitialised t_tlsCtx
+ * @param cfg		Shared configuration (read‑only)
+ * @param socket	Connected socket file descriptor
+ * @return			TLS_SUCCESS on success, error code otherwise
+ */
+int		tlsConnect(t_tlsCtx *ctx, const t_tlsConfig *cfg, int socket);
 
 /**
  * @brief Check if TLS connection is established
@@ -575,7 +272,7 @@ int		tlsAccept(t_tlsCtx *ctx);
  * @param ctx		TLS context
  * @return			1 if connected, 0 otherwise
  */
-int		tlsIsConnected(t_tlsCtx *ctx);
+int		tlsIsConnected(const t_tlsCtx *ctx);
 
 /**
  * @brief Read application data from TLS connection
@@ -613,6 +310,8 @@ ssize_t	tlsWrite(t_tlsCtx *ctx, const uint8_t *buf, size_t len);
  * This function sends a close_notify alert to the peer and then closes
  * the underlying socket. This is the proper way to shut down a TLS
  * connection, ensuring both peers know the connection is ending.
+ * The context is NOT freed by this function; call tlsFreeConnection()
+ * afterwards to release all resources.
  *
  * @param ctx		TLS context
  * @return			TLS_SUCCESS on success, error code otherwise
@@ -620,27 +319,16 @@ ssize_t	tlsWrite(t_tlsCtx *ctx, const uint8_t *buf, size_t len);
 int		tlsShutdown(t_tlsCtx *ctx);
 
 /**
- * @brief Get last error code
+ * @brief Frees a per‑connection TLS context and closes the socket
  *
- * This function returns the last error code recorded by the TLS context.
- * It is useful for determining the cause of a failed operation.
+ * Releases all resources associated with the connection, including
+ * handshake state, internal buffers, and the underlying socket.
+ * The configuration is not touched. After calling this function
+ * the context becomes invalid.
  *
- * @param ctx		TLS context
- * @return			Error code (TLS_ERR_*)
+ * @param ctx		Connection context to free
  */
-int		tlsLastError(t_tlsCtx *ctx);
-
-/**
- * @brief Get human‑readable error message
- *
- * This function returns a human‑readable string describing the last
- * error that occurred. The pointer remains valid until the next
- * operation that modifies the context.
- *
- * @param ctx		TLS context
- * @return			Pointer to error string (do not free)
- */
-const char	*tlsErrorString(t_tlsCtx *ctx);
+void	tlsFreeConnection(t_tlsCtx *ctx);
 
 /**
  * @brief Sets an error on the TLS context
@@ -655,112 +343,17 @@ const char	*tlsErrorString(t_tlsCtx *ctx);
 void	tlsSetError(t_tlsCtx *ctx, int errCode, const char *errMsg);
 
 /**
- * @brief Set SNI hostname (client side)
+ * @brief Handle an incoming TLS alert
  *
- * This function sets the Server Name Indication (SNI) hostname for client
- * mode. The hostname indicates which virtual server the client wants to
- * connect to, allowing the server to select the correct certificate.
- *
- * @param ctx		TLS context
- * @param hostname	Server name (e.g., "www.example.com")
- * @return			1 on success, 0 on error
- */
-int		tlsSetSni(t_tlsSharedCtx *ctx, const char *hostname);
-
-/**
- * @brief Set ALPN protocols (client side)
- *
- * This function sets the list of supported application protocols for
- * ALPN negotiation. The protocols array should be NULL‑terminated.
- * The server will select one of these protocols during the handshake.
+ * This function processes a TLS alert message, logging it and updating
+ * the connection state. It returns -1 for fatal alerts, 0 for closure,
+ * and 1 otherwise.
  *
  * @param ctx		TLS context
- * @param protocols	Array of protocol names (e.g., {"h2", "http/1.1", NULL})
- * @return			1 on success, 0 on error
+ * @param data		Alert data (two bytes: level, description)
+ * @param dataLen	Length of data (must be >= 2)
+ * @return			-1 on fatal, 0 on close_notify, 1 on warning
  */
-int		tlsSetAlpn(t_tlsSharedCtx *ctx, const char **protocols);
-
-/**
- * @brief Get negotiated ALPN protocol
- *
- * This function returns the ALPN protocol selected by the server during
- * the handshake. If no protocol was negotiated, it returns NULL.
- *
- * @param ctx		TLS context
- * @return			Selected protocol name, or NULL if not negotiated
- */
-const char	*tlsGetAlpn(t_tlsCtx *ctx);
-
-/**
- * @brief Set OCSP stapling (client side)
- *
- * This function enables or disables OCSP stapling (Certificate Status
- * Request) for client mode. When enabled, the client requests an OCSP
- * response from the server during the handshake.
- *
- * @param ctx		TLS context
- * @param enabled	1 to request OCSP stapling, 0 to disable
- * @return			1 on success, 0 on error
- */
-int		tlsSetOcspStapling(t_tlsSharedCtx *ctx, int enabled);
-
-/**
- * @brief Get OCSP response (server side, after handshake)
- *
- * This function retrieves the OCSP response that the client requested
- * via OCSP stapling. It is used by the server to send a stapled OCSP
- * response to the client.
- *
- * @param ctx		TLS context
- * @param response	Output pointer to OCSP response data
- * @param len		Output length of OCSP response
- * @return			1 if OCSP response is available, 0 otherwise
- */
-int		tlsGetOcspResponse(t_tlsCtx *ctx, uint8_t **response, size_t *len);
-
-/**
- * @brief Set certificate verification options
- *
- * This function configures certificate verification behaviour, including
- * whether to verify the peer's certificate and the CA trust store paths.
- *
- * @param ctx			TLS context
- * @param verifyPeer	1 to verify peer's certificate
- * @param caFile		Path to CA bundle file (PEM), or NULL
- * @param caPath		Path to CA directory, or NULL
- * @return				1 on success, 0 on error
- */
-int		tlsSetVerify(t_tlsSharedCtx *ctx, int verifyPeer, const char *caFile, const char *caPath);
-
-/**
- * @brief Set hostname for certificate verification (client side)
- *
- * This function sets the expected hostname for certificate verification
- * on the client side. The certificate's CN or SAN must match this hostname.
- *
- * @param ctx		TLS context
- * @param hostname	Expected hostname (must match certificate)
- * @return			1 on success, 0 on error
- */
-int		tlsSetVerifyHostname(t_tlsSharedCtx *ctx, const char *hostname);
-
-/**
- * @brief Export keying material (RFC 5705)
- *
- * This function allows applications to derive additional keys from the
- * TLS session using the exporter interface. It is useful for protocols
- * that need additional keys (e.g., WebRTC, DTLS‑SRTP).
- *
- * @param ctx			TLS context
- * @param label			Exporter label
- * @param context		Context value (may be NULL)
- * @param contextLen	Length of context
- * @param output		Output buffer
- * @param outputLen		Desired length of output
- * @return				1 on success, 0 on error
- */
-int		tlsExportKeyingMaterial(t_tlsCtx		*ctx,		const char	*label,
-								const uint8_t	*context,	size_t		contextLen,
-								uint8_t			*output,	size_t		outputLen);
+int		tlsHandleAlert(t_tlsCtx *ctx, const uint8_t *data, size_t dataLen);
 
 #endif /* BTLS_H */

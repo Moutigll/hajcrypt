@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <strings.h>
 
 #include "../../../../hajlib/include/hmemory.h"
 #include "../../../../includes/utils/random.h"
@@ -289,7 +288,7 @@ int tls13ServerSendFlight(t_tlsCtx *ctx)
 
 
 		/* ----- Derive application secrets and init record contexts ----- */
-		bzero(transcriptHash, sizeof(transcriptHash));
+		ft_bzero(transcriptHash, sizeof(transcriptHash));
 		hashLen = ctx->handshake.transcriptHash.digestSize;
 		transcriptGetHash(&ctx->handshake, transcriptHash);
 		if (!tls13KeyScheduleDeriveAppSecrets(&ctx->handshake.secrets,
