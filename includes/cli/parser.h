@@ -12,7 +12,8 @@ typedef enum e_cmdType {
 	CMD_GENPKEY,
 	CMD_PKEY,
 	CMD_PKEYUTL,
-	CMD_CERT
+	CMD_CERT,
+	CMD_SERVER
 } t_cmdType;
 
 typedef enum e_kdfChoice {

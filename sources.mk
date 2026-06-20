@@ -134,7 +134,8 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/pkey.c \
 	$(SRC_DIR)/cli/pkeygen.c \
 	$(SRC_DIR)/cli/pkeyutl.c \
-	$(SRC_DIR)/cli/cert.c
+	$(SRC_DIR)/cli/cert.c \
+	$(SRC_DIR)/cli/server.c
 
 TEST_SRC = \
 	tests/main.test.c \

@@ -6,9 +6,10 @@
 #include "../../hajlib/include/hprintf.h"
 
 #include "../../includes/cli/algoHandling.h"
+#include "../../includes/cli/cert.h"
 #include "../../includes/cli/parser.h"
 #include "../../includes/cli/pkey.h"
-#include "../../includes/cli/cert.h"
+#include "../../includes/cli/tls.h"
 
 
 static int executeSsl(t_sslOptions *opts, int argc, char **argv, char **env)
@@ -67,6 +68,8 @@ static int executeSsl(t_sslOptions *opts, int argc, char **argv, char **env)
 		return (cmdPkeyutl(argc, argv, env));
 	else if (opts->cmdType == CMD_CERT)
 		return (cmdCert(argc, argv, env));
+	else if (opts->cmdType == CMD_SERVER)
+		return (cmdServer(argc, argv, env));
 	return (0);
 }
 
