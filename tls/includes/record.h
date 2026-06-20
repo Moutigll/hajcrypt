@@ -3,7 +3,7 @@
 
 # include "../../includes/hash/hash.h"
 # include "constants.h"
-# include "aeadCipher.h"
+# include "tlsCipher.h"
 
 /**
  * @brief TLS record header structure
@@ -13,12 +13,6 @@
  * (handshake, application data, alert, or change_cipher_spec). The legacy
  * version field is set to 0x0303 for TLS 1.2 compatibility, even in TLS 1.3.
  * The length field specifies the size of the fragment that follows.
- *
- * struct {
- *	 uint8 content_type;
- *	 uint16 legacy_version;  // always 0x0303 for TLS 1.2 compat
- *	 uint16 length;
- * } TLSRecordHeader;
  */
 typedef struct s_tlsRecordHeader
 {
@@ -46,41 +40,68 @@ typedef struct s_tlsRecord
  * @brief Context for record protection
  *
  * This structure maintains the cryptographic state for record protection
- * including the AEAD cipher context and separate 64-bit sequence numbers
+ * including the unified cipher context and separate 64-bit sequence numbers
  * for client and server directions. The sequence numbers are used as part
  * of the nonce for AEAD encryption and increment with each record sent
  * in each direction.
  */
 typedef struct s_tlsRecordCtx
 {
-	t_tlsAeadCipher	aeadCtx;		/* AEAD cipher context (keys, IV, type) */
-	uint64_t		seqNumClient;	/* Sequence number for client → server */
-	uint64_t		seqNumServer;	/* Sequence number for server → client */
-	int				isEncrypt;	
+	t_tlsCipher			cipher;			/* Unified cipher context for record protection */
+	const t_tlsCipherSuite	*suite;		/* Cipher suite used for this context */
+	uint64_t			seqNumClient;	/* Sequence number for client → server */
+	uint64_t			seqNumServer;	/* Sequence number for server → client */
+	t_cipherDirection	direction;		/* Direction of the record */
 }	t_tlsRecordCtx;
 
 /**
- * @brief Initialize record context with traffic secret
+ * @brief Initialize record context for TLS 1.3 with traffic secret
  *
  * This function initializes a record protection context by deriving the
  * encryption key and IV from the provided traffic secret using HKDF.
- * The key and IV lengths are determined by the cipher type (16 or 32 bytes
- * for AES, 32 bytes for ChaCha20 key, 12 bytes IV for all). The sequence
- * numbers are initialized to zero.
  *
  * @param ctx			Record context to initialize
- * @param cipherType	AEAD cipher to use
+ * @param suite			Cipher suite to use
  * @param secret		Traffic secret (clientHandshakeTrafficSecret, etc.)
  * @param secretLen		Length of the secret
  * @param hash			Hash algorithm for HKDF
+ * @param direction		Direction of the record (client or server)
+ * @param isServer		1 if server, 0 if client
  * @return				1 on success, 0 on error
  */
-int	tlsRecordCtxInit(t_tlsRecordCtx		*ctx,
-					 t_tlsCipherType	cipherType,
-					 const uint8_t		*secret,
-					 size_t				secretLen,
-					 const t_hash		*hash,
-					 int				isEncrypt);
+int	tlsRecordCtxInit(t_tlsRecordCtx			*ctx,
+					 const t_tlsCipherSuite	*suite,
+					 const uint8_t			*secret,
+					 size_t					secretLen,
+					 const t_hash			*hash,
+					 t_cipherDirection		direction,
+					 int					isServer);
+
+/**
+ * @brief Initialize record context for TLS 1.2 with direct keys
+ *
+ * This function initializes a record protection context with pre-derived
+ * keys and IVs, suitable for TLS 1.2 where the PRF is used externally.
+ *
+ * @param ctx			Record context to initialize
+ * @param suite			Cipher suite to use
+ * @param key			Encryption key (pre-derived)
+ * @param keyLen		Length of the encryption key
+ * @param iv			IV/nonce (pre-derived)
+ * @param ivLen			Length of the IV
+ * @param macKey		MAC key (for CBC+HMAC) or NULL for AEAD
+ * @param macKeyLen		Length of the MAC key
+ * @param direction		Direction of the record (client or server)
+ * @param isServer		1 if server, 0 if client
+ * @return				1 on success, 0 on error
+ */
+int	tlsRecordCtxInitTls12(t_tlsRecordCtx			*ctx,
+						  const t_tlsCipherSuite	*suite,
+						  const uint8_t				*key,		size_t	keyLen,
+						  const uint8_t				*iv,		size_t	ivLen,
+						  const uint8_t				*macKey,	size_t	macKeyLen,
+						  t_cipherDirection			direction,
+						  int						isServer);
 
 /**
  * @brief Free record context (zero sensitive data)
@@ -100,11 +121,11 @@ void	tlsRecordCtxFree(t_tlsRecordCtx *ctx);
  * configured in the context. It constructs the additional authenticated
  * data (AAD) from the record header and sequence number, then encrypts
  * the fragment using the appropriate key and nonce based on the direction.
- * The encrypted record includes the authentication tag appended to the
- * ciphertext. The sequence number is incremented after successful encryption.
  *
  * @param ctx			Record context (contains keys and seq number)
- * @param record		Record to encrypt (plaintext fragment)
+ * @param fragment		Plaintext fragment to encrypt
+ * @param fragmentLen	Length of the fragment
+ * @param innerType		Inner content type (real type of the data)
  * @param isClient		1 if client sending, 0 if server sending
  * @param output		Output buffer for encrypted record
  * @param outputLen		Pointer to output length
@@ -122,16 +143,14 @@ int	tlsRecordEncrypt(t_tlsRecordCtx	*ctx,
  * This function decrypts an encrypted TLS record using the AEAD cipher
  * configured in the context. It reconstructs the AAD from the record header
  * and sequence number, then decrypts and verifies the authentication tag.
- * If tag verification fails, the function returns an error and the output
- * data must not be used. The sequence number is incremented after successful
- * decryption.
  *
  * @param ctx			Record context (contains keys and seq number)
  * @param ciphertext	Encrypted record data (including header)
  * @param ciphertextLen	Length of ciphertext
  * @param isClient		1 if client receiving, 0 if server receiving
- * @param output		Output buffer for decrypted plaintext
- * @param outputLen		Pointer to output length
+ * @param fragment		Output buffer for decrypted plaintext fragment
+ * @param fragmentLen	Pointer to output fragment length
+ * @param innerType		Output: real content type extracted from inner plaintext
  * @return				1 on success, 0 on error (including tag mismatch)
  */
 int	tlsRecordDecrypt(t_tlsRecordCtx	*ctx,
@@ -144,9 +163,6 @@ int	tlsRecordDecrypt(t_tlsRecordCtx	*ctx,
  * @brief Build a plaintext record from data
  *
  * This function constructs a plaintext TLS record from raw payload data.
- * It sets the content type, legacy version (0x0303), and length fields
- * in the header. A fragment buffer is allocated to hold the provided data.
- * The resulting record is ready for encryption or further processing.
  *
  * @param contentType	Content type (handshake, app data, etc.)
  * @param data			Payload data
@@ -162,9 +178,7 @@ int	tlsRecordBuild(uint8_t			contentType,
 /**
  * @brief Free record resources
  *
- * This function releases the fragment buffer allocated for a TLS record
- * and securely zeros it before freeing. The fragment pointer is set to NULL
- * to prevent double free attempts. The header structure is left untouched.
+ * This function releases the fragment buffer allocated for a TLS record.
  *
  * @param record	Record to free
  */
@@ -174,9 +188,6 @@ void	tlsRecordFree(t_tlsRecord *record);
  * @brief Reset sequence numbers (for key update)
  *
  * This function resets both client and server sequence numbers to zero.
- * It is used when performing a key update operation as specified in
- * RFC 8446 Section 6.1. After a key update, new sequence numbers start
- * from zero for the new encryption keys.
  *
  * @param ctx	Record context
  */

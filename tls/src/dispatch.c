@@ -1,3 +1,4 @@
+#include "../../hajlib/include/hprintf.h" /* IWYU pragma: keep */
 #include "../../includes/asymmetric/kex.h"
 #include "../../includes/hash/sha.h" /* IWYU pragma: keep */
 #include "../../includes/asymmetric/rsa.h"
@@ -65,37 +66,37 @@ const t_tlsCipherSuite g_supportedCipherSuites[] = {
 	 * TLS 1.3 (RFC 8446) - KEX and auth negotiated via extensions
 	 * ======================================================================== */
 	{
-		TLS_CIPHER_AES_128_GCM,
-		"TLS_AES_128_GCM_SHA256",
-		BTLS_CIPHER_AES_128_GCM,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_NONE,
-		NULL,
-		{ .aeadCipher = &g_aes128GcmCipher },
-		&g_sha256Hash,
-		TLS_VERS_1_3
+		.wireValue			= TLS_CIPHER_AES_128_GCM,
+		.name				= "TLS_AES_128_GCM_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_128_GCM,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_NONE,
+		.pkey				= NULL,
+		.cipher				= &g_aes128GcmCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_3
 	},
 	{
-		TLS_CIPHER_AES_256_GCM,
-		"TLS_AES_256_GCM_SHA384",
-		BTLS_CIPHER_AES_256_GCM,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_NONE,
-		NULL,
-		{ .aeadCipher = &g_aes256GcmCipher },
-		&g_sha384Hash,
-		TLS_VERS_1_3
+		.wireValue			= TLS_CIPHER_AES_256_GCM,
+		.name				= "TLS_AES_256_GCM_SHA384",
+		.cipherType			= BTLS_CIPHER_AES_256_GCM,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_NONE,
+		.pkey				= NULL,
+		.cipher				= &g_aes256GcmCipher,
+		.hash				= &g_sha384Hash,
+		.supportedVersions	= TLS_VERS_1_3
 	},
 	{
-		TLS_CIPHER_CHACHA20_POLY1305,
-		"TLS_CHACHA20_POLY1305_SHA256",
-		BTLS_CIPHER_CHACHA20_POLY1305,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_NONE,
-		NULL,
-		{ .aeadCipher = &g_chacha20Poly1305Cipher },
-		&g_sha256Hash,
-		TLS_VERS_1_3
+		.wireValue			= TLS_CIPHER_CHACHA20_POLY1305,
+		.name				= "TLS_CHACHA20_POLY1305_SHA256",
+		.cipherType			= BTLS_CIPHER_CHACHA20_POLY1305,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_NONE,
+		.pkey				= NULL,
+		.cipher				= &g_chacha20Poly1305Cipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_3
 	},
 
 	/* ========================================================================
@@ -103,63 +104,63 @@ const t_tlsCipherSuite g_supportedCipherSuites[] = {
 	 * ======================================================================== */
 	/* ECDHE_ECDSA with AES-GCM (AEAD) */
 	{
-		TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-		BTLS_CIPHER_AES_128_GCM,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_ECDH,
-		&g_ecdsaPkeyDef,
-		{ .aeadCipher = &g_aes128GcmCipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		.name				= "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_128_GCM,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_ecdsaPkeyDef,
+		.cipher				= &g_aes128GcmCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 	{
-		TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-		"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-		BTLS_CIPHER_AES_256_GCM,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_ECDH,
-		&g_ecdsaPkeyDef,
-		{ .aeadCipher = &g_aes256GcmCipher },
-		&g_sha384Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		.name				= "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+		.cipherType			= BTLS_CIPHER_AES_256_GCM,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_ecdsaPkeyDef,
+		.cipher				= &g_aes256GcmCipher,
+		.hash				= &g_sha384Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* ECDHE_ECDSA with ChaCha20-Poly1305 (AEAD) */
 	{
-		TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
-		BTLS_CIPHER_CHACHA20_POLY1305,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_ECDH,
-		&g_ecdsaPkeyDef,
-		{ .aeadCipher = &g_chacha20Poly1305Cipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+		.name				= "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+		.cipherType			= BTLS_CIPHER_CHACHA20_POLY1305,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_ecdsaPkeyDef,
+		.cipher				= &g_chacha20Poly1305Cipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* ECDHE_ECDSA with CBC + HMAC-SHA256/384 */
 	{
-		TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
-		BTLS_CIPHER_AES_128_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_ECDH,
-		&g_ecdsaPkeyDef,
-		{ .cipher = &g_aes128CbcCipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+		.name				= "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_128_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_ecdsaPkeyDef,
+		.cipher				= &g_aes128CbcCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 	{
-		TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,
-		"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
-		BTLS_CIPHER_AES_256_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_ECDH,
-		&g_ecdsaPkeyDef,
-		{ .cipher = &g_aes256CbcCipher },
-		&g_sha384Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,
+		.name				= "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
+		.cipherType			= BTLS_CIPHER_AES_256_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_ecdsaPkeyDef,
+		.cipher				= &g_aes256CbcCipher,
+		.hash				= &g_sha384Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* ========================================================================
@@ -167,63 +168,63 @@ const t_tlsCipherSuite g_supportedCipherSuites[] = {
 	 * ======================================================================== */
 	/* ECDHE_RSA with AES-GCM (AEAD) */
 	{
-		TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-		BTLS_CIPHER_AES_128_GCM,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_ECDH,
-		&g_rsaPkeyDef,
-		{ .aeadCipher = &g_aes128GcmCipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		.name				= "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_128_GCM,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes128GcmCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 	{
-		TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-		BTLS_CIPHER_AES_256_GCM,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_ECDH,
-		&g_rsaPkeyDef,
-		{ .aeadCipher = &g_aes256GcmCipher },
-		&g_sha384Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		.name				= "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+		.cipherType			= BTLS_CIPHER_AES_256_GCM,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes256GcmCipher,
+		.hash				= &g_sha384Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* ECDHE_RSA with ChaCha20-Poly1305 (AEAD) */
 	{
-		TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-		"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
-		BTLS_CIPHER_CHACHA20_POLY1305,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_ECDH,
-		&g_rsaPkeyDef,
-		{ .aeadCipher = &g_chacha20Poly1305Cipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+		.name				= "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+		.cipherType			= BTLS_CIPHER_CHACHA20_POLY1305,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_chacha20Poly1305Cipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* ECDHE_RSA with CBC + HMAC-SHA256/384 */
 	{
-		TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
-		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
-		BTLS_CIPHER_AES_128_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_ECDH,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_aes128CbcCipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+		.name				= "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_128_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes128CbcCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 	{
-		TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,
-		"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
-		BTLS_CIPHER_AES_256_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_ECDH,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_aes256CbcCipher },
-		&g_sha384Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,
+		.name				= "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
+		.cipherType			= BTLS_CIPHER_AES_256_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes256CbcCipher,
+		.hash				= &g_sha384Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* ========================================================================
@@ -231,63 +232,63 @@ const t_tlsCipherSuite g_supportedCipherSuites[] = {
 	 * ======================================================================== */
 	/* DHE_RSA with AES-GCM (AEAD) */
 	{
-		TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,
-		"TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
-		BTLS_CIPHER_AES_128_GCM,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_FFDHE,
-		&g_rsaPkeyDef,
-		{ .aeadCipher = &g_aes128GcmCipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,
+		.name				= "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_128_GCM,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes128GcmCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 	{
-		TLS_DHE_RSA_WITH_AES_256_GCM_SHA384,
-		"TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
-		BTLS_CIPHER_AES_256_GCM,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_FFDHE,
-		&g_rsaPkeyDef,
-		{ .aeadCipher = &g_aes256GcmCipher },
-		&g_sha384Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_DHE_RSA_WITH_AES_256_GCM_SHA384,
+		.name				= "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
+		.cipherType			= BTLS_CIPHER_AES_256_GCM,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes256GcmCipher,
+		.hash				= &g_sha384Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* DHE_RSA with ChaCha20-Poly1305 (AEAD) */
 	{
-		TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-		"TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
-		BTLS_CIPHER_CHACHA20_POLY1305,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_FFDHE,
-		&g_rsaPkeyDef,
-		{ .aeadCipher = &g_chacha20Poly1305Cipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+		.name				= "TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+		.cipherType			= BTLS_CIPHER_CHACHA20_POLY1305,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_chacha20Poly1305Cipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* DHE_RSA with CBC + HMAC-SHA256 */
 	{
-		TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,
-		"TLS_DHE_RSA_WITH_AES_128_CBC_SHA256",
-		BTLS_CIPHER_AES_128_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_FFDHE,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_aes128CbcCipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,
+		.name				= "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_128_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes128CbcCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 	{
-		TLS_DHE_RSA_WITH_AES_256_CBC_SHA256,
-		"TLS_DHE_RSA_WITH_AES_256_CBC_SHA256",
-		BTLS_CIPHER_AES_256_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_FFDHE,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_aes256CbcCipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_DHE_RSA_WITH_AES_256_CBC_SHA256,
+		.name				= "TLS_DHE_RSA_WITH_AES_256_CBC_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_256_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes256CbcCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* ========================================================================
@@ -295,50 +296,50 @@ const t_tlsCipherSuite g_supportedCipherSuites[] = {
 	 * ======================================================================== */
 	/* DHE_DSA with AES-GCM (AEAD) - disabled by default */
 	{
-		TLS_DHE_DSA_WITH_AES_128_GCM_SHA256,
-		"TLS_DHE_DSA_WITH_AES_128_GCM_SHA256",
-		BTLS_CIPHER_AES_128_GCM,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_FFDHE,
-		&g_dsaPkeyDef,
-		{ .aeadCipher = &g_aes128GcmCipher },
-		&g_sha256Hash,
-		0  /* Disabled: DSA is obsolete */
+		.wireValue			= TLS_DHE_DSA_WITH_AES_128_GCM_SHA256,
+		.name				= "TLS_DHE_DSA_WITH_AES_128_GCM_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_128_GCM,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_dsaPkeyDef,
+		.cipher				= &g_aes128GcmCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 	{
-		TLS_DHE_DSA_WITH_AES_256_GCM_SHA384,
-		"TLS_DHE_DSA_WITH_AES_256_GCM_SHA384",
-		BTLS_CIPHER_AES_256_GCM,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_FFDHE,
-		&g_dsaPkeyDef,
-		{ .aeadCipher = &g_aes256GcmCipher },
-		&g_sha384Hash,
-		0  /* Disabled: DSA is obsolete */
+		.wireValue			= TLS_DHE_DSA_WITH_AES_256_GCM_SHA384,
+		.name				= "TLS_DHE_DSA_WITH_AES_256_GCM_SHA384",
+		.cipherType			= BTLS_CIPHER_AES_256_GCM,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_dsaPkeyDef,
+		.cipher				= &g_aes256GcmCipher,
+		.hash				= &g_sha384Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* DHE_DSA with CBC + HMAC-SHA256 */
 	{
-		TLS_DHE_DSA_WITH_AES_128_CBC_SHA256,
-		"TLS_DHE_DSA_WITH_AES_128_CBC_SHA256",
-		BTLS_CIPHER_AES_128_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_FFDHE,
-		&g_dsaPkeyDef,
-		{ .cipher = &g_aes128CbcCipher },
-		&g_sha256Hash,
-		0  /* Disabled: DSA is obsolete */
+		.wireValue			= TLS_DHE_DSA_WITH_AES_128_CBC_SHA256,
+		.name				= "TLS_DHE_DSA_WITH_AES_128_CBC_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_128_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_dsaPkeyDef,
+		.cipher				= &g_aes128CbcCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 	{
-		TLS_DHE_DSA_WITH_AES_256_CBC_SHA256,
-		"TLS_DHE_DSA_WITH_AES_256_CBC_SHA256",
-		BTLS_CIPHER_AES_256_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_FFDHE,
-		&g_dsaPkeyDef,
-		{ .cipher = &g_aes256CbcCipher },
-		&g_sha256Hash,
-		0  /* Disabled: DSA is obsolete */
+		.wireValue			= TLS_DHE_DSA_WITH_AES_256_CBC_SHA256,
+		.name				= "TLS_DHE_DSA_WITH_AES_256_CBC_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_256_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_dsaPkeyDef,
+		.cipher				= &g_aes256CbcCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* ========================================================================
@@ -346,102 +347,102 @@ const t_tlsCipherSuite g_supportedCipherSuites[] = {
 	 * ======================================================================== */
 	/* RSA with AES-GCM (AEAD) */
 	{
-		TLS_RSA_WITH_AES_128_GCM_SHA256,
-		"TLS_RSA_WITH_AES_128_GCM_SHA256",
-		BTLS_CIPHER_AES_128_GCM,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_NONE,
-		&g_rsaPkeyDef,
-		{ .aeadCipher = &g_aes128GcmCipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_RSA_WITH_AES_128_GCM_SHA256,
+		.name				= "TLS_RSA_WITH_AES_128_GCM_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_128_GCM,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_NONE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes128GcmCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 	{
-		TLS_RSA_WITH_AES_256_GCM_SHA384,
-		"TLS_RSA_WITH_AES_256_GCM_SHA384",
-		BTLS_CIPHER_AES_256_GCM,
-		BTLS_RECORD_AEAD,
-		KEX_TYPE_NONE,
-		&g_rsaPkeyDef,
-		{ .aeadCipher = &g_aes256GcmCipher },
-		&g_sha384Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_RSA_WITH_AES_256_GCM_SHA384,
+		.name				= "TLS_RSA_WITH_AES_256_GCM_SHA384",
+		.cipherType			= BTLS_CIPHER_AES_256_GCM,
+		.recordCipherType	= BTLS_RECORD_AEAD,
+		.kex				= KEX_TYPE_NONE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes256GcmCipher,
+		.hash				= &g_sha384Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* RSA with CBC + HMAC-SHA256 */
 	{
-		TLS_RSA_WITH_AES_128_CBC_SHA256,
-		"TLS_RSA_WITH_AES_128_CBC_SHA256",
-		BTLS_CIPHER_AES_128_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_NONE,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_aes128CbcCipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_RSA_WITH_AES_128_CBC_SHA256,
+		.name				= "TLS_RSA_WITH_AES_128_CBC_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_128_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_NONE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes128CbcCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 	{
-		TLS_RSA_WITH_AES_256_CBC_SHA256,
-		"TLS_RSA_WITH_AES_256_CBC_SHA256",
-		BTLS_CIPHER_AES_256_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_NONE,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_aes256CbcCipher },
-		&g_sha256Hash,
-		TLS_VERS_1_2
+		.wireValue			= TLS_RSA_WITH_AES_256_CBC_SHA256,
+		.name				= "TLS_RSA_WITH_AES_256_CBC_SHA256",
+		.cipherType			= BTLS_CIPHER_AES_256_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_NONE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes256CbcCipher,
+		.hash				= &g_sha256Hash,
+		.supportedVersions	= TLS_VERS_1_2
 	},
 
 	/* ========================================================================
 	 * TLS 1.2 - RSA with 3DES (Weak, disabled)
 	 * ======================================================================== */
 	{
-		TLS_RSA_WITH_3DES_EDE_CBC_SHA,
-		"TLS_RSA_WITH_3DES_EDE_CBC_SHA",
-		BTLS_CIPHER_3DES_EDE_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_NONE,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_des3CbcCipher },
-		&g_sha1Hash,
-		0  /* Disabled: 3DES is weak */
+		.wireValue			= TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+		.name				= "TLS_RSA_WITH_3DES_EDE_CBC_SHA",
+		.cipherType			= BTLS_CIPHER_3DES_EDE_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_NONE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_des3CbcCipher,
+		.hash				= &g_sha1Hash,
+		.supportedVersions	= 0
 	},
 	{
-		TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA,
-		"TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA",
-		BTLS_CIPHER_3DES_EDE_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_FFDHE,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_des3CbcCipher },
-		&g_sha1Hash,
-		0  /* Disabled: 3DES is weak */
+		.wireValue			= TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA,
+		.name				= "TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA",
+		.cipherType			= BTLS_CIPHER_3DES_EDE_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_des3CbcCipher,
+		.hash				= &g_sha1Hash,
+		.supportedVersions	= 0
 	},
 
 	/* ========================================================================
 	 * TLS 1.2 - RSA with DES (Obsolete, disabled)
 	 * ======================================================================== */
 	{
-		TLS_RSA_WITH_DES_CBC_SHA,
-		"TLS_RSA_WITH_DES_CBC_SHA",
-		BTLS_CIPHER_DES_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_NONE,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_desCbcCipher },
-		&g_sha1Hash,
-		0  /* Disabled: DES is obsolete */
+		.wireValue			= TLS_RSA_WITH_DES_CBC_SHA,
+		.name				= "TLS_RSA_WITH_DES_CBC_SHA",
+		.cipherType			= BTLS_CIPHER_DES_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_NONE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_desCbcCipher,
+		.hash				= &g_sha1Hash,
+		.supportedVersions	= 0
 	},
 	{
-		TLS_DHE_RSA_WITH_DES_CBC_SHA,
-		"TLS_DHE_RSA_WITH_DES_CBC_SHA",
-		BTLS_CIPHER_DES_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_FFDHE,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_desCbcCipher },
-		&g_sha1Hash,
-		0  /* Disabled: DES is obsolete */
+		.wireValue			= TLS_DHE_RSA_WITH_DES_CBC_SHA,
+		.name				= "TLS_DHE_RSA_WITH_DES_CBC_SHA",
+		.cipherType			= BTLS_CIPHER_DES_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_desCbcCipher,
+		.hash				= &g_sha1Hash,
+		.supportedVersions	= 0
 	},
 
 	/* ========================================================================
@@ -449,104 +450,114 @@ const t_tlsCipherSuite g_supportedCipherSuites[] = {
 	 * ======================================================================== */
 	/* RSA + SHA-1 */
 	{
-		TLS_RSA_WITH_AES_128_CBC_SHA,
-		"TLS_RSA_WITH_AES_128_CBC_SHA",
-		BTLS_CIPHER_AES_128_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_NONE,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_aes128CbcCipher },
-		&g_sha1Hash,
-		0  /* Disabled: SHA-1 is broken */
+		.wireValue			= TLS_RSA_WITH_AES_128_CBC_SHA,
+		.name				= "TLS_RSA_WITH_AES_128_CBC_SHA",
+		.cipherType			= BTLS_CIPHER_AES_128_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_NONE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes128CbcCipher,
+		.hash				= &g_sha1Hash,
+		.supportedVersions	= 0
 	},
 	{
-		TLS_RSA_WITH_AES_256_CBC_SHA,
-		"TLS_RSA_WITH_AES_256_CBC_SHA",
-		BTLS_CIPHER_AES_256_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_NONE,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_aes256CbcCipher },
-		&g_sha1Hash,
-		0  /* Disabled: SHA-1 is broken */
+		.wireValue			= TLS_RSA_WITH_AES_256_CBC_SHA,
+		.name				= "TLS_RSA_WITH_AES_256_CBC_SHA",
+		.cipherType			= BTLS_CIPHER_AES_256_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_NONE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes256CbcCipher,
+		.hash				= &g_sha1Hash,
+		.supportedVersions	= 0
 	},
 
 	/* DHE_RSA + SHA-1 */
 	{
-		TLS_DHE_RSA_WITH_AES_128_CBC_SHA,
-		"TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
-		BTLS_CIPHER_AES_128_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_FFDHE,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_aes128CbcCipher },
-		&g_sha1Hash,
-		0  /* Disabled: SHA-1 is broken */
+		.wireValue			= TLS_DHE_RSA_WITH_AES_128_CBC_SHA,
+		.name				= "TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
+		.cipherType			= BTLS_CIPHER_AES_128_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes128CbcCipher,
+		.hash				= &g_sha1Hash,
+		.supportedVersions	= 0
 	},
 	{
-		TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
-		"TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
-		BTLS_CIPHER_AES_256_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_FFDHE,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_aes256CbcCipher },
-		&g_sha1Hash,
-		0  /* Disabled: SHA-1 is broken */
+		.wireValue			= TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
+		.name				= "TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
+		.cipherType			= BTLS_CIPHER_AES_256_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_FFDHE,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes256CbcCipher,
+		.hash				= &g_sha1Hash,
+		.supportedVersions	= 0
 	},
 
 	/* ECDHE_ECDSA + SHA-1 */
 	{
-		TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
-		BTLS_CIPHER_AES_128_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_ECDH,
-		&g_ecdsaPkeyDef,
-		{ .cipher = &g_aes128CbcCipher },
-		&g_sha1Hash,
-		0  /* Disabled: SHA-1 is broken */
+		.wireValue			= TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+		.name				= "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+		.cipherType			= BTLS_CIPHER_AES_128_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_ecdsaPkeyDef,
+		.cipher				= &g_aes128CbcCipher,
+		.hash				= &g_sha1Hash,
+		.supportedVersions	= 0
 	},
 	{
-		TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-		"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
-		BTLS_CIPHER_AES_256_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_ECDH,
-		&g_ecdsaPkeyDef,
-		{ .cipher = &g_aes256CbcCipher },
-		&g_sha1Hash,
-		0  /* Disabled: SHA-1 is broken */
+		.wireValue			= TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+		.name				= "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+		.cipherType			= BTLS_CIPHER_AES_256_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_ecdsaPkeyDef,
+		.cipher				= &g_aes256CbcCipher,
+		.hash				= &g_sha1Hash,
+		.supportedVersions	= 0
 	},
 
 	/* ECDHE_RSA + SHA-1 */
 	{
-		TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
-		BTLS_CIPHER_AES_128_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_ECDH,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_aes128CbcCipher },
-		&g_sha1Hash,
-		0  /* Disabled: SHA-1 is broken */
+		.wireValue			= TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+		.name				= "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+		.cipherType			= BTLS_CIPHER_AES_128_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes128CbcCipher,
+		.hash				= &g_sha1Hash,
+		.supportedVersions	= 0
 	},
 	{
-		TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-		"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
-		BTLS_CIPHER_AES_256_CBC,
-		BTLS_RECORD_CBC_HMAC,
-		KEX_TYPE_ECDH,
-		&g_rsaPkeyDef,
-		{ .cipher = &g_aes256CbcCipher },
-		&g_sha1Hash,
-		0  /* Disabled: SHA-1 is broken */
+		.wireValue			= TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+		.name				= "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+		.cipherType			= BTLS_CIPHER_AES_256_CBC,
+		.recordCipherType	= BTLS_RECORD_CBC_HMAC,
+		.kex				= KEX_TYPE_ECDH,
+		.pkey				= &g_rsaPkeyDef,
+		.cipher				= &g_aes256CbcCipher,
+		.hash				= &g_sha1Hash,
+		.supportedVersions	= 0
 	},
 
 	/* ========================================================================
 	 * Terminator
 	 * ======================================================================== */
-	{ 0, NULL, 0, 0, 0, NULL, NULL, 0 }
+	    {
+        .wireValue         = 0,
+        .name              = NULL,
+        .cipherType        = 0,
+        .recordCipherType  = 0,
+        .kex               = 0,
+        .pkey              = NULL,
+        .cipher            = NULL,
+        .hash              = NULL,
+        .supportedVersions = 0
+    }
 };
 
 /**
@@ -600,6 +611,7 @@ int negotiateGroup(const uint16_t *clientGroups, size_t clientCount, uint16_t *s
 				*selectedWire = g_supportedGroups[j].wireValue;
 				*kexType = g_supportedGroups[j].kexType;
 				*groupId = g_supportedGroups[j].groupId;
+				BTLS_DEBUG("Negotiated group: %s (0x%04X)\n", g_supportedGroups[j].name, g_supportedGroups[j].wireValue);
 				return (1);
 			}
 		}
@@ -624,7 +636,10 @@ const t_tlsCipherSuite *negotiateCipherSuite(const uint16_t *clientSuites, size_
 	for (size_t i = 0; i < clientCount; i++) {
 		for (size_t j = 0; j < NUM_SUPPORTED_CIPHER_SUITES; j++) {
 			if (clientSuites[i] == g_supportedCipherSuites[j].wireValue)
+			{
+				BTLS_DEBUG("Negotiated cipher suite: %s (0x%04X)\n", g_supportedCipherSuites[j].name, g_supportedCipherSuites[j].wireValue);
 				return (&g_supportedCipherSuites[j]);
+			}
 		}
 	}
 	return (NULL);
@@ -647,7 +662,10 @@ const t_tlsSigAlgo *negotiateSignatureAlgorithm(const uint16_t *clientAlgs, size
 	for (size_t i = 0; i < clientCount; i++) {
 		for (size_t j = 0; j < NUM_SUPPORTED_SIG_ALGS; j++) {
 			if (clientAlgs[i] == g_supportedSignatureAlgorithms[j].wireValue)
+			{
+				BTLS_DEBUG("Negotiated signature algorithm: %s (0x%04X)\n", g_supportedSignatureAlgorithms[j].name, g_supportedSignatureAlgorithms[j].wireValue);
 				return (&g_supportedSignatureAlgorithms[j]);
+			}
 		}
 	}
 	return (NULL);

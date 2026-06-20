@@ -69,11 +69,7 @@ typedef struct s_tlsCipherSuite {
 	t_tlsRecordCipherType	recordCipherType;	/* Record cipher type (AEAD, CBC+HMAC, Stream) */
 	const t_kexType			kex;				/* Key exchange algorithm (ECDHE/DHE) */
 	const t_pkeyDef			*pkey;				/* Pointer to the public key definition (for RSA, ECDSA, etc.) */
-	union
-	{
-		const t_cipher		*cipher;			/* Pointer to the cipher definition (for CBC or AEAD) */
-		const t_aeadCipher	*aeadCipher;		/* Pointer to the AEAD cipher definition (for AEAD ciphers) */
-	} cipher;
+	const void				*cipher;			/* Pointer to the cipher definition (for CBC ciphers) */
 	const t_hash			*hash;				/* Pointer to the hash definition (for HMAC or AEAD) */
 	uint8_t					supportedVersions;	/* Bitmask of supported TLS versions (e.g., TLS_VERS_1_2 | TLS_VERS_1_3) */
 } t_tlsCipherSuite;

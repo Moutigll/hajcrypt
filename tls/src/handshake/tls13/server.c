@@ -207,15 +207,15 @@ int tls13ServerSendFlight(t_tlsCtx *ctx)
 
 		/* ---- Init handshake record contexts ---- */
 		if (!tlsRecordCtxInit(&ctx->handshake.handshakeSendCtx,
-					  cipherSuite->cipher,
+					  cipherSuite,
 					  ctx->handshake.secrets
 					  .serverHandshakeTrafficSecret,
-					  hashLen, &ctx->handshake.transcriptHash, 1) ||
+					  hashLen, &ctx->handshake.transcriptHash, CIPHER_ENCRYPT, 1) ||
 			!tlsRecordCtxInit(&ctx->handshake.handshakeRecvCtx,
-					  cipherSuite->cipher,
+					  cipherSuite,
 					  ctx->handshake.secrets
 					  .clientHandshakeTrafficSecret,
-					  hashLen, &ctx->handshake.transcriptHash, 0))
+					  hashLen, &ctx->handshake.transcriptHash, CIPHER_DECRYPT, 0))
 		{
 			tlsSetError(ctx, TLS_ERR_INTERNAL,
 					"Failed to init handshake record contexts");
@@ -298,12 +298,12 @@ int tls13ServerSendFlight(t_tlsCtx *ctx)
 		}
 
 		const t_tlsCipherSuite *cs = getCipherSuite(ctx->handshake.cipherSuite);
-		if (!tlsRecordCtxInit(&ctx->handshake.appSendCtx, cs->cipher,
+		if (!tlsRecordCtxInit(&ctx->handshake.appSendCtx, cs,
 					  ctx->handshake.secrets.serverAppTrafficSecret,
-					  hashLen, &ctx->handshake.transcriptHash, 1) ||
-			!tlsRecordCtxInit(&ctx->handshake.appRecvCtx, cs->cipher,
+					  hashLen, &ctx->handshake.transcriptHash, CIPHER_ENCRYPT, 1) ||
+			!tlsRecordCtxInit(&ctx->handshake.appRecvCtx, cs,
 					  ctx->handshake.secrets.clientAppTrafficSecret,
-					  hashLen, &ctx->handshake.transcriptHash, 0)) {
+					  hashLen, &ctx->handshake.transcriptHash, CIPHER_DECRYPT, 0)) {
 			tlsSetError(ctx, TLS_ERR_INTERNAL, "Failed to init application record contexts");
 			return (TLS_ERR_INTERNAL);
 		}

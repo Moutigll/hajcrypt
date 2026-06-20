@@ -102,6 +102,8 @@ int	tlsCipherInit(t_tlsCipher				*ctx,
  * identical regardless of the underlying cipher.
  *
  * @param ctx			Record cipher context
+ * @param nonce			Nonce (may be NULL for some cipher types)
+ * @param nonceLen		Length of nonce
  * @param aad			Additional authenticated data (may be NULL)
  * @param aadLen		Length of AAD
  * @param plaintext		Plaintext to encrypt
@@ -111,6 +113,7 @@ int	tlsCipherInit(t_tlsCipher				*ctx,
  * @return				1 on success, 0 on error
  */
 int	tlsCipherSeal(t_tlsCipher	*ctx,
+				  const uint8_t	*nonce,		size_t	nonceLen,
 				  const uint8_t	*aad,		size_t	aadLen,
 				  const uint8_t	*plaintext,	size_t	plaintextLen,
 				  uint8_t		*ciphertext,
@@ -126,6 +129,8 @@ int	tlsCipherSeal(t_tlsCipher	*ctx,
  * regardless of the underlying cipher.
  *
  * @param ctx			Record cipher context
+ * @param nonce			Nonce (may be NULL for some cipher types)
+ * @param nonceLen		Length of nonce
  * @param aad			Additional authenticated data (may be NULL)
  * @param aadLen		Length of AAD
  * @param ciphertext	Ciphertext to decrypt
@@ -136,6 +141,7 @@ int	tlsCipherSeal(t_tlsCipher	*ctx,
  * @return				1 on success (tag valid), 0 on error
  */
 int	tlsCipherOpen(t_tlsCipher	*ctx,
+				  const uint8_t	*nonce,			size_t	nonceLen,
 				  const uint8_t	*aad,			size_t	aadLen,
 				  const uint8_t	*ciphertext,	size_t	ciphertextLen,
 				  const uint8_t	*tag,			size_t	tagLen,

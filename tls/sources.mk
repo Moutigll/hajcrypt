@@ -1,6 +1,6 @@
 SRC_DIR	= src
 
-SRCS	= $(SRC_DIR)/aeadCipher.c \
+SRCS	= $(SRC_DIR)/cipher.c \
 		  $(SRC_DIR)/dispatch.c \
 		  $(SRC_DIR)/hkdf.c \
 		  $(SRC_DIR)/io.c \
