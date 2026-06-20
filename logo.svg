@@ -1,0 +1,80 @@
+<!-- Credit to @koro410177 https://www.reddit.com/r/BLAHAJ/comments/ud8wqs/i_draw_some_arts_of_blahaj/ -->
+<svg width="1000" height="1000" viewbox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+	<defs>
+		<clipPath id="shieldInnerClip">
+			<path d="M 443.2 436.2 C 428 464.2 406.4 473.8 369.6 471.4 C 359.2 601.8 451.2 730.6 503.2 756.2 C 570.4 722.6 643.2 602.6 638.4 471.4 C 615.2 475.4 575.2 466.6 565.6 436.2 L 443.2 436.2" />
+		</clipPath>
+	</defs>
+
+	<!-- Background -->
+	<path fill="#173661" d="M 0 -90 H 1000 V 1000 H 0 L 0 -90" />
+	
+	<!-- Outline -->
+	<path stroke="#000" stroke-width="10" stroke-linecap="round" fill="#9fafc1" d="M 194 809 C 184 803 171 734 165 712 C 155 557 193 372 218 308 C 263 199 315 111 358 69 C 415 23 449 41 501 67 C 571 110 618 176 651 233 C 699 298 723 370 745 440 C 763 496 790 595 786 604 C 805 611 837 730 842 753 C 846 779 846 794 828 809"></path>
+	
+	<!-- Body -->
+	<path fill="#fff" d="M 244 600 C 275 364 380 198 438 201 C 565 223 681 424 727 568 C 674 669 575 674 694 809 L 400 809 C 415 706 268 699 244 600"></path>
+	
+	<!-- Limbs -->
+	<path stroke="#000" stroke-width="10" stroke-linecap="round" d="M 231 584 C 242 595 239 591 247 604 C 251 614 260 622 261 633"></path>
+	<path stroke="#000" fill="#9fafc1" stroke-width="10" stroke-linecap="round" d="M 247 657 C 298 586 321 558 368 508 C 391 496 397 490 420 494 C 433 501 448 550 452 592 C 462 687 436 751 401 810"></path>
+	<path stroke="#000" fill="#9fafc1" stroke-width="10" stroke-linecap="round" d="M 770 608 C 710 552 654 512 568 483 C 539 472 518 479 528 513 C 578 647 605 720 693 809"></path>
+	
+	<!-- UwU -->
+	<path fill="#e2857d" d="M 251 337 C 237 367 283 399 311 364 C 327 316 255 313 251 337 M 601 290 C 586 328 630 342 643 324 C 670 297 626 259 601 290"></path>
+	<path stroke="#b04c47" stroke-width="10" stroke-linecap="round" d="M 262 355 C 262 347 266 338 273 334 M 277 358 C 278 351 281 344 286 340 M 294 360 C 297 352 295 354 300 347  M 621 291 C 613 300 614 297 613 315 M 624 316 L 632 296 M 635 320 L 643 299"></path>
+	
+	<!-- Eyes -->
+	<path d="M 281 268 C 292 266 303 268 307 275 C 310 286 299 310 283 312 C 267 314 262 303 263 290 C 265 282 271 272 281 268 M 595 246 C 591 240 595 234 603 234 C 617 225 629 241 639 248 C 642 255 645 268 629 269 C 622 275 591 267 595 246"></path>
+		<path fill="#fff" d="M 272 284 C 268 292 275 298 280 294 C 284 293 279 272 272 284 M 605 240 C 596 246 602 259 608 256 C 616 256 612 237 605 240"></path>
+			<circle r="2" cx="282" cy="294" fill="#fff" />
+			<circle r="2.5" cx="293" cy="296" fill="#fff" />
+			<circle r="4" cx="297" cy="282" fill="#fff" />
+
+			<circle r="3" cx="615" cy="259" fill="#ffff" />
+			<circle r="2.5" cx="628" cy="253" fill="#ffff" />
+			<circle r="2.5" cx="632" cy="250" fill="#ffff" />
+
+	<!-- Stitches -->
+	<path stroke="rgba(67,91,119,0.26)" stroke-width="5" stroke-linecap="round" d="M 442 198 L 437 157 M 435 137 L 430 97 M 428 76 L 424 47 M 220 589 L 200 616 M 187 632 L 170 662 M 780 620 L 801 654 M 812 675 L 818 690"></path>
+
+	<!-- Mouth -->
+	<path stroke="#000" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" d="M 324 342 C 382 378 411 358 468 317 C 533 345 561 338 587 313 M 332 349 C 341 384 365 370 375 356 C 396 380 407 373 418 354 C 446 369 452 356 450 330 C 463 363 483 340 480 325 C 486 348 505 342 504 333 C 503 351 528 351 529 337 C 538 351 556 353 555 335 C 565 356 586 347 584 318"></path>
+
+	<!-- Shield -->
+	<path fill="darkgray" d="M 429 399 C 410 434 383 446 337 443 C 324 606 439 767 504 799 C 588 757 679 607 673 443 C 644 448 594 437 582 399 L 429 399 "></path>
+	<g clip-path="url(#shieldInnerClip)">
+		<rect x="350" y="436.2" width="300" height="64" fill="#5BCEFA"/>
+		<rect x="350" y="500.2" width="300" height="64" fill="#F5A9B8"/>
+		<rect x="350" y="564.2" width="300" height="64" fill="#FFFFFF"/>
+		<rect x="350" y="628.2" width="300" height="64" fill="#F5A9B8"/>
+		<rect x="350" y="692.2" width="300" height="64.2" fill="#5BCEFA"/>
+	</g>
+	<circle r="10" cx="454.5" cy="418.5" stroke="#000" fill="gray"/>
+	<circle r="10" cx="504.5" cy="418.5" stroke="#000" fill="gray"/>
+	<circle r="10" cx="554.5" cy="418.5" stroke="#000" fill="gray"/>
+	<circle r="10" cx="604.5" cy="450" stroke="#000" fill="gray"/>
+	<circle r="10" cx="654.5" cy="470" stroke="#000" fill="gray"/>
+	<circle r="10" cx="654.5" cy="520" stroke="#000" fill="gray"/>
+	<circle r="10" cx="644" cy="570" stroke="#000" fill="gray"/>
+	<circle r="10" cx="628" cy="620" stroke="#000" fill="gray"/>
+	<circle r="10" cx="604" cy="670" stroke="#000" fill="gray"/>
+	<circle r="10" cx="578" cy="710" stroke="#000" fill="gray"/>
+	<circle r="10" cx="548" cy="745" stroke="#000" fill="gray"/>
+	<circle r="10" cx="505" cy="775" stroke="#000" fill="gray"/>
+	<circle r="10" cx="404.5" cy="450" stroke="#000" fill="gray"/>
+	<circle r="10" cx="354.5" cy="470" stroke="#000" fill="gray"/>
+	<circle r="10" cx="355" cy="520" stroke="#000" fill="gray"/>
+	<circle r="10" cx="365" cy="570" stroke="#000" fill="gray"/>
+	<circle r="10" cx="382" cy="620" stroke="#000" fill="gray"/>
+	<circle r="10" cx="407" cy="670" stroke="#000" fill="gray"/>
+	<circle r="10" cx="433" cy="710" stroke="#000" fill="gray"/>
+	<circle r="10" cx="463" cy="745" stroke="#000" fill="gray"/>
+
+	<!-- Lock -->
+	<path fill="gray" d="M 469 567 L 461 567 C 459 558 455 506 501 503 C 530 503 549 523 544 567 L 536 567 C 539 534 529 512 501 511 C 464 516 469 554 469 567" />
+	<path fill="#2e528c" d="M 503 686.5 C 487 670 403.5 610.5 445.5 572 C 464 555.5 503 564.5 503 597.5 C 503 578 526.5 549.5 556.5 571.5 C 599 607.5 520 666.5 503 686.5"></path>
+	<path d="M 511 653 L 495 653 L 499 634 C 487 628 495 613 503 616 C 510 613 518 628 507 634 L 511 653" />
+	
+	<text x="105" y="960" style="font-size:150px;font-family:helvetica" fill="#8ac4ff">HAJCRYPT</text>
+</svg>
