@@ -3,8 +3,10 @@
 
 # include "../../includes/asymmetric/pkey.h"
 # include "../../includes/asymmetric/kex.h"
+# include "../../includes/cipher/cipher.h"
+# include "../../includes/cipher/aes.h"
+# include "../../includes/cipher/chacha20Poly1305.h"
 # include "../../includes/hash/hash.h"
-# include "aeadCipher.h"
 
 
 # define BTLS_DEBUG(string, ...) ft_printf("[BTLS]: " string "\n", ##__VA_ARGS__)
@@ -17,6 +19,25 @@ typedef enum e_tlsVersionSupported {
 	TLS_VERS_1_3 = 0b1000
 }	t_tlsVersionSupported;
 
+typedef enum e_tlsRecordCipherType
+{
+	BTLS_RECORD_AEAD,
+	BTLS_RECORD_CBC_HMAC,
+	BTLS_RECORD_STREAM		/* Not supported as it is strongly deprecated */
+}	t_tlsRecordCipherType;
+
+typedef enum e_tlsCipherType
+{
+	BTLS_CIPHER_AES_128_GCM,
+	BTLS_CIPHER_AES_256_GCM,
+	BTLS_CIPHER_CHACHA20_POLY1305,
+	BTLS_CIPHER_AES_128_CBC,
+	BTLS_CIPHER_AES_256_CBC,
+	BTLS_CIPHER_DES_CBC,
+	BTLS_CIPHER_3DES_EDE_CBC,
+	BTLS_CIPHER_UNKNOWN
+}	t_tlsCipherType;
+
 typedef struct s_tlsGroup {
 	uint16_t	wireValue;
 	t_kexType	kexType;
@@ -25,12 +46,36 @@ typedef struct s_tlsGroup {
 	uint8_t		supportedVersions;
 } t_tlsGroup;
 
+/**
+ * @brief Unified AEAD cipher context
+ *
+ * This structure abstracts the differences between AES-GCM and
+ * ChaCha20-Poly1305, providing a common interface for TLS record
+ * protection. The union stores the cipher-specific context while
+ * the common fields track metadata and cached key material for
+ * potential re-initialization or key updates.
+ */
+typedef struct s_aeadCipher
+{
+	size_t			keySize;
+	size_t			ivSize;
+	size_t			tagLen;
+}	t_aeadCipher;
+
 typedef struct s_tlsCipherSuite {
-	uint16_t		wireValue;
-	t_tlsCipherType	cipher;
-	const char		*name;
-	const t_hash	*hash;
-	uint8_t			supportedVersions;
+	uint16_t				wireValue;			/* Cipher suite identifier as defined in RFC 8446 */
+	const char				*name;				/* Human-readable name of the cipher suite */
+	t_tlsCipherType			cipherType;			/* Cipher type (AES-GCM, ChaCha20-Poly1305, etc.) */
+	t_tlsRecordCipherType	recordCipherType;	/* Record cipher type (AEAD, CBC+HMAC, Stream) */
+	const t_kexType			kex;				/* Key exchange algorithm (ECDHE/DHE) */
+	const t_pkeyDef			*pkey;				/* Pointer to the public key definition (for RSA, ECDSA, etc.) */
+	union
+	{
+		const t_cipher		*cipher;			/* Pointer to the cipher definition (for CBC or AEAD) */
+		const t_aeadCipher	*aeadCipher;		/* Pointer to the AEAD cipher definition (for AEAD ciphers) */
+	} cipher;
+	const t_hash			*hash;				/* Pointer to the hash definition (for HMAC or AEAD) */
+	uint8_t					supportedVersions;	/* Bitmask of supported TLS versions (e.g., TLS_VERS_1_2 | TLS_VERS_1_3) */
 } t_tlsCipherSuite;
 
 typedef struct s_tlsSignatureAlgorithm {
@@ -216,12 +261,65 @@ typedef enum e_tlsAlertLevel {
 #define TLS_NAMED_GROUP_FFDHE6144	0x0103
 #define TLS_NAMED_GROUP_FFDHE8192	0x0104
 
+
+
 /* TLS cipher suite identifiers */
-/* 1.3 */
+
+/* TLS 1.3 cipher suites (RFC 8446) */
 #define TLS_CIPHER_AES_128_GCM			0x1301
 #define TLS_CIPHER_AES_256_GCM			0x1302
 #define TLS_CIPHER_CHACHA20_POLY1305	0x1303
-/* 1.2 */
+
+/* TLS 1.2 cipher suites (RFC 5246, RFC 5289, RFC 8422, RFC 7905) */
+
+/* RSA */
+#define TLS_RSA_WITH_AES_128_CBC_SHA	0x002F
+#define TLS_RSA_WITH_AES_256_CBC_SHA	0x0035
+#define TLS_RSA_WITH_AES_128_CBC_SHA256	0x003C
+#define TLS_RSA_WITH_AES_256_CBC_SHA256	0x003D
+#define TLS_RSA_WITH_AES_128_GCM_SHA256	0x009C
+#define TLS_RSA_WITH_AES_256_GCM_SHA384	0x009D
+
+/* DHE_RSA */
+#define TLS_DHE_RSA_WITH_AES_128_CBC_SHA	0x0033
+#define TLS_DHE_RSA_WITH_AES_256_CBC_SHA	0x0039
+#define TLS_DHE_RSA_WITH_AES_128_CBC_SHA256	0x0067
+#define TLS_DHE_RSA_WITH_AES_256_CBC_SHA256	0x006B
+#define TLS_DHE_RSA_WITH_AES_128_GCM_SHA256	0x009E
+#define TLS_DHE_RSA_WITH_AES_256_GCM_SHA384	0x009F
+
+/* ECDHE_ECDSA */
+#define TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA	0xC009
+#define TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA	0xC00A
+#define TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256	0xC023
+#define TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384	0xC024
+#define TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256	0xC02B
+#define TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384	0xC02C
+
+/* ECDHE_RSA */
+#define TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA		0xC013
+#define TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA		0xC014
+#define TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256	0xC027
+#define TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384	0xC028
+#define TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256	0xC02F
+#define TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384	0xC030
+
+/* DHE_DSA */
+#define TLS_DHE_DSA_WITH_AES_128_CBC_SHA256	0x0068
+#define TLS_DHE_DSA_WITH_AES_256_CBC_SHA256	0x006C
+#define TLS_DHE_DSA_WITH_AES_128_GCM_SHA256	0x00A2
+#define TLS_DHE_DSA_WITH_AES_256_GCM_SHA384	0x00A3
+
+/* ChaCha20-Poly1305 (RFC 7905) */
+#define TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256		0xCCA8
+#define TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256	0xCCA9
+#define TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256		0xCCAA
+
+/* Obsolete / weak (DES, 3DES) – RFC 5246 */
+#define TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA	0x0016
+#define TLS_RSA_WITH_3DES_EDE_CBC_SHA		0x000A
+#define TLS_DHE_RSA_WITH_DES_CBC_SHA		0x0015
+#define TLS_RSA_WITH_DES_CBC_SHA			0x0009
 
 /* TLS signature algorithms */
 #define TLS_SIG_RSA_PKCS1_SHA1			0x0201

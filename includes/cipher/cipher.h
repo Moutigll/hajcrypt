@@ -152,7 +152,6 @@ typedef struct s_cipher
 	size_t			blockSize;
 	size_t			keySize;
 	size_t			ivSize;
-	size_t			tagSize;	/* For AEAD modes like GCM/CCM */
 	size_t			ctxSize;
 
 	int		(*init)(void				*ctx,

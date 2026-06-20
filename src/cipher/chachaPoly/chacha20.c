@@ -301,7 +301,6 @@ const t_cipher	g_chacha20Cipher = {
 	.blockSize		= 1,
 	.keySize		= CHACHA20_KEY_SIZE,
 	.ivSize			= CHACHA20_NONCE_SIZE,
-	.tagSize		= 0,
 	.ctxSize		= sizeof(t_chacha20Ctx),
 	.init			= chacha20InitGen,
 	.update			= chacha20UpdateGen,

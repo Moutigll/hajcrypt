@@ -3,6 +3,9 @@
 #include "../../includes/asymmetric/rsa.h"
 #include "../../includes/asymmetric/dsa.h"
 #include "../../includes/asymmetric/ecdsa.h"
+#include "../../includes/cipher/aes.h"
+#include "../../includes/cipher/des.h"
+#include "../../includes/cipher/des3.h"
 
 #include "../includes/constants.h"
 
@@ -29,13 +32,521 @@ const t_tlsGroup g_supportedGroups[] = {
 	{ TLS_NAMED_GROUP_FFDHE8192,	KEX_TYPE_FFDHE, FFDHE_GROUP_8192,		"ffdhe8192",	TLS_VERS_1_3 },
 };
 
+static const t_aeadCipher g_aes128GcmCipher = {
+	.keySize = 16,
+	.ivSize = 12,
+	.tagLen = 16
+};
+
+static const t_aeadCipher g_aes256GcmCipher = {
+	.keySize = 32,
+	.ivSize = 12,
+	.tagLen = 16
+};
+
+static const t_aeadCipher g_chacha20Poly1305Cipher = {
+	.keySize = 32,
+	.ivSize = 12,
+	.tagLen = 16
+};
+
 /**
  * @brief Supported cipher suites table
+ *
+ * Ordered by priority: TLS 1.3 first, then TLS 1.2 with ECDHE (strongest),
+ * then DHE_RSA, then RSA (static, no PFS), and finally obsolete suites (disabled).
+ *
+ * Note: For TLS 1.2, kex and pkey fields are used to determine the key exchange
+ * and authentication algorithms. For TLS 1.3, these fields are set to KEX_TYPE_NONE
+ * and NULL respectively as they are negotiated via extensions.
  */
 const t_tlsCipherSuite g_supportedCipherSuites[] = {
-	{ TLS_CIPHER_AES_128_GCM,		BTLS_CIPHER_AES_128_GCM,			"TLS_AES_128_GCM_SHA256",		&g_sha256Hash, TLS_VERS_1_3 },
-	{ TLS_CIPHER_AES_256_GCM,		BTLS_CIPHER_AES_256_GCM,			"TLS_AES_256_GCM_SHA384",		&g_sha384Hash, TLS_VERS_1_3 },
-	{ TLS_CIPHER_CHACHA20_POLY1305,	BTLS_CIPHER_CHACHA20_POLY1305,	"TLS_CHACHA20_POLY1305_SHA256",		&g_sha256Hash, TLS_VERS_1_3 },
+	/* ========================================================================
+	 * TLS 1.3 (RFC 8446) - KEX and auth negotiated via extensions
+	 * ======================================================================== */
+	{
+		TLS_CIPHER_AES_128_GCM,
+		"TLS_AES_128_GCM_SHA256",
+		BTLS_CIPHER_AES_128_GCM,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_NONE,
+		NULL,
+		{ .aeadCipher = &g_aes128GcmCipher },
+		&g_sha256Hash,
+		TLS_VERS_1_3
+	},
+	{
+		TLS_CIPHER_AES_256_GCM,
+		"TLS_AES_256_GCM_SHA384",
+		BTLS_CIPHER_AES_256_GCM,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_NONE,
+		NULL,
+		{ .aeadCipher = &g_aes256GcmCipher },
+		&g_sha384Hash,
+		TLS_VERS_1_3
+	},
+	{
+		TLS_CIPHER_CHACHA20_POLY1305,
+		"TLS_CHACHA20_POLY1305_SHA256",
+		BTLS_CIPHER_CHACHA20_POLY1305,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_NONE,
+		NULL,
+		{ .aeadCipher = &g_chacha20Poly1305Cipher },
+		&g_sha256Hash,
+		TLS_VERS_1_3
+	},
+
+	/* ========================================================================
+	 * TLS 1.2 - ECDHE + ECDSA (Strongest, PFS)
+	 * ======================================================================== */
+	/* ECDHE_ECDSA with AES-GCM (AEAD) */
+	{
+		TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+		BTLS_CIPHER_AES_128_GCM,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_ECDH,
+		&g_ecdsaPkeyDef,
+		{ .aeadCipher = &g_aes128GcmCipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+	{
+		TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+		BTLS_CIPHER_AES_256_GCM,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_ECDH,
+		&g_ecdsaPkeyDef,
+		{ .aeadCipher = &g_aes256GcmCipher },
+		&g_sha384Hash,
+		TLS_VERS_1_2
+	},
+
+	/* ECDHE_ECDSA with ChaCha20-Poly1305 (AEAD) */
+	{
+		TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+		BTLS_CIPHER_CHACHA20_POLY1305,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_ECDH,
+		&g_ecdsaPkeyDef,
+		{ .aeadCipher = &g_chacha20Poly1305Cipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+
+	/* ECDHE_ECDSA with CBC + HMAC-SHA256/384 */
+	{
+		TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+		BTLS_CIPHER_AES_128_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_ECDH,
+		&g_ecdsaPkeyDef,
+		{ .cipher = &g_aes128CbcCipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+	{
+		TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,
+		"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
+		BTLS_CIPHER_AES_256_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_ECDH,
+		&g_ecdsaPkeyDef,
+		{ .cipher = &g_aes256CbcCipher },
+		&g_sha384Hash,
+		TLS_VERS_1_2
+	},
+
+	/* ========================================================================
+	 * TLS 1.2 - ECDHE + RSA (Strong, PFS)
+	 * ======================================================================== */
+	/* ECDHE_RSA with AES-GCM (AEAD) */
+	{
+		TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+		BTLS_CIPHER_AES_128_GCM,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_ECDH,
+		&g_rsaPkeyDef,
+		{ .aeadCipher = &g_aes128GcmCipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+	{
+		TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+		BTLS_CIPHER_AES_256_GCM,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_ECDH,
+		&g_rsaPkeyDef,
+		{ .aeadCipher = &g_aes256GcmCipher },
+		&g_sha384Hash,
+		TLS_VERS_1_2
+	},
+
+	/* ECDHE_RSA with ChaCha20-Poly1305 (AEAD) */
+	{
+		TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+		"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+		BTLS_CIPHER_CHACHA20_POLY1305,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_ECDH,
+		&g_rsaPkeyDef,
+		{ .aeadCipher = &g_chacha20Poly1305Cipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+
+	/* ECDHE_RSA with CBC + HMAC-SHA256/384 */
+	{
+		TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+		BTLS_CIPHER_AES_128_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_ECDH,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_aes128CbcCipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+	{
+		TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,
+		"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
+		BTLS_CIPHER_AES_256_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_ECDH,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_aes256CbcCipher },
+		&g_sha384Hash,
+		TLS_VERS_1_2
+	},
+
+	/* ========================================================================
+	 * TLS 1.2 - DHE + RSA (PFS, fallback for older clients)
+	 * ======================================================================== */
+	/* DHE_RSA with AES-GCM (AEAD) */
+	{
+		TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,
+		"TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
+		BTLS_CIPHER_AES_128_GCM,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_FFDHE,
+		&g_rsaPkeyDef,
+		{ .aeadCipher = &g_aes128GcmCipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+	{
+		TLS_DHE_RSA_WITH_AES_256_GCM_SHA384,
+		"TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
+		BTLS_CIPHER_AES_256_GCM,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_FFDHE,
+		&g_rsaPkeyDef,
+		{ .aeadCipher = &g_aes256GcmCipher },
+		&g_sha384Hash,
+		TLS_VERS_1_2
+	},
+
+	/* DHE_RSA with ChaCha20-Poly1305 (AEAD) */
+	{
+		TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+		"TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+		BTLS_CIPHER_CHACHA20_POLY1305,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_FFDHE,
+		&g_rsaPkeyDef,
+		{ .aeadCipher = &g_chacha20Poly1305Cipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+
+	/* DHE_RSA with CBC + HMAC-SHA256 */
+	{
+		TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,
+		"TLS_DHE_RSA_WITH_AES_128_CBC_SHA256",
+		BTLS_CIPHER_AES_128_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_FFDHE,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_aes128CbcCipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+	{
+		TLS_DHE_RSA_WITH_AES_256_CBC_SHA256,
+		"TLS_DHE_RSA_WITH_AES_256_CBC_SHA256",
+		BTLS_CIPHER_AES_256_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_FFDHE,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_aes256CbcCipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+
+	/* ========================================================================
+	 * TLS 1.2 - DHE + DSA (Obsolete, rarely used)
+	 * ======================================================================== */
+	/* DHE_DSA with AES-GCM (AEAD) - disabled by default */
+	{
+		TLS_DHE_DSA_WITH_AES_128_GCM_SHA256,
+		"TLS_DHE_DSA_WITH_AES_128_GCM_SHA256",
+		BTLS_CIPHER_AES_128_GCM,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_FFDHE,
+		&g_dsaPkeyDef,
+		{ .aeadCipher = &g_aes128GcmCipher },
+		&g_sha256Hash,
+		0  /* Disabled: DSA is obsolete */
+	},
+	{
+		TLS_DHE_DSA_WITH_AES_256_GCM_SHA384,
+		"TLS_DHE_DSA_WITH_AES_256_GCM_SHA384",
+		BTLS_CIPHER_AES_256_GCM,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_FFDHE,
+		&g_dsaPkeyDef,
+		{ .aeadCipher = &g_aes256GcmCipher },
+		&g_sha384Hash,
+		0  /* Disabled: DSA is obsolete */
+	},
+
+	/* DHE_DSA with CBC + HMAC-SHA256 */
+	{
+		TLS_DHE_DSA_WITH_AES_128_CBC_SHA256,
+		"TLS_DHE_DSA_WITH_AES_128_CBC_SHA256",
+		BTLS_CIPHER_AES_128_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_FFDHE,
+		&g_dsaPkeyDef,
+		{ .cipher = &g_aes128CbcCipher },
+		&g_sha256Hash,
+		0  /* Disabled: DSA is obsolete */
+	},
+	{
+		TLS_DHE_DSA_WITH_AES_256_CBC_SHA256,
+		"TLS_DHE_DSA_WITH_AES_256_CBC_SHA256",
+		BTLS_CIPHER_AES_256_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_FFDHE,
+		&g_dsaPkeyDef,
+		{ .cipher = &g_aes256CbcCipher },
+		&g_sha256Hash,
+		0  /* Disabled: DSA is obsolete */
+	},
+
+	/* ========================================================================
+	 * TLS 1.2 - RSA (Static, No PFS)
+	 * ======================================================================== */
+	/* RSA with AES-GCM (AEAD) */
+	{
+		TLS_RSA_WITH_AES_128_GCM_SHA256,
+		"TLS_RSA_WITH_AES_128_GCM_SHA256",
+		BTLS_CIPHER_AES_128_GCM,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_NONE,
+		&g_rsaPkeyDef,
+		{ .aeadCipher = &g_aes128GcmCipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+	{
+		TLS_RSA_WITH_AES_256_GCM_SHA384,
+		"TLS_RSA_WITH_AES_256_GCM_SHA384",
+		BTLS_CIPHER_AES_256_GCM,
+		BTLS_RECORD_AEAD,
+		KEX_TYPE_NONE,
+		&g_rsaPkeyDef,
+		{ .aeadCipher = &g_aes256GcmCipher },
+		&g_sha384Hash,
+		TLS_VERS_1_2
+	},
+
+	/* RSA with CBC + HMAC-SHA256 */
+	{
+		TLS_RSA_WITH_AES_128_CBC_SHA256,
+		"TLS_RSA_WITH_AES_128_CBC_SHA256",
+		BTLS_CIPHER_AES_128_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_NONE,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_aes128CbcCipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+	{
+		TLS_RSA_WITH_AES_256_CBC_SHA256,
+		"TLS_RSA_WITH_AES_256_CBC_SHA256",
+		BTLS_CIPHER_AES_256_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_NONE,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_aes256CbcCipher },
+		&g_sha256Hash,
+		TLS_VERS_1_2
+	},
+
+	/* ========================================================================
+	 * TLS 1.2 - RSA with 3DES (Weak, disabled)
+	 * ======================================================================== */
+	{
+		TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+		"TLS_RSA_WITH_3DES_EDE_CBC_SHA",
+		BTLS_CIPHER_3DES_EDE_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_NONE,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_des3CbcCipher },
+		&g_sha1Hash,
+		0  /* Disabled: 3DES is weak */
+	},
+	{
+		TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA,
+		"TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA",
+		BTLS_CIPHER_3DES_EDE_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_FFDHE,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_des3CbcCipher },
+		&g_sha1Hash,
+		0  /* Disabled: 3DES is weak */
+	},
+
+	/* ========================================================================
+	 * TLS 1.2 - RSA with DES (Obsolete, disabled)
+	 * ======================================================================== */
+	{
+		TLS_RSA_WITH_DES_CBC_SHA,
+		"TLS_RSA_WITH_DES_CBC_SHA",
+		BTLS_CIPHER_DES_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_NONE,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_desCbcCipher },
+		&g_sha1Hash,
+		0  /* Disabled: DES is obsolete */
+	},
+	{
+		TLS_DHE_RSA_WITH_DES_CBC_SHA,
+		"TLS_DHE_RSA_WITH_DES_CBC_SHA",
+		BTLS_CIPHER_DES_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_FFDHE,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_desCbcCipher },
+		&g_sha1Hash,
+		0  /* Disabled: DES is obsolete */
+	},
+
+	/* ========================================================================
+	 * TLS 1.2 - SHA-1 based suites (All disabled)
+	 * ======================================================================== */
+	/* RSA + SHA-1 */
+	{
+		TLS_RSA_WITH_AES_128_CBC_SHA,
+		"TLS_RSA_WITH_AES_128_CBC_SHA",
+		BTLS_CIPHER_AES_128_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_NONE,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_aes128CbcCipher },
+		&g_sha1Hash,
+		0  /* Disabled: SHA-1 is broken */
+	},
+	{
+		TLS_RSA_WITH_AES_256_CBC_SHA,
+		"TLS_RSA_WITH_AES_256_CBC_SHA",
+		BTLS_CIPHER_AES_256_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_NONE,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_aes256CbcCipher },
+		&g_sha1Hash,
+		0  /* Disabled: SHA-1 is broken */
+	},
+
+	/* DHE_RSA + SHA-1 */
+	{
+		TLS_DHE_RSA_WITH_AES_128_CBC_SHA,
+		"TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
+		BTLS_CIPHER_AES_128_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_FFDHE,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_aes128CbcCipher },
+		&g_sha1Hash,
+		0  /* Disabled: SHA-1 is broken */
+	},
+	{
+		TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
+		"TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
+		BTLS_CIPHER_AES_256_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_FFDHE,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_aes256CbcCipher },
+		&g_sha1Hash,
+		0  /* Disabled: SHA-1 is broken */
+	},
+
+	/* ECDHE_ECDSA + SHA-1 */
+	{
+		TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+		BTLS_CIPHER_AES_128_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_ECDH,
+		&g_ecdsaPkeyDef,
+		{ .cipher = &g_aes128CbcCipher },
+		&g_sha1Hash,
+		0  /* Disabled: SHA-1 is broken */
+	},
+	{
+		TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+		"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+		BTLS_CIPHER_AES_256_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_ECDH,
+		&g_ecdsaPkeyDef,
+		{ .cipher = &g_aes256CbcCipher },
+		&g_sha1Hash,
+		0  /* Disabled: SHA-1 is broken */
+	},
+
+	/* ECDHE_RSA + SHA-1 */
+	{
+		TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+		BTLS_CIPHER_AES_128_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_ECDH,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_aes128CbcCipher },
+		&g_sha1Hash,
+		0  /* Disabled: SHA-1 is broken */
+	},
+	{
+		TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+		"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+		BTLS_CIPHER_AES_256_CBC,
+		BTLS_RECORD_CBC_HMAC,
+		KEX_TYPE_ECDH,
+		&g_rsaPkeyDef,
+		{ .cipher = &g_aes256CbcCipher },
+		&g_sha1Hash,
+		0  /* Disabled: SHA-1 is broken */
+	},
+
+	/* ========================================================================
+	 * Terminator
+	 * ======================================================================== */
+	{ 0, NULL, 0, 0, 0, NULL, NULL, 0 }
 };
 
 /**
