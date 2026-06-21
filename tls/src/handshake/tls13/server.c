@@ -67,7 +67,7 @@ int tls13ServerSendFlight(t_tlsCtx *ctx)
 		}
 		ctx->handshake.cipherSuite = cipherSuite->wireValue;
 		ctx->handshake.transcriptHash = *cipherSuite->hash;
-		ctx->handshake.transcriptHash.init(ctx->handshake.transcript);
+		ctx->handshake.transcriptHash.init(ctx->handshake.transcriptHashCtx);
 
 		/* Update transcript with ClientHello */
 		transcriptUpdateRaw(&ctx->handshake,

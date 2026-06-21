@@ -47,6 +47,19 @@
 #define X448_SHARED_SIZE		56
 #define FRP256V1_SHARED_SIZE	32
 
+#define WEIER_TABLE_SIZE 64
+#define CURVE_MAX_WORDS 9
+
+typedef enum e_ecdhParams {
+	PARAM_P = 0,
+	PARAM_A,
+	PARAM_B,
+	PARAM_N,
+	PARAM_GX,
+	PARAM_GY,
+	PARAM_COUNT
+} t_ecdhParams;
+
 /**
  * @brief Affine point on a Weierstrass curve
  *

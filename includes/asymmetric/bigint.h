@@ -53,6 +53,20 @@ t_bigInt	*bigIntFromUint64(uint64_t val);
 t_bigInt	*bigIntFromHex(const char *hexStr, size_t hexStrLen);
 
 /**
+ * @brief Converts a hexadecimal string to an existing big integer.
+ * 
+ * Initializes the provided big integer structure with the value represented
+ * by the given hexadecimal string. The big integer must have enough allocated
+ * space to hold the value.
+ * 
+ * @param n Pointer to the t_bigInt structure to initialize.
+ * @param hexStr The hexadecimal string to convert.
+ * @return 1 if the conversion is successful, or 0 if an error occurs (e.g.,
+ *         insufficient space in n or invalid hex string).
+ */
+int bigIntFromHexTo(t_bigInt *n, const char *hex);
+
+/**
  * @brief Converts a byte array to a big integer.
  * 
  * Allocates and initializes a new big integer structure from the given

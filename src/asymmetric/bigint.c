@@ -129,6 +129,39 @@ t_bigInt *bigIntFromHex(const char *hex, size_t numWords)
 	return (n);
 }
 
+int bigIntFromHexTo(t_bigInt *n, const char *hex)
+{
+	if (!n || !hex)
+		return (0);
+
+	size_t		len = ft_strlen(hex);
+	size_t		bytes = (len + 1) / 2;
+	size_t		words = (bytes + 7) / 8;
+
+	if (words > n->numWords)
+		return (0);
+
+	ft_bzero(n->words, n->numWords * sizeof(uint64_t));
+
+	for (size_t i = 0; i < len; i++)
+	{
+		char	c = hex[len - 1 - i];
+		uint8_t	nibble;
+		if		(c >= '0' && c <= '9') nibble = c - '0';
+		else if	(c >= 'a' && c <= 'f') nibble = c - 'a' + 10;
+		else if	(c >= 'A' && c <= 'F') nibble = c - 'A' + 10;
+		else						   nibble = 0;
+
+		n->words[i / 16] |= ((uint64_t)nibble << ((i % 16) * 4));
+	}
+
+	n->used = words;
+	while (n->used > 0 && n->words[n->used - 1] == 0)
+		n->used--;
+
+	return (1);
+}
+
 t_bigInt	*bigIntFromBytes(const uint8_t *bytes, size_t len)
 {
 	size_t		words = (len + 7) / 8;

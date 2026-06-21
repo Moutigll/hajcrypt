@@ -108,7 +108,8 @@ typedef struct s_tlsHandshakeCtx
 
 	/* Transcript hash */
 	t_hash				transcriptHash;		/* Hash algorithm for transcript */
-	uint8_t				transcript[256];	/* Running transcript hash */
+	/* We must force 16-byte alignment for the hash context to avoid unaligned access and therefore potential crashes on some architectures. */
+	void				*transcriptHashCtx[HASH_MAX_CTX_SIZE] __attribute__((aligned(16)));	/* Hash context for transcript */
 	uint8_t				clientRandom[32];	/* Client random (from ClientHello) */
 	uint8_t				serverRandom[32];	/* Server random (from ServerHello) */
 

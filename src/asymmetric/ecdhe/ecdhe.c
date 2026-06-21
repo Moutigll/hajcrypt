@@ -1,5 +1,4 @@
 #include "../../../hajlib/include/hmemory.h"
-#include "../../../hajlib/include/hstring.h"
 #include "../../../includes/utils/utils.h"
 #include "../../../includes/utils/random.h"
 
@@ -57,10 +56,27 @@ static const char *FRP256V1_GX_HEX =
 static const char *FRP256V1_GY_HEX =
 	"6142E0F7C8B204911F9271F0F3ECEF8C2701C307E8E4C9E183115A1554062CFB";
 
-static t_weierstrassParams	g_weier[32];
+static t_weierstrassParams	g_weier[WEIER_TABLE_SIZE];
 static int					g_weierInitialized = 0;
 
+static uint64_t				g_curveWordStore[WEIER_TABLE_SIZE][PARAM_COUNT][CURVE_MAX_WORDS];
+static t_bigInt				g_curveBigintStore[WEIER_TABLE_SIZE][PARAM_COUNT];
 
+
+static t_bigInt *bindStaticParam(int curveId, int paramIdx, const char *hex)
+{
+	t_bigInt	*n = &g_curveBigintStore[curveId][paramIdx];
+	uint64_t	*buf = g_curveWordStore[curveId][paramIdx];
+
+	ft_bzero(buf, sizeof(g_curveWordStore[curveId][paramIdx]));
+	n->words	= buf;
+	n->numWords	= CURVE_MAX_WORDS;
+	n->used		= 0;
+	n->sign		= 0;
+	if (!bigIntFromHexTo(n, hex))
+		return (NULL);
+	return (n);
+}
 
 static void reverseBytes(uint8_t *dest, const uint8_t *src, size_t len) {
 	for (size_t i = 0; i < len; i++)
@@ -73,12 +89,12 @@ static int initWeierstrassCurve(int			curveId,
 								size_t		keySize,	size_t		pubSize)
 {
 	t_weierstrassParams *c = &g_weier[curveId];
-	c->p	= bigIntFromHex(pHex,	ft_strlen(pHex));
-	c->a	= bigIntFromHex(aHex,	ft_strlen(aHex));
-	c->b	= bigIntFromHex(bHex,	ft_strlen(bHex));
-	c->n	= bigIntFromHex(nHex,	ft_strlen(nHex));
-	c->G.x	= bigIntFromHex(gxHex,	ft_strlen(gxHex));
-	c->G.y	= bigIntFromHex(gyHex,	ft_strlen(gyHex));
+	c->p	= bindStaticParam(curveId, PARAM_P, pHex);
+	c->a	= bindStaticParam(curveId, PARAM_A, aHex);
+	c->b	= bindStaticParam(curveId, PARAM_B, bHex);
+	c->n	= bindStaticParam(curveId, PARAM_N, nHex);
+	c->G.x	= bindStaticParam(curveId, PARAM_GX, gxHex);
+	c->G.y	= bindStaticParam(curveId, PARAM_GY, gyHex);
 	c->keySize = keySize;
 	c->pubSize = pubSize;
 	return (c->p && c->a && c->b && c->n && c->G.x && c->G.y);

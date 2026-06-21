@@ -33,7 +33,7 @@ void tlsHandshakeFree(t_tlsHandshakeCtx *ctx)
 	/* Securely zero all secrets */
 	secureZeroMemory(&ctx->secrets, sizeof(ctx->secrets));
 	secureZeroMemory(ctx->sharedSecret, sizeof(ctx->sharedSecret));
-	secureZeroMemory(ctx->transcript, sizeof(ctx->transcript));
+	secureZeroMemory(ctx->transcriptHashCtx, sizeof(ctx->transcriptHashCtx));
 
 	ctx->sharedSecretLen = 0;
 	ctx->state = TLS_HS_STATE_IDLE;
@@ -43,7 +43,7 @@ int transcriptUpdateRaw(t_tlsHandshakeCtx *ctx, const uint8_t *fullHandshakeMsg,
 {
 	if (!ctx || !fullHandshakeMsg || !ctx->transcriptHash.update)
 		return (0);
-	ctx->transcriptHash.update(ctx->transcript, fullHandshakeMsg, fullLen);
+	ctx->transcriptHash.update(ctx->transcriptHashCtx, fullHandshakeMsg, fullLen);
 	return (1);
 }
 
@@ -64,7 +64,7 @@ int transcriptUpdate(t_tlsHandshakeCtx *ctx, uint8_t msgType, const uint8_t *bod
 		return (0);
 	}
 
-	ctx->transcriptHash.update(ctx->transcript, encoded, encodedLen);
+	ctx->transcriptHash.update(ctx->transcriptHashCtx, encoded, encodedLen);
 	
 	free(encoded);
 	return (1);
@@ -84,7 +84,7 @@ void transcriptGetHash(t_tlsHandshakeCtx *ctx, uint8_t *out)
 	 * Clone the current hash state, finalize the clone to get the digest,
 	 * leaving the original state intact for future transcriptUpdate() calls.
 	 */
-	ft_memcpy(tmpCtx, ctx->transcript, ctx->transcriptHash.ctxSize);
+	ft_memcpy(tmpCtx, ctx->transcriptHashCtx, ctx->transcriptHash.ctxSize);
 	ctx->transcriptHash.final(out, tmpCtx);
 
 	/* Ensure the rest of the output buffer is zeroed */

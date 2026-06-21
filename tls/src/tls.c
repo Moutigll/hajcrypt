@@ -83,12 +83,16 @@ int tlsHandleAlert(t_tlsCtx *ctx, const uint8_t *data, size_t dataLen)
 
 static int loadPemKey(const char *keyFile, const char *password, t_pkey *out)
 {
+	uint8_t	*rawData;
+	size_t	rawLen;
 	char	*keyPem = NULL;
 
-	if (readBinaryFile(keyFile, (uint8_t**)&keyPem, NULL)) {
+	if (readBinaryFile(keyFile, &rawData, &rawLen)) {
 		ft_dprintf(STDERR_FILENO, "btls: cannot read key file '%s'\n", keyFile);
 		return (0);
 	}
+	keyPem = ft_strndup((const char *)rawData, rawLen);
+	free(rawData);
 	if (pkeyFromPem(keyPem, out, 1, password) != 1) {
 		ft_dprintf(STDERR_FILENO, "btls: failed to parse private key from '%s'\n", keyFile);
 		free(keyPem);
@@ -114,7 +118,7 @@ static t_certChain *loadCertChain(const char *certFile)
 	}
 
 	if (rawLen > 0 && rawData[0] == '-') {
-		pemText = (char *)rawData;
+		pemText = ft_strndup((const char *)rawData, rawLen);
 		const char *ptr = pemText;
 		while (1) {
 			const char *begin = ft_strstr(ptr, "-----BEGIN CERTIFICATE-----");
@@ -135,6 +139,7 @@ static t_certChain *loadCertChain(const char *certFile)
 			free(block);
 			ptr = end;
 		}
+		free(pemText);
 		free(rawData);
 	} else {
 		if (!certChainAddDER(chain, rawData, rawLen)) {
