@@ -281,9 +281,8 @@ uninstall:
 
 # --------------- Version management ---------------
 
-$(VERSION_H): $(VERSION_H_IN) $(VERSION_FILE)
+$(VERSION_H): update-version $(VERSION_H_IN) $(VERSION_FILE)
 	@echo "Generating $(VERSION_H)..."
-	@if [ ! -f $(VERSION_META) ]; then ./version.sh > /dev/null; fi
 	@VERSION=$$(cat $(VERSION_FILE)); \
 	MAJOR=$$(echo $$VERSION | cut -d. -f1); \
 	MINOR=$$(echo $$VERSION | cut -d. -f2); \
@@ -302,13 +301,12 @@ $(VERSION_H): $(VERSION_H_IN) $(VERSION_FILE)
 
 update-version:
 	./version.sh
-	$(MAKE) $(VERSION_H)
 
 release: update-version changelog
 	@VERSION=$$(cat $(VERSION_FILE)); \
 	git add $(VERSION_FILE) $(VERSION_H) $(CHANGELOG_MD); \
-	git commit -m "chore(release): $$VERSION"; \
-	git tag -a "v$$VERSION" -m "Release $$VERSION"
+	git commit -m "chore(release): $$VERSION";
+	@printf "$(GREEN)Release commit created for version $$VERSION.$(RESET)\n You can now run 'git push && git push --tags' to push the release to the remote repository.$(RESET)\n"
 
 changelog:
 	./changelog.sh

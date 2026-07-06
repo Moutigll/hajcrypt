@@ -6,9 +6,9 @@
 #define HAJCRYPT_VERSION_PATCH	1
 #define HAJCRYPT_VERSION_STRING	"0.14.1"
 
-#define HAJCRYPT_GIT_COMMIT_HASH	"022e22d"
-#define HAJCRYPT_GIT_COMMIT_SUBJECT	"feat(cli): Add --nopad option to disable padding for block ciphers"
-#define HAJCRYPT_GIT_COMMIT_DATE	"14 Jun 2026"
+#define HAJCRYPT_GIT_COMMIT_HASH	"0468c81"
+#define HAJCRYPT_GIT_COMMIT_SUBJECT	"feat!: Add version management"
+#define HAJCRYPT_GIT_COMMIT_DATE	"06 Jul 2026"
 
 const char	*hajcryptVersion(void);
 void		hajcryptVersionComponents(int *major, int *minor, int *patch);

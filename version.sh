@@ -15,22 +15,23 @@ MAJOR_BUMP=0
 MINOR_BUMP=0
 PATCH_BUMP=0
 
-# 1) Detect BREAKING CHANGE (in subject with !: or in body)
+# 1) Detect BREAKING CHANGE (only in body with explicit "BREAKING CHANGE:" or "BREAKING-CHANGE:")
 if git log "$LAST_TAG"..HEAD --grep="BREAKING CHANGE" -E --no-merges | head -n1 | grep -q .; then
 	MAJOR_BUMP=1
 fi
-if git log "$LAST_TAG"..HEAD --pretty=format:"%s" --no-merges | grep -q '!:' ; then
+if git log "$LAST_TAG"..HEAD --grep="BREAKING-CHANGE" -E --no-merges | head -n1 | grep -q .; then
 	MAJOR_BUMP=1
 fi
 
 # 2) If no major, check for minor indicators (merge OR feat!:)
 if [ "$MAJOR_BUMP" -eq 0 ]; then
 	# Check for feat!: commits (explicit minor version marker)
+	# feat!: means new feature with impact, but not breaking
 	if git log "$LAST_TAG"..HEAD --pretty=format:"%s" --no-merges \
 		| grep -q -E '^(feat|perf)\(.+\)?!:|^(feat|perf)!:' ; then
 		MINOR_BUMP=1
 	fi
-	
+
 	# Check for merges (backward compatibility)
 	if [ "$MINOR_BUMP" -eq 0 ] && [ "$MERGE_COUNT" -gt 0 ]; then
 		MINOR_BUMP=1
@@ -75,7 +76,7 @@ echo "Scanning for commits since $LAST_TAG..."
 MERGES=$(git log "$LAST_TAG"..HEAD --merges --reverse --pretty=format:"%H")
 
 # Get all feat!: commits that are not merges
-FEAT_BANG=$(git log "$LAST_TAG"..HEAD --no-merges --pretty=format:"%H" --grep="!:" -E | while read hash; do
+FEAT_BANG=$(git log "$LAST_TAG"..HEAD --no-merges --pretty=format:"%H" | while read hash; do
 	if [ -n "$hash" ]; then
 		subject=$(git log -1 --format="%s" "$hash")
 		if echo "$subject" | grep -q -E '^(feat|perf)\(.+\)?!:|^(feat|perf)!:'; then
@@ -108,20 +109,24 @@ if [ -n "$ALL_MINOR_COMMITS" ]; then
 		# Check if this commit contains breaking changes
 		BREAKING=0
 		IS_MERGE=0
-		
+
 		# Check if it's a merge commit
 		if git log -1 --format="%P" "$HASH" | grep -q ' '; then
 			IS_MERGE=1
 			PARENT=$(git log -1 --format="%P" "$HASH" | cut -d' ' -f1)
 			if [ -n "$PARENT" ]; then
 				if git log "$PARENT".."$HASH" --pretty=format:"%s" --no-merges \
-					| grep -q -E 'BREAKING CHANGE|!:' 2>/dev/null; then
+					| grep -q -E 'BREAKING CHANGE|BREAKING-CHANGE' 2>/dev/null; then
 					BREAKING=1
 				fi
 			fi
 		else
-			# Check single commit for breaking changes
-			if git log -1 --pretty=format:"%s" "$HASH" | grep -q -E '!:|BREAKING CHANGE'; then
+			# Check single commit for breaking changes (only explicit BREAKING CHANGE)
+			if git log -1 --pretty=format:"%s" "$HASH" | grep -q -E 'BREAKING CHANGE|BREAKING-CHANGE'; then
+				BREAKING=1
+			fi
+			# Also check body
+			if git log -1 --pretty=format:"%b" "$HASH" | grep -q -E 'BREAKING CHANGE|BREAKING-CHANGE'; then
 				BREAKING=1
 			fi
 		fi
@@ -168,7 +173,6 @@ if [ -n "$ALL_MINOR_COMMITS" ]; then
 	# Now count useful commits since the last processed commit
 	LAST_PROCESSED=$(echo "$ALL_MINOR_COMMITS" | tail -n1)
 	if [ -n "$LAST_PROCESSED" ]; then
-		# Count useful commits after the last processed commit
 		USEFUL_COMMITS=$(git log "$LAST_PROCESSED"..HEAD --pretty=format:"%s" --no-merges \
 			| grep -v -E '^(test|chore|docs|build|style|ci|refactor)(\(.+\))?:' | wc -l)
 		PATCH=$USEFUL_COMMITS
