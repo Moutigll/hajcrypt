@@ -28,7 +28,7 @@ char	*readPkeyFileContent(const char *fileName)
 	
 	if (fd < 0)
 	{
-		ft_dprintf(STDERR_FILENO, "ft_ssl: pkey: cannot open '%s'\n",
+		ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": pkey: cannot open '%s'\n",
 			fileName ? fileName : "stdin");
 		return (NULL);
 	}
@@ -58,7 +58,7 @@ char	*readPkeyFileContent(const char *fileName)
 	return (buf);
 
 mallocError:
-	ft_dprintf(STDERR_FILENO, "ft_ssl: pkey: memory allocation failed\n");
+	ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": pkey: memory allocation failed\n");
 	if (fileName)
 		close(fd);
 	return (NULL);
@@ -88,7 +88,7 @@ static const tFtLongOption	g_pkeyLongOpts[] = {
 static void	printPkeyHelp(const t_pkeyDef *def)
 {
 	ft_printf(
-		"Usage: ft_ssl %s [options]\n"
+		"Usage: " HAJCRYPT_CLI_NAME " %s [options]\n"
 		"Options:\n"
 		"  --*                  Any supported cipher (e.g., --des)\n"
 		"  -I, --inform  <PEM>  Input format (only PEM supported)\n"
@@ -128,7 +128,7 @@ static int	parsePkeyArgs(int argc, char **argv, t_pkeyOptions *opt)
 			break;
 		if (status == FT_GETOPT_POSITIONAL)
 		{
-			ft_dprintf(STDERR_FILENO, "ft_ssl: pkey: unexpected argument '%s'\n", st.argv[st.index]);
+			ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": pkey: unexpected argument '%s'\n", st.argv[st.index]);
 			return (0);
 		}
 		if (status == FT_GETOPT_ERROR)
@@ -144,16 +144,16 @@ static int	parsePkeyArgs(int argc, char **argv, t_pkeyOptions *opt)
 					continue;
 				}
 				ft_dprintf(STDERR_FILENO,
-					"ft_ssl: unknown option '%s'\n", st.badOpt);
+					HAJCRYPT_CLI_NAME ": unknown option '%s'\n", st.badOpt);
 			}
 			else if (st.status == FT_GETOPT_MISSING_ARG)
 				ft_dprintf(STDERR_FILENO,
-					"ft_ssl: option '%c' requires an argument\n", st.opt);
+					HAJCRYPT_CLI_NAME ": option '%c' requires an argument\n", st.opt);
 			else if (st.status == FT_GETOPT_AMBIGUOUS)
 				ft_dprintf(STDERR_FILENO,
-					"ft_ssl: ambiguous option '%s'\n", st.badOpt);
+					HAJCRYPT_CLI_NAME ": ambiguous option '%s'\n", st.badOpt);
 			else
-				ft_dprintf(STDERR_FILENO, "ft_ssl: invalid option\n");
+				ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": invalid option\n");
 			return (0);
 		}
 		if (status == FT_GETOPT_OK)
@@ -162,11 +162,11 @@ static int	parsePkeyArgs(int argc, char **argv, t_pkeyOptions *opt)
 			{
 			case 'I': if (ft_strcmp(st.optArg, "PEM")) {
 					ft_dprintf(STDERR_FILENO,
-						"ft_ssl: unsupported format '%s' (only PEM)\n",
+						HAJCRYPT_CLI_NAME ": unsupported format '%s' (only PEM)\n",
 						st.optArg); return (0); } break;
 			case 'O': if (ft_strcmp(st.optArg, "PEM")) {
 					ft_dprintf(STDERR_FILENO,
-						"ft_ssl: unsupported format '%s' (only PEM)\n",
+						HAJCRYPT_CLI_NAME ": unsupported format '%s' (only PEM)\n",
 						st.optArg); return (0); } break;
 			case 'i': opt->inFile = st.optArg; break;
 			case 'o': opt->outFile = st.optArg; break;
@@ -217,7 +217,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 	        if (!def)
 	        {
 	            ft_dprintf(STDERR_FILENO,
-	                "ft_ssl: unknown key type '%s'\n", argv[2]);
+	                HAJCRYPT_CLI_NAME ": unknown key type '%s'\n", argv[2]);
 	            return (1);
 	        }
 	        offset = 3;
@@ -231,7 +231,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 		if (!def)
 		{
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: unknown command '%s'\n", argv[1]);
+				HAJCRYPT_CLI_NAME ": unknown command '%s'\n", argv[1]);
 			return (1);
 		}
 		offset = 2;
@@ -257,7 +257,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 		if (!passinPass)
 		{
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: error getting input password\n", def ? def->name : "pkey");
+				HAJCRYPT_CLI_NAME ": %s: error getting input password\n", def ? def->name : "pkey");
 			return (1);
 		}
 	}
@@ -279,12 +279,12 @@ int	cmdPkey(int argc, char **argv, char **env)
 		char	*promptPass;
 
 		ft_dprintf(STDERR_FILENO,
-			"ft_ssl: %s: password required for encrypted key\n", def ? def->name : "pkey");
+			HAJCRYPT_CLI_NAME ": %s: password required for encrypted key\n", def ? def->name : "pkey");
 		promptPass = promptPassword("Enter password for encrypted key: ");
 		if (!promptPass)
 		{
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: error getting password from prompt\n", def ? def->name : "pkey");
+				HAJCRYPT_CLI_NAME ": %s: error getting password from prompt\n", def ? def->name : "pkey");
 			free(pem);
 			free(passinPass);
 			return (1);
@@ -296,7 +296,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 	if (keyRet != 1 || !pkey.key)
 	{
 		ft_dprintf(STDERR_FILENO,
-			"ft_ssl: %s: failed to parse %s key\n",
+			HAJCRYPT_CLI_NAME ": %s: failed to parse %s key\n",
 			def ? def->name : "pkey", opt.pubin ? "public" : "private");
 		free(pem);
 		free(passinPass);
@@ -310,7 +310,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 			pkey.def->printKey(pkey.key, !opt.pubin);
 		else
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: text output not supported\n", pkey.def->name);
+				HAJCRYPT_CLI_NAME ": %s: text output not supported\n", pkey.def->name);
 	}
 	if (opt.modulus)
 	{
@@ -329,7 +329,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 		}
 		else
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: --modulus not supported\n", pkey.def->name);
+				HAJCRYPT_CLI_NAME ": %s: --modulus not supported\n", pkey.def->name);
 	}
 	if (opt.check)
 	{
@@ -395,7 +395,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 			if (!encPass)
 			{
 				ft_dprintf(STDERR_FILENO,
-					"ft_ssl: %s: error getting output password\n", pkey.def->name);
+					HAJCRYPT_CLI_NAME ": %s: error getting output password\n", pkey.def->name);
 				ret = 1;
 				goto cleanup;
 			}
@@ -411,7 +411,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 		if (!outPem)
 		{
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: failed to encode key\n", pkey.def->name);
+				HAJCRYPT_CLI_NAME ": %s: failed to encode key\n", pkey.def->name);
 			ret = 1;
 			goto cleanup;
 		}

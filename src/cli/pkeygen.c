@@ -19,7 +19,7 @@ static const tFtLongOption	g_genpkeyLongOpts[] = {
 static void	printGenpkeyHelp(const t_pkeyDef *def)
 {
 	ft_printf(
-		"Usage: ft_ssl gen%s [options] [bits]\n"
+		"Usage: " HAJCRYPT_CLI_NAME " gen%s [options] [bits]\n"
 		"Options:\n"
 		"  -o, --out     <file> Output file (default stdout)\n"
 		"  -p, --passout <arg>  Password for encrypting the private key\n"
@@ -64,14 +64,14 @@ static int	parseGenpkeyArgs(int				argc,
 			if (!bitsStr)
 			{
 				ft_dprintf(STDERR_FILENO,
-					"ft_ssl: %s: missing bits argument\n", def->name);
+					HAJCRYPT_CLI_NAME ": %s: missing bits argument\n", def->name);
 				return (0);
 			}
 			*bits = ft_atoi((char *)bitsStr);
 			if (*bits <= 0)
 			{
 				ft_dprintf(STDERR_FILENO,
-					"ft_ssl: %s: invalid bits argument '%s'\n", def->name, bitsStr);
+					HAJCRYPT_CLI_NAME ": %s: invalid bits argument '%s'\n", def->name, bitsStr);
 				return (0);
 			}
 			st.index++;
@@ -82,7 +82,7 @@ static int	parseGenpkeyArgs(int				argc,
 			if (st.status == FT_GETOPT_MISSING_ARG)
 			{
 				ft_dprintf(STDERR_FILENO,
-					"ft_ssl: %s: option '%s' requires an argument\n",
+					HAJCRYPT_CLI_NAME ": %s: option '%s' requires an argument\n",
 					def->name, st.badOpt);
 				return (0);
 			}
@@ -99,12 +99,12 @@ static int	parseGenpkeyArgs(int				argc,
 					continue ;
 				}
 				ft_dprintf(STDERR_FILENO,
-					"ft_ssl: %s: unknown cipher '--%s'\n",
+					HAJCRYPT_CLI_NAME ": %s: unknown cipher '--%s'\n",
 					def->name, st.badOpt + 2);
 				return (0);
 			}
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: invalid option\n", def->name);
+				HAJCRYPT_CLI_NAME ": %s: invalid option\n", def->name);
 			return (0);
 		}
 		if (status == FT_GETOPT_OK)
@@ -131,14 +131,14 @@ static int	parseGenpkeyArgs(int				argc,
 		if (!bitsStr)
 		{
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: missing bits argument\n", def->name);
+				HAJCRYPT_CLI_NAME ": %s: missing bits argument\n", def->name);
 			return (0);
 		}
 		*bits = ft_atoi((char *)bitsStr);
 		if (*bits <= 0)
 		{
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: invalid bits argument '%s'\n", def->name, bitsStr);
+				HAJCRYPT_CLI_NAME ": %s: invalid bits argument '%s'\n", def->name, bitsStr);
 			return (0);
 		}
 		st.index++;
@@ -161,7 +161,7 @@ int	writePkeyOutput(const char *filename, const char *data)
 	if (fd < 0)
 	{
 		ft_dprintf(STDERR_FILENO,
-			"ft_ssl: cannot open '%s' for writing\n", filename);
+			HAJCRYPT_CLI_NAME ": cannot open '%s' for writing\n", filename);
 		return (0);
 	}
 	ft_dprintf(fd, "%s", data);
@@ -196,7 +196,7 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 			if (!def)
 			{
 				ft_dprintf(STDERR_FILENO,
-					"ft_ssl: unknown key type '%s'\n", argv[2]);
+					HAJCRYPT_CLI_NAME ": unknown key type '%s'\n", argv[2]);
 				return (1);
 			}
 			offset = 3;
@@ -206,7 +206,7 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 			if (g_pkeyTable[0].def == NULL)
 			{
 				ft_dprintf(STDERR_FILENO,
-					"ft_ssl: no asymmetric key algorithms available\n");
+					HAJCRYPT_CLI_NAME ": no asymmetric key algorithms available\n");
 				return (1);
 			}
 			def = g_pkeyTable[0].def;
@@ -219,7 +219,7 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 		if (!def)
 		{
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: unknown algorithm '%s'\n", argv[1]);
+				HAJCRYPT_CLI_NAME ": unknown algorithm '%s'\n", argv[1]);
 			return (1);
 		}
 		offset = 2;
@@ -227,7 +227,7 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 	if (!def->generate)
 	{
 		ft_dprintf(STDERR_FILENO,
-			"ft_ssl: %s does not support key generation\n", def->name);
+			HAJCRYPT_CLI_NAME ": %s does not support key generation\n", def->name);
 		return (1);
 	}
 	ret = parseGenpkeyArgs(argc - offset, argv + offset, def,
@@ -244,7 +244,7 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 		if (!password)
 		{
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: failed to get password\n", def->name);
+				HAJCRYPT_CLI_NAME ": %s: failed to get password\n", def->name);
 			return (1);
 		}
 	}
@@ -254,7 +254,7 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 		if (!password)
 		{
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: failed to get password\n", def->name);
+				HAJCRYPT_CLI_NAME ": %s: failed to get password\n", def->name);
 			return (1);
 		}
 	}
@@ -267,7 +267,7 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 	if (!pkeyGenerate(&pkey, bits))
 	{
 		ft_dprintf(STDERR_FILENO,
-			"ft_ssl: %s: key generation failed\n", def->name);
+			HAJCRYPT_CLI_NAME ": %s: key generation failed\n", def->name);
 		free(password);
 		return (1);
 	}
@@ -278,7 +278,7 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 	if (!privPem)
 	{
 		ft_dprintf(STDERR_FILENO,
-			"ft_ssl: %s: PEM encoding failed\n", def->name);
+			HAJCRYPT_CLI_NAME ": %s: PEM encoding failed\n", def->name);
 		pkeyFree(&pkey);
 		free(password);
 		return (1);
@@ -290,7 +290,7 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 		if (!pubPem)
 		{
 			ft_dprintf(STDERR_FILENO,
-				"ft_ssl: %s: public key PEM encoding failed\n", def->name);
+				HAJCRYPT_CLI_NAME ": %s: public key PEM encoding failed\n", def->name);
 			free(privPem);
 			pkeyFree(&pkey);
 			free(password);

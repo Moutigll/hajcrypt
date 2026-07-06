@@ -58,7 +58,7 @@ int	openInputFile(const char *filename, const char *cipherName)
 	if (fd < 0)
 	{
 		ft_dprintf(STDERR_FILENO,
-			"ft_ssl: %s: %s: No such file or directory\n",
+			HAJCRYPT_CLI_NAME ": %s: %s: No such file or directory\n",
 			cipherName, filename);
 	}
 	return (fd);
@@ -72,7 +72,7 @@ int	openOutputFile(const char *filename, const char *cipherName)
 	if (fd < 0)
 	{
 		ft_dprintf(STDERR_FILENO,
-			"ft_ssl: %s: cannot create %s\n",
+			HAJCRYPT_CLI_NAME ": %s: cannot create %s\n",
 			cipherName, filename);
 	}
 	return (fd);
@@ -97,7 +97,7 @@ int prepareKeyAndIv(t_sslOptions	*opts,
 	{
 		if (pbkdfHexToBytes(opts->keyHex, key, keyLen) < 0)
 		{
-			ft_dprintf(STDERR_FILENO, "ft_ssl: invalid key hex\n");
+			ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": invalid key hex\n");
 			return (-1);
 		}
 		/* IV hex optional, if provided it overrides the derived IV or zeros */
@@ -105,7 +105,7 @@ int prepareKeyAndIv(t_sslOptions	*opts,
 		{
 			if (pbkdfHexToBytes(opts->ivHex, iv, ivLen) < 0)
 			{
-				ft_dprintf(STDERR_FILENO, "ft_ssl: invalid IV hex\n");
+				ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": invalid IV hex\n");
 				return (-1);
 			}
 		}
@@ -121,7 +121,7 @@ int prepareKeyAndIv(t_sslOptions	*opts,
 		{
 			if (pbkdfHexToBytes(opts->saltHex, salt, 8) < 0)
 			{
-				ft_dprintf(STDERR_FILENO, "ft_ssl: invalid salt hex\n");
+				ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": invalid salt hex\n");
 				return (-1);
 			}
 		}
@@ -148,7 +148,7 @@ int prepareKeyAndIv(t_sslOptions	*opts,
 									ft_strlen(opts->password),
 									salt, keyLen, key, iv) < 0)
 		{
-			ft_dprintf(STDERR_FILENO, "ft_ssl: key derivation failed\n");
+			ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": key derivation failed\n");
 			return (-1);
 		}
 
@@ -157,7 +157,7 @@ int prepareKeyAndIv(t_sslOptions	*opts,
 		{
 			if (pbkdfHexToBytes(opts->ivHex, iv, ivLen) < 0)
 			{
-				ft_dprintf(STDERR_FILENO, "ft_ssl: invalid IV hex\n");
+				ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": invalid IV hex\n");
 				return (-1);
 			}
 		}
@@ -173,7 +173,7 @@ int prepareKeyAndIv(t_sslOptions	*opts,
 
 	/* Now we derive the key from the stored parameters */
 	if (deriveKeyFromParams(opts, key, keyLen, iv) != 0) {
-		ft_dprintf(STDERR_FILENO, "ft_ssl: key derivation failed\n");
+		ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": key derivation failed\n");
 		cleanupSslOptions(opts);
 		return (-1);
 	}
@@ -183,7 +183,7 @@ int prepareKeyAndIv(t_sslOptions	*opts,
  	{
  		if (pbkdfHexToBytes(opts->ivHex, iv, ivLen) < 0)
  		{
- 			ft_dprintf(STDERR_FILENO, "ft_ssl: invalid IV hex\n");
+ 			ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": invalid IV hex\n");
 			cleanupSslOptions(opts);
 			return (-1);
  		}

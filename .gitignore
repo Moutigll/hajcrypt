@@ -9,6 +9,7 @@ includes/consts/*
 !includes/consts/consts.h
 !includes/consts/blowfish.h
 benchmark.html
+.version_meta
 *.der
 *.crt
 *.pem

@@ -1,6 +1,9 @@
 #ifndef HAJCRYPT_H
 #define HAJCRYPT_H
 
+#define HAJCRYPT_NAME "HajCrypt"
+#define HAJCRYPT_CLI_NAME "ft_ssl"
+
 #define HAJCRYPT_DPRINT(string, ...) ft_dprintf(STDERR_FILENO, string, ##__VA_ARGS__)
 #define HAJCRYPT_SMALL_FOOTPRINT 0
 

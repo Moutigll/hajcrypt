@@ -22,6 +22,7 @@ CONST_SRC = \
 	$(CONST_DIR)/aes.const.c
 
 LIB_SRC = \
+	$(SRC_DIR)/version.c \
 	$(SRC_DIR)/utils.c \
 	$(SRC_DIR)/hajSecRandBytes.c \
 	$(SRC_DIR)/dispatch.c \

@@ -63,7 +63,7 @@ static int processDecryptLast(t_cipherCtx *c, t_blockData *b, uint8_t *outBuf)
 
 	if (b->lastLen != c->cipher->blockSize)
 	{
-		ft_dprintf(STDERR_FILENO, "ft_ssl: bad decrypt\n");
+		ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": bad decrypt\n");
 		return (-1);
 	}
 	c->cipher->update(c->ctx, b->lastBlock, c->cipher->blockSize, outBuf, &outLen);
@@ -76,7 +76,7 @@ static int processDecryptLast(t_cipherCtx *c, t_blockData *b, uint8_t *outBuf)
 	{
 		if (c->cipher->unpad(outBuf, &unpaddedLen, c->cipher->blockSize) != 0)
 		{
-			ft_dprintf(STDERR_FILENO, "ft_ssl: bad decrypt\n");
+			ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": bad decrypt\n");
 			return (-1);
 		}
 		if (unpaddedLen > 0 && writeOutput(c->outFd, outBuf,
@@ -351,7 +351,7 @@ int executeCipher(t_sslOptions *opts)
 	cipher = getCipherByAlgo(opts->algo);
 	if (!cipher)
 	{
-		ft_dprintf(STDERR_FILENO, "ft_ssl: unknown cipher algorithm\n");
+		ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": unknown cipher algorithm\n");
 		return (1);
 	}
 	if (opts->inputFile && (inFd = openInputFile(opts->inputFile, cipher->name)) < 0)

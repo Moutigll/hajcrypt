@@ -1,0 +1,17 @@
+#ifndef HAJCRYPT_VERSION_H
+#define HAJCRYPT_VERSION_H
+
+#define HAJCRYPT_VERSION_MAJOR	@MAJOR@
+#define HAJCRYPT_VERSION_MINOR	@MINOR@
+#define HAJCRYPT_VERSION_PATCH	@PATCH@
+#define HAJCRYPT_VERSION_STRING	"@VERSION@"
+
+#define HAJCRYPT_GIT_COMMIT_HASH	"@GIT_COMMIT_HASH@"
+#define HAJCRYPT_GIT_COMMIT_SUBJECT	"@GIT_COMMIT_SUBJECT@"
+#define HAJCRYPT_GIT_COMMIT_DATE	"@GIT_COMMIT_DATE@"
+
+const char	*hajcryptVersion(void);
+void		hajcryptVersionComponents(int *major, int *minor, int *patch);
+int			hajcryptVersionCompare(const char *v1, const char *v2);
+
+#endif /* HAJCRYPT_VERSION_H */

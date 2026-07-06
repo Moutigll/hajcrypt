@@ -81,7 +81,7 @@ _ft_ssl_cipher_opts()
 		'-p+[Password]:password:' \
 		'-k+[Hex key]:hex key:' \
 		'-s+[Salt]:salt:' \
-		'-v+[IV]:iv:' \
+		'-V+[IV]:iv:' \
 		'-i+[Input file]:file:_files' \
 		'-o+[Output file]:file:_files' \
 		'-P[Disable padding]' \

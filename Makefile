@@ -18,6 +18,12 @@ CFLAGS		= $(BASE_FLAGS) $(OPT_FLAGS) $(SAN_FLAGS)
 
 INCLUDES	= -I./includes -I$(HLIB_PATH)/include
 
+VERSION_FILE	:= VERSION
+VERSION_H		:= includes/version.h
+VERSION_H_IN	:= includes/version.h.in
+VERSION_META	:= .version_meta
+CHANGELOG_MD	:= CHANGELOG.md
+
 include sources.mk
 
 # Installation paths
@@ -97,7 +103,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 	$(CC) $(BASE_FLAGS) $(ASM_FLAGS) -g $(INCLUDES) -c $< -o $@
 
 # --- Build static library ---
-$(LIB_NAME).a: $(CONST_HEADERS) $(LIB_OBJ)
+$(LIB_NAME).a: $(VERSION_H) $(CONST_HEADERS) $(LIB_OBJ)
 	@echo -e "$(GREEN)Building static library $@...$(RESET)"
 	@mkdir -p $(BUILD_DIR)
 	ar rcs $@ $(LIB_OBJ)
@@ -273,5 +279,40 @@ uninstall:
 	esac
 	@printf "$(GREEN)Uninstall complete. Please restart your shell.$(RESET)\n"
 
+# --------------- Version management ---------------
+
+$(VERSION_H): $(VERSION_H_IN) $(VERSION_FILE)
+	@echo "Generating $(VERSION_H)..."
+	@if [ ! -f $(VERSION_META) ]; then ./version.sh > /dev/null; fi
+	@VERSION=$$(cat $(VERSION_FILE)); \
+	MAJOR=$$(echo $$VERSION | cut -d. -f1); \
+	MINOR=$$(echo $$VERSION | cut -d. -f2); \
+	PATCH=$$(echo $$VERSION | cut -d. -f3); \
+	HASH=$$(git log -1 --format="%h"); \
+	SUBJ=$$(git log -1 --format="%s"); \
+	DATE=$$(git log -1 --format="%ad" --date=format:"%d %b %Y"); \
+	sed -e "s/@MAJOR@/$$MAJOR/g" \
+	    -e "s/@MINOR@/$$MINOR/g" \
+	    -e "s/@PATCH@/$$PATCH/g" \
+	    -e "s/@VERSION@/$$VERSION/g" \
+	    -e "s/@GIT_COMMIT_HASH@/$$HASH/g" \
+	    -e "s/@GIT_COMMIT_SUBJECT@/$$SUBJ/g" \
+	    -e "s/@GIT_COMMIT_DATE@/$$DATE/g" \
+	    $(VERSION_H_IN) > $(VERSION_H)
+
+update-version:
+	./version.sh
+	$(MAKE) $(VERSION_H)
+
+release: update-version changelog
+	@VERSION=$$(cat $(VERSION_FILE)); \
+	git add $(VERSION_FILE) $(VERSION_H) $(CHANGELOG_MD); \
+	git commit -m "chore(release): $$VERSION"; \
+	git tag -a "v$$VERSION" -m "Release $$VERSION"
+
+changelog:
+	./changelog.sh
+
 .PHONY: all clean fclean re const lib leak leak-test
 .PHONY: install install-system install-user install-config uninstall
+.PHONY: update-version release changelog

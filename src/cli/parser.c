@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include "../../hajlib/include/hajlib.h"	/* IWYU pragma: keep */
+#include "../../includes/version.h"
 
 #include "../../includes/cli/parser.h"
 
@@ -172,6 +173,7 @@ static void	printUsage(void)
 	}
 	
 	ft_printf("\nFlags:\n"
+	"\t-v\t\tVersion information\n"
 	"\t-p <password>\n\t\tHash:\tread from stdin and print it\n\t\tCipher:\tPassword in ASCII (for key derivation)\n"
 	"\t-q\t\tQuiet mode - only print the hash\n"
 	"\t-r\t\tReverse output format\n"
@@ -182,10 +184,12 @@ static void	printUsage(void)
 	"\t-i <file>\tInput file\n"
 	"\t-o <file>\tOutput file\n"
 	"\t-a\t\tBase64 encode/decode input/output\n"
-	"\t-v <iv>\t\tIV in hex (for ciphers that use IV)\n"
+	"\t-V <iv>\t\tIV in hex (for ciphers that use IV)\n"
 	"\t-b\t\tFor hashes, output binary instead of hex\n"
 	"\t-P\t\tDisable padding for block ciphers\n"
 	"\t-h\t\tShow this help message\n"
+	"\n" HAJCRYPT_CLI_NAME " version: " HAJCRYPT_VERSION_STRING "\n"
+	"Library: " HAJCRYPT_NAME " " HAJCRYPT_VERSION_STRING " " HAJCRYPT_GIT_COMMIT_DATE " " HAJCRYPT_GIT_COMMIT_HASH "\n"
 	);
 }
 
@@ -277,7 +281,7 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 		return (0);
 	}
 
-	ft_dprintf(STDERR_FILENO, "ft_ssl: Error: '%s' is an invalid command.\n\n", arg);
+	ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": Error: '%s' is an invalid command.\n\n", arg);
 	printUsage();
 	return (1);
 }
@@ -310,7 +314,7 @@ static int listCmd(int argc, char **argv)
 {
 	if (argc < 3)
 	{
-		ft_dprintf(STDERR_FILENO, "ft_ssl: list: missing argument\n");
+		ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": list: missing argument\n");
 		return (1);
 	}
 	int useColor = isatty(STDOUT_FILENO);
@@ -330,7 +334,7 @@ static int listCmd(int argc, char **argv)
 	}
 	else
 	{
-		ft_dprintf(STDERR_FILENO, "ft_ssl: list: unknown argument '%s'\n", argv[2]);
+		ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": list: unknown argument '%s'\n", argv[2]);
 		return (1);
 	}
 	return (0);
@@ -358,12 +362,18 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		return (1);
 	}
 
+	if (ft_strcmp(argv[1], "-v") == 0 || ft_strcmp(argv[1], "--version") == 0)
+	{
+		ft_printf(HAJCRYPT_CLI_NAME " version %s (Library: " HAJCRYPT_NAME " %s %s %s)\n", HAJCRYPT_VERSION_STRING, HAJCRYPT_GIT_COMMIT_DATE, HAJCRYPT_VERSION_STRING, HAJCRYPT_GIT_COMMIT_DATE, HAJCRYPT_GIT_COMMIT_HASH);
+		return (0);
+	}
+
 	if (ft_strcmp(argv[1], "list") == 0)
-		return listCmd(argc, argv);
+		return (listCmd(argc, argv));
 
 	if (initSslOptions(opts, argc) != 0)
 	{
-		ft_dprintf(STDERR_FILENO, "ft_ssl: memory allocation failed\n");
+		ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": memory allocation failed\n");
 		return (1);
 	}
 
@@ -385,7 +395,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 	if (opts->cmdType == CMD_HASH)
 		shortOpts = "pqrs:bh";
 	else
-		shortOpts = "p:qreds:k:i:o:v:ahP";
+		shortOpts = "p:qreds:k:i:o:vV:ahP";
 
 	ft_getoptInit(&st, argc - 2, argv + 2);
 	st.index = 0; /* reset index to start of options (argv[2]) */
@@ -401,7 +411,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		if (status == FT_GETOPT_ERROR)
 		{
 			/* st.badOpt or st.status carries info; print usable message */
-			ft_dprintf(STDERR_FILENO, "ft_ssl: %s: illegal option %s\n",
+			ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": %s: illegal option %s\n",
 				argv[1], st.badOpt ? st.badOpt : "(unknown)");
 			freeSslOptions(opts);
 			return (1);
@@ -413,7 +423,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 				opts->fileInputs[opts->fileCount++] = st.argv[st.index];
 			else
 			{
-				ft_dprintf(STDERR_FILENO, "ft_ssl: too many inputs\n");
+				ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": too many inputs\n");
 				freeSslOptions(opts);
 				return (1);
 			}
@@ -439,12 +449,12 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 							opts->password = ft_strdup((char *)st.optArg);
 						else
 						{
-							ft_dprintf(STDERR_FILENO, "ft_ssl: %s: option requires an argument -- p\n", argv[1]);
+							ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": %s: option requires an argument -- p\n", argv[1]);
 							freeSslOptions(opts);
 							return (1);
 						}
 						if (!opts->password) {
-							ft_dprintf(STDERR_FILENO, "ft_ssl: memory allocation failed\n");
+							ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": memory allocation failed\n");
 							freeSslOptions(opts);
 							return (1);
 						}
@@ -463,7 +473,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 					} else {
 						opts->keyHex = ft_strdup((char *)st.optArg);
 						if (!opts->keyHex) {
-							ft_dprintf(STDERR_FILENO, "ft_ssl: memory allocation failed\n");
+							ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": memory allocation failed\n");
 							freeSslOptions(opts);
 							return (1);
 						}
@@ -483,9 +493,13 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 					opts->outputFile = (char *)st.optArg;
 					break;
 				case 'v':
+					ft_printf(HAJCRYPT_CLI_NAME " version %s (Library: " HAJCRYPT_NAME " %s %s %s)\n", HAJCRYPT_VERSION_STRING, HAJCRYPT_GIT_COMMIT_DATE, HAJCRYPT_VERSION_STRING, HAJCRYPT_GIT_COMMIT_DATE, HAJCRYPT_GIT_COMMIT_HASH);
+					freeSslOptions(opts);
+					return (0);
+				case 'V':
 					opts->ivHex = ft_strdup((char *)st.optArg);
 					if (!opts->ivHex) {
-						ft_dprintf(STDERR_FILENO, "ft_ssl: memory allocation failed\n");
+						ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": memory allocation failed\n");
 						freeSslOptions(opts);
 						return (1);
 					}
@@ -512,21 +526,21 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 								opts->stringInputs[opts->stringCount++] = (char *)st.optArg;
 							else
 							{
-								ft_dprintf(STDERR_FILENO, "ft_ssl: too many inputs\n");
+								ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": too many inputs\n");
 								freeSslOptions(opts);
 								return (1);
 							}
 						else
 							opts->saltHex = ft_strdup((char *)st.optArg);
 						if (!opts->saltHex) {
-							ft_dprintf(STDERR_FILENO, "ft_ssl: memory allocation failed\n");
+							ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": memory allocation failed\n");
 							freeSslOptions(opts);
 							return (1);
 						}
 					}
 					else
 					{
-						ft_dprintf(STDERR_FILENO, "ft_ssl: %s: option requires an argument -- s\n", argv[1]);
+						ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": %s: option requires an argument -- s\n", argv[1]);
 						freeSslOptions(opts);
 						return (1);
 					}
@@ -534,7 +548,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 
 				default:
 					/* unknown option value (defensive) */
-					ft_dprintf(STDERR_FILENO, "ft_ssl: unknown option '%c'\n", (char)st.opt);
+					ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": unknown option '%c'\n", (char)st.opt);
 					freeSslOptions(opts);
 					return (1);
 			}
@@ -550,7 +564,7 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 			opts->fileInputs[opts->fileCount++] = st.argv[st.index];
 		else
 		{
-			ft_dprintf(STDERR_FILENO, "ft_ssl: too many inputs\n");
+			ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": too many inputs\n");
 			freeSslOptions(opts);
 			return (1);
 		}

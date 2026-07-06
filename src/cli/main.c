@@ -41,7 +41,7 @@ static int executeSsl(t_sslOptions *opts, int argc, char **argv, char **env)
 			if (fd < 0)
 			{
 				ft_dprintf(STDERR_FILENO,
-					"ft_ssl: %s: %s: No such file or directory\n",
+					HAJCRYPT_CLI_NAME ": %s: %s: No such file or directory\n",
 					getAlgoName(opts->algo),
 					opts->fileInputs[i]);
 			}

@@ -6,7 +6,7 @@
 #include "../../includes/cli/pkey.h"
 #include "../../includes/asymmetric/pkey.h"
 
-#define FT_PKEYUTL_ERR(...) ft_dprintf(STDERR_FILENO, "ft_ssl: pkeyutl: " __VA_ARGS__)
+#define FT_PKEYUTL_ERR(...) ft_dprintf(STDERR_FILENO, HAJCRYPT_CLI_NAME ": pkeyutl: " __VA_ARGS__)
 
 static const tFtLongOption g_pkeyutlLongOptions[] = {
 	{"in",		FT_GETOPT_REQUIRED_ARGUMENT,	'i'},
@@ -31,7 +31,7 @@ static const tFtLongOption g_pkeyutlLongOptions[] = {
 static void printPkeyutlHelp(void)
 {
 	ft_printf(
-		"Usage: ft_ssl pkeyutl -e|-d|-s|-v [options] [input_file] [signature_file]\n"
+		"Usage: " HAJCRYPT_CLI_NAME " pkeyutl -e|-d|-s|-v [options] [input_file] [signature_file]\n"
 		"Options:\n"
 		"  -i, --in      <file>  Input file (default stdin)\n"
 		"  -o, --out     <file>  Output file (default stdout)\n"
