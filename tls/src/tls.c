@@ -297,7 +297,7 @@ static void initConnectionCtx(t_tlsCtx *ctx, const t_tlsConfig *cfg, int socket,
 		ctx->handshake.isClient = 0;
 	else
 		ctx->handshake.isClient = 1;
-	ctx->handshake.state    = TLS_HS_STATE_IDLE;
+	ctx->handshake.state = TLS_HS_STATE_IDLE;
 }
 
 void tlsFreeConnection(t_tlsCtx *ctx)
@@ -353,9 +353,9 @@ static int serverHandshake(t_tlsCtx *ctx)
 			ft_memcpy(ctx->handshake.clientRandom, clientHello.random, 32);
 
 			if (!negotiateVersion(clientHello.extensions.supportedVersions,
-					      clientHello.extensions.numSupportedVersions,
-					      ctx->config->versionPref,
-					      &ctx->handshake.version)) {
+						  clientHello.extensions.numSupportedVersions,
+						  ctx->config->versionPref,
+						  &ctx->handshake.version)) {
 				tlsHelloFree(&clientHello);
 				tlsSetError(ctx, TLS_ERR_HANDSHAKE, "No common TLS version");
 				ctx->handshake.state = TLS_HS_STATE_ERROR;
@@ -511,10 +511,10 @@ ssize_t tlsRead(t_tlsCtx *ctx, uint8_t *buf, size_t len)
 			plainLen = sizeof(plain);
 
 			if (!tlsRecordDecrypt(&ctx->handshake.appRecvCtx,
-					      rawData, rawLen, 0,
-					      plain, &plainLen, &innerType)) {
+						  rawData, rawLen, 0,
+						  plain, &plainLen, &innerType)) {
 				tlsSetError(ctx, TLS_ERR_DECRYPT,
-					    "Application data decryption failed");
+						"Application data decryption failed");
 				return (-1);
 			}
 
@@ -525,7 +525,7 @@ ssize_t tlsRead(t_tlsCtx *ctx, uint8_t *buf, size_t len)
 			}
 			if (innerType != TLS_RT_APPLICATION_DATA) {
 				tlsSetError(ctx, TLS_ERR_PROTOCOL,
-					    "Unexpected inner content type");
+						"Unexpected inner content type");
 				return (-1);
 			}
 
@@ -546,7 +546,7 @@ ssize_t tlsRead(t_tlsCtx *ctx, uint8_t *buf, size_t len)
 		}
 		else {
 			tlsSetError(ctx, TLS_ERR_PROTOCOL,
-				    "Unexpected content type during read");
+					"Unexpected content type during read");
 			return (-1);
 		}
 	}
@@ -562,39 +562,49 @@ ssize_t tlsWrite(t_tlsCtx *ctx, const uint8_t *buf, size_t len)
 	size_t sent = 0;
 	while (sent < len) {
 		size_t chunkLen = len - sent;
-		if (chunkLen > TLS_MAX_FRAGMENT_LEN)
-			chunkLen = TLS_MAX_FRAGMENT_LEN;
+		if (chunkLen > TLS_MAX_FRAGMENT_LEN - 1)
+			chunkLen = TLS_MAX_FRAGMENT_LEN - 1;
 
 		t_tlsRecord record;
-		if (!tlsRecordBuild(TLS_RT_APPLICATION_DATA, buf + sent, chunkLen,
-				    &record)) {
+		if (!tlsRecordBuild(TLS_RT_APPLICATION_DATA, buf + sent, chunkLen, &record)) {
 			tlsSetError(ctx, TLS_ERR_INTERNAL, "Failed to build record");
 			return (-1);
 		}
 
-		uint8_t	encrypted[TLS_MAX_FRAGMENT_LEN + 256];
-		size_t	encryptedLen = sizeof(encrypted);
+		uint8_t encrypted[TLS_WRITE_BUFFER_SIZE];
+		size_t encryptedLen = sizeof(encrypted);
 		if (!tlsRecordEncrypt(&ctx->handshake.appSendCtx,
-				      record.fragment, record.fragmentLen,
-				      TLS_RT_APPLICATION_DATA, 0,
-				      encrypted, &encryptedLen)) {
+							  record.fragment, record.fragmentLen,
+							  TLS_RT_APPLICATION_DATA, 0,
+							  encrypted, &encryptedLen)) {
 			tlsRecordFree(&record);
-			tlsSetError(ctx, TLS_ERR_INTERNAL,
-				    "Failed to encrypt application data");
+			tlsSetError(ctx, TLS_ERR_INTERNAL, "Failed to encrypt application data");
 			return (-1);
 		}
 		tlsRecordFree(&record);
 
-		ssize_t n = tlsIoWriteRaw(&ctx->io, encrypted, encryptedLen);
-		if (n < 0) {
-			tlsSetError(ctx, TLS_ERR_IO, "Failed to send application data");
+		int write_ret = tlsIoWriteRecord(&ctx->io, TLS_RT_APPLICATION_DATA,
+										 encrypted + TLS_RECORD_HEADER_SIZE,
+										 encryptedLen - TLS_RECORD_HEADER_SIZE);
+		if (write_ret < 0) {
+			tlsSetError(ctx, TLS_ERR_IO, "Failed to queue record");
 			return (-1);
-		}
-		if (n == 0 && !ctx->config->isBlocking) {
+		} else if (write_ret == 0) {
 			tlsSetError(ctx, TLS_ERR_WANT_WRITE, "Write would block");
 			return (sent > 0 ? (ssize_t)sent : TLS_ERR_WANT_WRITE);
 		}
+
 		sent += chunkLen;
+
+		int flush_ret = tlsIoFlush(&ctx->io);
+		if (flush_ret < 0) {
+			tlsSetError(ctx, TLS_ERR_IO, "Failed to flush");
+			return (-1);
+		}
+		if (flush_ret == 0) {
+			tlsSetError(ctx, TLS_ERR_WANT_WRITE, "Write would block");
+			return (sent);
+		}
 	}
 	return ((ssize_t)sent);
 }

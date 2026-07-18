@@ -134,11 +134,10 @@ static void tlsIoCompactWriteBuf(t_tlsIoctx *io)
 int tlsIoFlush(t_tlsIoctx *io)
 {
 	ssize_t n;
-
 	if (!io || io->writeBufLen == 0)
-		return (0);
-	while (io->writeBufPos < io->writeBufLen)
-	{
+		return (1);
+
+	while (io->writeBufPos < io->writeBufLen) {
 		n = tlsIoWriteRaw(io,
 						  io->writeBuf + io->writeBufPos,
 						  io->writeBufLen - io->writeBufPos);
@@ -149,9 +148,9 @@ int tlsIoFlush(t_tlsIoctx *io)
 		io->writeBufPos += (size_t)n;
 	}
 
-	io->writeBufLen  = 0;
-	io->writeBufPos  = 0;
-	return (0);
+	io->writeBufLen = 0;
+	io->writeBufPos = 0;
+	return (1);
 }
 
 int tlsIoWriteRecord(t_tlsIoctx *io, uint8_t contentType, const uint8_t *data, size_t dataLen)
@@ -171,7 +170,8 @@ int tlsIoWriteRecord(t_tlsIoctx *io, uint8_t contentType, const uint8_t *data, s
 	available = TLS_WRITE_BUFFER_SIZE - (io->writeBufLen - io->writeBufPos);
 
 	if (needed > available) {
-		if (tlsIoFlush(io) != 0)
+		int flush_ret = tlsIoFlush(io);
+		if (flush_ret < 0)
 			return (-1);
 
 		available = TLS_WRITE_BUFFER_SIZE - (io->writeBufLen - io->writeBufPos);
@@ -181,8 +181,8 @@ int tlsIoWriteRecord(t_tlsIoctx *io, uint8_t contentType, const uint8_t *data, s
 			available = TLS_WRITE_BUFFER_SIZE - (io->writeBufLen - io->writeBufPos);
 
 			if (needed > available) {
-				io->ioError = TLS_ERR_INTERNAL;
-				return (-1);
+				io->ioError = TLS_ERR_WANT_WRITE;
+				return (0);
 			}
 		}
 	}
@@ -196,13 +196,8 @@ int tlsIoWriteRecord(t_tlsIoctx *io, uint8_t contentType, const uint8_t *data, s
 		io->writeBuf[offset + 2] = 0x03;
 		io->writeBuf[offset + 3] = (dataLen >> 8) & 0xFF;
 		io->writeBuf[offset + 4] = dataLen & 0xFF;
-	}
-
-	if (contentType != 0)
-		/* With header: we copy the data after the 5-byte header */
 		ft_memcpy(io->writeBuf + offset + TLS_RECORD_HEADER_SIZE, data, dataLen);
-	else
-		/* Without header: we copy the data directly */
+	} else
 		ft_memcpy(io->writeBuf + offset, data, dataLen);
 
 	io->writeBufLen += needed;

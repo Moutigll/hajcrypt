@@ -7,8 +7,8 @@
 #include "constants.h"
 
 /* Buffer sizes for TLS I/O context, corresponding to maximum TLS record size (16KB) */
-# define TLS_READ_BUFFER_SIZE	TLS_MAX_FRAGMENT_LEN
-# define TLS_WRITE_BUFFER_SIZE	TLS_MAX_FRAGMENT_LEN
+# define TLS_READ_BUFFER_SIZE	TLS_MAX_FRAGMENT_LEN + 512
+# define TLS_WRITE_BUFFER_SIZE	TLS_MAX_FRAGMENT_LEN + 512
 
 # define TLS_IO_MAX_RETRIES 10
 
