@@ -7,6 +7,7 @@
 #include "../includes/hash/blake2b.h"
 
 #include "../includes/cipher/base64.h"
+#include "../includes/cipher/base32.h"
 #include "../includes/cipher/des.h"
 #include "../includes/cipher/des3.h"
 #include "../includes/cipher/aes.h"
@@ -53,9 +54,9 @@ const t_pkeyDispatch g_pkeyTable[] = {
  *                          Cipher dispatch table
  * ========================================================================= */
 const t_cipherDispatch g_cipherTable[] = {
-	/* Base64 */
 	{ ALGO_BASE64,	&g_base64Cipher },
-	
+	{ ALGO_BASE32,	&g_base32Cipher },
+
 	/* DES family */
 	{ ALGO_DES,			&g_desCipher },
 	{ ALGO_DES_ECB,		&g_desEcbCipher },

@@ -8,6 +8,7 @@
 
 #include "../../includes/cli/algoHandling.h"
 #include "../../includes/cipher/base64.h"
+#include "../../includes/cipher/base32.h"
 #include "../../includes/cli/parser.h"
 #include "../../includes/cli/password.h"
 
@@ -171,21 +172,39 @@ static int handleBlockCipher(t_cipherCtx *c, int fd)
 	return (ret < 0 ? 1 : 0);
 }
 
-/* ---------- Base64 handling ---------- */
+/* ---------- Base handling ---------- */
 
-static int processBase64(int fd, int outFd, t_sslOptions *opts)
+static int processBase(int fd, int outFd, t_sslOptions *opts, t_algo base)
 {
-	t_base64Ctx b64Ctx;
 	t_cipherCtx c;
-
-	c.ctx = &b64Ctx;
-	c.cipher = &g_base64Cipher;
 	c.opts = opts;
 	c.outFd = outFd;
 	c.shouldWrap = (!opts->isDecoding && opts->wrapOutput);
 	c.lineLen = 0;
-	base64Init(&b64Ctx, NULL, 0, NULL,
-			   opts->isDecoding ? CIPHER_DECRYPT : CIPHER_ENCRYPT);
+	switch (base)
+	{
+		case ALGO_BASE64:
+		{
+			t_base64Ctx b64Ctx;
+			c.ctx = &b64Ctx;
+			c.cipher = &g_base64Cipher;
+			base64Init(&b64Ctx, NULL, 0, NULL,
+					   opts->isDecoding ? CIPHER_DECRYPT : CIPHER_ENCRYPT);
+		}
+		break;
+		case ALGO_BASE32:
+		{
+			t_base32Ctx b32Ctx;
+			c.ctx = &b32Ctx;
+			c.cipher = &g_base32Cipher;
+			base32Init(&b32Ctx, NULL, 0, NULL,
+					   opts->isDecoding ? CIPHER_DECRYPT : CIPHER_ENCRYPT);
+		}
+		break;
+		default:
+			ft_dprintf(STDERR_FILENO, "ft_ssl: unsupported base algorithm\n");
+			return (1);
+	}
 	return (handleStreamCipher(&c, fd));
 }
 
@@ -244,7 +263,7 @@ static int processBase64WithCipher(int inFd, int outFd, const t_cipher *cipher, 
 		close(pipeFd[0]); /* Close read end in child */
 
 		if (opts->isDecoding)
-			ret = processBase64(inFd, pipeFd[1], opts);
+			ret = processBase(inFd, pipeFd[1], opts, ALGO_BASE64);
 		else
 		{
 			t_cipherCtx ctx;
@@ -290,7 +309,7 @@ static int processBase64WithCipher(int inFd, int outFd, const t_cipher *cipher, 
 			free(ctx.ctx);
 		}
 		else
-			ret = processBase64(pipeFd[0], outFd, opts);
+			ret = processBase(pipeFd[0], outFd, opts, ALGO_BASE64);
 
 		close(pipeFd[0]);
 		wait(&status);
@@ -302,8 +321,8 @@ static int processBase64WithCipher(int inFd, int outFd, const t_cipher *cipher, 
 
 static int processCipherFd(int fd, int outFd, const t_cipher *cipher, t_sslOptions *opts)
 {
-	if (opts->algo == ALGO_BASE64)
-		return (processBase64(fd, outFd, opts));
+	if (opts->algo == ALGO_BASE64 || opts->algo == ALGO_BASE32)
+		return (processBase(fd, outFd, opts, opts->algo));
 
 	if (opts->useBase64)
 		return (processBase64WithCipher(fd, outFd, cipher, opts));

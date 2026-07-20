@@ -84,6 +84,7 @@ LIB_SRC = \
 	$(SRC_DIR)/cipher/modes/ctr.c \
 	$(SRC_DIR)/cipher/modes/pcbc.c \
 	$(SRC_DIR)/cipher/base64.c \
+	$(SRC_DIR)/cipher/base32.c \
 	$(SRC_DIR)/cipher/blowfish/transform.c \
 	$(SRC_DIR)/cipher/blowfish/ecb.c \
 	$(SRC_DIR)/cipher/blowfish/cbc.c \
