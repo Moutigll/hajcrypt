@@ -15,6 +15,7 @@ _ft_ssl_build_command_list()
 		'pkeyutl:Public key utility'
 		'rsautl:RSA utility'
 		'dsautl:DSA utility'
+		'totp:Time-based One-Time Password (TOTP) generator (RFC 6238)'
 	)
 
 	hash_cmds=()
@@ -335,6 +336,34 @@ _ft_ssl_rsautl_opts()
 		'*:file:_files'
 }
 
+_ft_ssl_totp_opts()
+{
+	_arguments \
+		'-s+[Secret key in Base32]:secret:' \
+		'--secret=[Secret key in Base32]:secret:' \
+		'-a+[Algorithm (sha1, sha256, sha512)]:algorithm:(sha1 sha256 sha512)' \
+		'--algo=[Algorithm (sha1, sha256, sha512)]:algorithm:(sha1 sha256 sha512)' \
+		'-d+[Number of digits (6 or 8)]:digits:(6 8)' \
+		'--digits=[Number of digits (6 or 8)]:digits:(6 8)' \
+		'-p+[Period in seconds]:period:' \
+		'--period=[Period in seconds]:period:' \
+		'-u+[User email]:user:' \
+		'--user=[User email]:user:' \
+		'-i+[Issuer name]:issuer:' \
+		'--issuer=[Issuer name]:issuer:' \
+		'-U[Generate URI]' \
+		'--uri[Generate URI]' \
+		'-l[Live update mode]' \
+		'--live[Live update mode]' \
+		'-b[Batch mode (no prompts)]' \
+		'--batch[Batch mode (no prompts)]' \
+		'-S[Show secret when generating URI]' \
+		'--show-secret[Show secret when generating URI]' \
+		'-h[Show help]' \
+		'--help[Show help]' \
+		':TOTP URI (otpauth://)'
+}
+
 _ft_ssl_build_command_list
 
 if (( CURRENT == 2 )); then
@@ -371,6 +400,9 @@ case "$cmd" in
 		;;
 	rsautl|pkeyutl|dsautl)
 		_ft_ssl_rsautl_opts
+		;;
+	totp)
+		_ft_ssl_totp_opts
 		;;
 	*)
 		_ft_ssl_cipher_opts

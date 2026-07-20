@@ -25,6 +25,7 @@ LIB_SRC = \
 	$(SRC_DIR)/utils.c \
 	$(SRC_DIR)/hajSecRandBytes.c \
 	$(SRC_DIR)/dispatch.c \
+	$(SRC_DIR)/totp.c \
 	$(SRC_DIR)/x509/asn1Decode.c \
 	$(SRC_DIR)/x509/asn1Encode.c \
 	$(SRC_DIR)/x509/pemDecode.c \
@@ -136,7 +137,8 @@ CLI_SRC = \
 	$(SRC_DIR)/cli/pkeygen.c \
 	$(SRC_DIR)/cli/pkeyutl.c \
 	$(SRC_DIR)/cli/cert.c \
-	$(SRC_DIR)/cli/server.c
+	$(SRC_DIR)/cli/server.c \
+	$(SRC_DIR)/cli/totp.c
 
 TEST_SRC = \
 	tests/main.test.c \

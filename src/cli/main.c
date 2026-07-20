@@ -10,7 +10,23 @@
 #include "../../includes/cli/parser.h"
 #include "../../includes/cli/pkey.h"
 #include "../../includes/cli/tls.h"
+#include "../../includes/cli/totp.h"
 
+typedef int (*t_cmdFunc)(int argc, char **argv, char **env);
+
+typedef struct s_cmdEntry {
+	t_cmdType	type;
+	t_cmdFunc	func;
+} t_cmdEntry;
+
+static const t_cmdEntry g_cmdTable[] = {
+	{CMD_GENPKEY,	cmdGenPkey},
+	{CMD_PKEY,		cmdPkey},
+	{CMD_PKEYUTL,	cmdPkeyutl},
+	{CMD_CERT,		cmdCert},
+	{CMD_SERVER,	cmdServer},
+	{CMD_TOTP,		cmdTotp}
+};
 
 static int executeSsl(t_sslOptions *opts, int argc, char **argv, char **env)
 {
@@ -60,16 +76,15 @@ static int executeSsl(t_sslOptions *opts, int argc, char **argv, char **env)
 			processFd(STDIN_FILENO, hash, opts, NULL);
 	} else if (opts->cmdType == CMD_CIPHER)
 		return (executeCipher(opts));
-	else if (opts->cmdType == CMD_GENPKEY)
-		return (cmdGenPkey(argc, argv, env));
-	else if (opts->cmdType == CMD_PKEY)
-		return (cmdPkey(argc, argv, env));
-	else if (opts->cmdType == CMD_PKEYUTL)
-		return (cmdPkeyutl(argc, argv, env));
-	else if (opts->cmdType == CMD_CERT)
-		return (cmdCert(argc, argv, env));
-	else if (opts->cmdType == CMD_SERVER)
-		return (cmdServer(argc, argv, env));
+	else {
+		for (i = 0; i < sizeof(g_cmdTable) / sizeof(g_cmdTable[0]); i++) {
+			if (g_cmdTable[i].type == opts->cmdType) {
+				return (g_cmdTable[i].func(argc, argv, env));
+			}
+		}
+		ft_dprintf(STDERR_FILENO, "ft_ssl: unknown command type\n");
+		return (1);
+	}
 	return (0);
 }
 

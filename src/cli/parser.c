@@ -95,7 +95,7 @@ static void	printUsage(void)
 	char	prevRoot[32];
 	char	currRoot[32];
 
-	ft_printf("Standard commands:\n\tgenpkey\n\tgenrsa\n\tgendsa\n\tpkey\n\trsa\n\tdsa\n\tpkeyutl\n\trsautl\n\tdsautl\n\tserver\n");
+	ft_printf("Standard commands:\n\tgenpkey\tgenrsa\tgendsa\n\tpkey\trsa\tdsa\n\tpkeyutl\trsautl\tdsautl\n\tcert\n\tserver\n\ttotp\n");
 	
 	ft_printf("\nMessage Digest commands:\n");
 	i = 0;
@@ -284,6 +284,12 @@ static int parseAlgorithm(const char *arg, t_sslOptions *opts)
 		return (0);
 	}
 
+	if (ft_strcmp(arg, "totp") == 0) {
+		opts->algo = ALGO_NONE;
+		opts->cmdType = CMD_TOTP;
+		return (0);
+	}
+
 	ft_dprintf(STDERR_FILENO, "ft_ssl: Error: '%s' is an invalid command.\n\n", arg);
 	printUsage();
 	return (1);
@@ -323,7 +329,7 @@ static int listCmd(int argc, char **argv)
 	int useColor = isatty(STDOUT_FILENO);
 	if (ft_strcmp(argv[2], "commands") == 0)
 	{
-		ft_printf("genpkey\ngenrsa\ngendsa\npkey\nrsa\ndsa\npkeyutl\nrsautl\ndsautl\ncert\nserver\n");
+		ft_printf("genpkey\ngenrsa\ngendsa\npkey\nrsa\ndsa\npkeyutl\nrsautl\ndsautl\ncert\nserver\ntotp\n");
 	}
 	else if (ft_strcmp(argv[2], "hashes") == 0)
 	{
@@ -386,7 +392,12 @@ int parseSslArgs(int argc, char **argv, t_sslOptions *opts)
 		return (0);
 	}
 
-	if (opts->cmdType == CMD_PKEY|| opts->cmdType == CMD_PKEYUTL || opts->cmdType == CMD_GENPKEY || opts->cmdType == CMD_CERT || opts->cmdType == CMD_SERVER)
+	if (opts->cmdType == CMD_PKEY
+			|| opts->cmdType == CMD_PKEYUTL
+			|| opts->cmdType == CMD_GENPKEY
+			|| opts->cmdType == CMD_CERT
+			|| opts->cmdType == CMD_SERVER
+			|| opts->cmdType == CMD_TOTP)
 		return (0); /* PKEY and PKEYUTL have their own argument parsing */
 
 	if (opts->cmdType == CMD_HASH)

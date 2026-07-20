@@ -95,4 +95,36 @@ int totpCreateUri(const char			*userEmail,
 				  const t_totpConfig	*config,
 				  char					*output,	size_t	outputSize);
 
+/**
+ * @brief Initializes a TOTP context from a TOTP URI.
+ *
+ * @param ctx Pointer to the TOTP context to initialize.
+ * @param uri The TOTP URI to parse (should start with "otpauth://totp/").
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int totpInitFromUri(t_totpCtx *ctx, const char *uri);
+
+/**
+ * @brief Generates a TOTP code from a TOTP URI for the given timestamp.
+ *
+ * @param uri The TOTP URI to parse (should start with "otpauth://totp/").
+ * @param timestamp The current timestamp in seconds since the epoch.
+ * @param code A buffer to store the generated TOTP code (should be at least 9 bytes for 8 digits + null terminator).
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int totpGenerateFromUri(const char *uri, uint64_t timestamp, char *code);
+
+/**
+ * @brief Verifies a TOTP code against a TOTP URI for the given timestamp.
+ *
+ * @param uri The TOTP URI to parse (should start with "otpauth://totp/").
+ * @param code The TOTP code to verify (as a null-terminated string).
+ * @param timestamp The current timestamp in seconds since the epoch.
+ *
+ * @return 1 if the code is valid, 0 if invalid, and -1 on error.
+ */
+int totpVerifyFromUri(const char *uri, const char *code, uint64_t timestamp);
+
 #endif /* TOTP_H */
