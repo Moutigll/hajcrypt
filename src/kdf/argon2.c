@@ -151,8 +151,6 @@ static uint32_t indexAlpha(const t_argon2Ctx	*ctx,
 			refAreaSize = ctx->blocksPerLane - ctx->segmentLength + ((pos->index == 0) ? -1 : 0);
 	}
 
-	if (refAreaSize < 0) refAreaSize = 0;
-
 	relPos = pseudoRand;
 	relPos = (relPos * relPos) >> 32;
 	if (refAreaSize > 0)
@@ -724,35 +722,35 @@ int argon2Encode(const t_argon2Ctx	*ctx,
 				 char				*output,
 				 size_t				outputSize)
 {
-	const char *type_str;
-	char salt_b64[256];
-	char hash_b64[256];
+	const char	*typeStr;
+	char		saltB64[256];
+	char		hashB64[256];
 	
 	if (!ctx || !hash || !output || outputSize == 0)
 		return (-1);
 	
 	/* Get type string */
 	switch (ctx->type) {
-		case ARGON2_D:  type_str = "argon2d"; break;
-		case ARGON2_I:  type_str = "argon2i"; break;
-		case ARGON2_ID: type_str = "argon2id"; break;
+		case ARGON2_D:  typeStr = "argon2d"; break;
+		case ARGON2_I:  typeStr = "argon2i"; break;
+		case ARGON2_ID: typeStr = "argon2id"; break;
 		default: return (-1);
 	}
 	
 	/* Base64 encode salt */
 	if (ctx->salt && ctx->saltLen > 0)
-		base64EncodeNoPad(ctx->salt, ctx->saltLen, salt_b64, sizeof(salt_b64));
+		base64EncodeNoPad(ctx->salt, ctx->saltLen, saltB64, sizeof(saltB64));
 	else
-		salt_b64[0] = '\0';
+		saltB64[0] = '\0';
 	
 	/* Base64 encode hash */
-	base64EncodeNoPad(hash, hashLen, hash_b64, sizeof(hash_b64));
+	base64EncodeNoPad(hash, hashLen, hashB64, sizeof(hashB64));
 	
 	/* Write encoded string */
 	if (ft_snprintf(output, outputSize, "$%s$v=%u$m=%u,t=%u,p=%u$%s$%s",
-				 type_str, ctx->version, ctx->memory, 
+				 typeStr, ctx->version, ctx->memory, 
 				 ctx->iterations, ctx->parallelism,
-				 salt_b64, hash_b64) >= (int)outputSize) {
+				 saltB64, hashB64) >= (int)outputSize) {
 		return (-1);
 	}
 	
@@ -762,16 +760,16 @@ int argon2Encode(const t_argon2Ctx	*ctx,
 
 static int parseUint(const char **ptr, unsigned int *result)
 {
-	char	*endptr;
+	char	*endPtr;
 	
 	if (!ptr || !*ptr || !result)
 		return (-1);
 	
-	*result = ft_strtoul(*ptr, &endptr, 10);
-	if (endptr == *ptr)  // Pas de chiffres trouvés
+	*result = ft_strtoul(*ptr, &endPtr, 10);
+	if (endPtr == *ptr)  // Pas de chiffres trouvés
 		return (-1);
 	
-	*ptr = endptr;
+	*ptr = endPtr;
 	return (0);
 }
 
@@ -780,11 +778,11 @@ int argon2Decode(const char		*encoded,
 				 uint8_t		*hash,
 				 size_t			*hashLen)
 {
-	char			type_str[16];
-	char			salt_b64[256];
-	char			hash_b64[256];
+	char			typeStr[16];
+	char			saltB64[256];
+	char			hashB64[256];
 	uint8_t			salt[64];
-	size_t			salt_len;
+	size_t			saltLen;
 	unsigned int	v, m, t, p;
 	const char		*ptr;
 	const char		*next;
@@ -799,15 +797,15 @@ int argon2Decode(const char		*encoded,
 	
 	next = ft_strchr(ptr, '$');
 	if (!next) return (-1);
-	ft_strlcpy(type_str, ptr, next - ptr + 1);
+	ft_strlcpy(typeStr, ptr, next - ptr + 1);
 	ptr = next + 1;
 	
 	/* Convert type string */
-	if (ft_strcmp(type_str, "argon2d") == 0)
+	if (ft_strcmp(typeStr, "argon2d") == 0)
 		type = ARGON2_D;
-	else if (ft_strcmp(type_str, "argon2i") == 0)
+	else if (ft_strcmp(typeStr, "argon2i") == 0)
 		type = ARGON2_I;
-	else if (ft_strcmp(type_str, "argon2id") == 0)
+	else if (ft_strcmp(typeStr, "argon2id") == 0)
 		type = ARGON2_ID;
 	else
 		return (-1);
@@ -843,21 +841,17 @@ int argon2Decode(const char		*encoded,
 	/* Extract the salt */
 	next = ft_strchr(ptr, '$');
 	if (!next) return (-1);
-	ft_strlcpy(salt_b64, ptr, next - ptr + 1);
+	ft_strlcpy(saltB64, ptr, next - ptr + 1);
 	ptr = next + 1;
 	
 	/* Extract the hash (the rest) */
-	ft_strlcpy(hash_b64, ptr, sizeof(hash_b64));
+	ft_strlcpy(hashB64, ptr, sizeof(hashB64));
 	
 	/* Decode salt */
-	salt_len = base64Decode(salt_b64, salt);
-	if (salt_len < 0)
-		return (-1);
+	saltLen = base64Decode(saltB64, salt);
 	
 	/* Decode hash */
-	*hashLen = base64Decode(hash_b64, hash);
-	if (*hashLen < 0)
-		return (-1);
+	*hashLen = base64Decode(hashB64, hash);
 	
 	/* Initialize context with parsed parameters */
 	ft_bzero(ctx, sizeof(t_argon2Ctx));
@@ -869,7 +863,7 @@ int argon2Decode(const char		*encoded,
 	ctx->outputLen = 32;
 	ctx->flags = ARGON2_FLAG_CLEAR_MEMORY;
 
-	if (argon2SetSalt(ctx, salt, salt_len) != 0)
+	if (argon2SetSalt(ctx, salt, saltLen) != 0)
 		return (-1);
 	
 	return (0);
@@ -878,15 +872,15 @@ int argon2Decode(const char		*encoded,
 int argon2Verify(const char *encoded, const uint8_t *password, size_t passLen)
 {
 	t_argon2Ctx	ctx;
-	uint8_t		expected_hash[64];
-	uint8_t		computed_hash[64];
-	size_t		expected_len = sizeof(expected_hash);
+	uint8_t		expectedHash[64];
+	uint8_t		computedHash[64];
+	size_t		expectedLen = sizeof(expectedHash);
 	int			ret;
 	
 	if (!encoded || !password || passLen == 0)
 		return (-1);
 	
-	if (argon2Decode(encoded, &ctx, expected_hash, &expected_len) != 0) {
+	if (argon2Decode(encoded, &ctx, expectedHash, &expectedLen) != 0) {
 		return (-1);
 	}
 
@@ -895,13 +889,13 @@ int argon2Verify(const char *encoded, const uint8_t *password, size_t passLen)
 		return (-1);
 	}
 
-	if (argon2Hash(&ctx, computed_hash, expected_len) != 0) {
+	if (argon2Hash(&ctx, computedHash, expectedLen) != 0) {
 		argon2Free(&ctx);
 		return (-1);
 	}
 
-	ret = argon2SecureCompare(computed_hash, expected_len,
-							  expected_hash, expected_len);
+	ret = argon2SecureCompare(computedHash, expectedLen,
+							  expectedHash, expectedLen);
 	
 	argon2Free(&ctx);
 

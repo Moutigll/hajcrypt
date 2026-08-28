@@ -101,7 +101,53 @@ void cleanupSslOptions(t_sslOptions *opts)
 	opts->password = NULL;
 }
 
-char *promptPassword(const char *promptMsg)
+#ifdef _WIN32
+#include <windows.h>
+#include <conio.h>
+#include <stdio.h>
+
+static char *winGetpass(const char *prompt)
+{
+	char	*pass;
+	int		ch;
+	size_t	i = 0;
+	size_t	maxLen = 1024;
+
+	pass = malloc(maxLen);
+	if (!pass)
+		return (NULL);
+
+	fputs(prompt, stdout);
+	fflush(stdout);
+
+	while (1) {
+		ch = _getch();
+		if (ch == '\r' || ch == '\n') {
+			break;
+		} else if (ch == '\b' || ch == 127) {
+			if (i > 0) {
+				i--;
+				fputs("\b \b", stdout);
+				fflush(stdout);
+			}
+		} else if (i < maxLen - 1) {
+			pass[i++] = (char)ch;
+			fputs("*", stdout);
+			fflush(stdout);
+		} else {
+			ft_printf("\nPassword too long. Max length is %zu characters.\n", maxLen - 1);
+			free(pass);
+			return (NULL);
+		}
+	}
+	pass[i] = '\0';
+	fputs("\n", stdout);
+	fflush(stdout);
+	return (pass);
+}
+#endif /* _WIN32 */
+
+char *promptPassword(const char *promptMsg, int verify)
 {
 	char	*pass1;
 	char	*pass2;
@@ -109,29 +155,44 @@ char *promptPassword(const char *promptMsg)
 	size_t	len2;
 
 	while (1) {
+#ifdef _WIN32
+		pass1 = winGetpass(promptMsg);
+#else
 		pass1 = getpass(promptMsg);
+#endif
 		if (!pass1)
 			return (NULL);
 
 		len1 = ft_strlen(pass1);
 		if (len1 == 0) {
 			ft_printf("Password cannot be empty.\n");
+			free(pass1);
 			continue;
 		}
 
-		pass2 = getpass("confirm password: ");
-		if (!pass2) {
-			return (NULL);
-		}
+		if (verify) {
+#ifdef _WIN32
+			pass2 = winGetpass("Confirm password: ");
+#else
+			pass2 = getpass("confirm password: ");
+#endif
+			if (!pass2) {
+				free(pass1);
+				return (NULL);
+			}
+		} else
+			pass2 = pass1;
 
 		len2 = ft_strlen(pass2);
-		if (len1 == len2 && ft_memcmp(pass1, pass2, len1) == 0) {
+		if (len1 == len2 && ft_memcmp(pass1, pass2, len1) == 0)
 			return (ft_strdup(pass1));
-		}
 
 		ft_printf("Passwords don't match. Try again.\n");
 		secureZeroMemory(pass1, len1);
 		secureZeroMemory(pass2, len2);
+		free(pass1);
+		if (pass2 != pass1)
+			free(pass2);
 	}
 }
 
@@ -298,7 +359,7 @@ int promptForCipherParams(t_sslOptions *opts)
 
 	ft_bzero(&params, sizeof(params));
 
-	params.password = promptPassword("enter encryption password: ");
+	params.password = promptPassword("enter encryption password: ", 1);
 	if (!params.password) return (-1);
 
 	if (promptSalt(params.salt, &params.saltLen) != 0) {

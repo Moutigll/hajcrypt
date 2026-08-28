@@ -6,7 +6,7 @@
 
 #include "../../includes/consts/consts.h"
 
-const static t_header headers[] = {
+static const t_header headers[] = {
 	{ "md5", generateMd5Header },
 	{ "sha", generateShaHeader },
 	{ "whirlpool", generateWhirlpoolHeader },

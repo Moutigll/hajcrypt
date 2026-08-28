@@ -250,7 +250,7 @@ int	cmdGenPkey(int argc, char **argv, char **env)
 	}
 	if (cipher && !opts.passout)
 	{
-		password = promptPassword("Enter pass phrase: ");
+		password = promptPassword("Enter pass phrase: ", 1);
 		if (!password)
 		{
 			ft_dprintf(STDERR_FILENO,

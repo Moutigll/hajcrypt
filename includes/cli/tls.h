@@ -72,7 +72,7 @@ typedef struct {
 	int				epollFd;
 	int				serverFd;
 	t_client		clients[MAX_CLIENTS];
-	size_t			numCLients;
+	size_t			numClients;
 	t_tlsConfig		config;
 	t_serverOptions	opts;
 	int				running;

@@ -96,7 +96,7 @@ static char *getPasswordSpec(const char *arg, t_passType *type_out)
 
 char *getPassword(const char *arg, char **env)
 {
-	t_passType	type;
+	t_passType	type = PASSWORD_TYPE_INTERACTIVE;
 	char		*value;
 	char		*password = NULL;
 
@@ -132,7 +132,7 @@ char *getPassword(const char *arg, char **env)
 				ft_dprintf(STDERR_FILENO, "Cannot read password from stdin\n");
 			break;
 		case PASSWORD_TYPE_INTERACTIVE:
-			password = promptPassword("enter password: ");
+			password = promptPassword("enter password: ", 1);
 			break;
 	}
 	return (password);

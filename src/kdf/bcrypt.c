@@ -339,9 +339,9 @@ static void bcryptEncryptMagic(const t_bcryptCtx *ctx, uint8_t output[24])
 
 
 int bcryptHash(const char		*password,
-			   const uint8_t	*salt,
+			   const uint8_t	salt[16],
 			   uint32_t			cost,
-			   char				*output)
+			   char				output[BCRYPT_STRING_LEN])
 {
 	t_bcryptCtx	ctx;
 	uint8_t		hash[24];
@@ -448,10 +448,10 @@ int bcryptSimple(const char *password, uint32_t cost, char output[BCRYPT_STRING_
 	return (bcryptHash(password, salt, cost, output));
 }
 
-int bcryptHashWithSalt(const char *password,
-					   const char *saltStr,
-					   uint32_t   cost,
-					   char	   *output)
+int bcryptHashWithSalt(const char	*password,
+					   const char	*saltStr,
+					   uint32_t		cost,
+					   char			output[BCRYPT_STRING_LEN])
 {
 	uint8_t	salt[16];
 

@@ -6,6 +6,10 @@
 #include "../../includes/x509/pem.h"
 #include "../includes/handshake.h"
 
+#ifdef _WIN32
+	#include <winsock2.h>
+#endif
+
 #include "../includes/btls.h"
 
 void tlsSetError(t_tlsCtx *ctx, int errCode, const char *errMsg)
@@ -309,7 +313,12 @@ void tlsFreeConnection(t_tlsCtx *ctx)
 	tlsHandshakeFree(&ctx->handshake);
 	free(ctx->errorMsg);
 	if (ctx->io.socket >= 0)
+#ifdef _WIN32
+		closesocket(ctx->io.socket);
+#else
 		close(ctx->io.socket);
+#endif
+	ctx->io.socket = -1;
 	ft_bzero(ctx, sizeof(t_tlsCtx));
 }
 

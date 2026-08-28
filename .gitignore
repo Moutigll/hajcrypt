@@ -10,3 +10,4 @@ ft_ssl
 *.crt
 *.pem
 *.key
+ft_ssl.exe

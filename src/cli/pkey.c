@@ -227,7 +227,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 
 		ft_dprintf(STDERR_FILENO,
 			"ft_ssl: %s: password required for encrypted key\n", def ? def->name : "pkey");
-		promptPass = promptPassword("Enter password for encrypted key: ");
+		promptPass = promptPassword("Enter password for encrypted key: ", 0);
 		if (!promptPass)
 		{
 			ft_dprintf(STDERR_FILENO,
@@ -338,7 +338,7 @@ int	cmdPkey(int argc, char **argv, char **env)
 			if (opt.passout)
 				encPass = getPassword(opt.passout, env);
 			else
-				encPass = promptPassword("Enter PEM pass phrase: ");
+				encPass = promptPassword("Enter PEM pass phrase: ", 1);
 			if (!encPass)
 			{
 				ft_dprintf(STDERR_FILENO,

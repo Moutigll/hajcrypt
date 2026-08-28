@@ -51,7 +51,7 @@ char *getPassword(const char *arg, char **env);
  * @return A dynamically allocated string containing the entered password on success, or NULL on failure.
  *         The caller is responsible for freeing the returned string.
  */
-char *promptPassword(const char *prompt);
+char *promptPassword(const char *prompt, int verify);
 
 /**
  * @brief Prompts the user to input cipher parameters and stores them in the provided options structure.

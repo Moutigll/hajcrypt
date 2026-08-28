@@ -480,7 +480,7 @@ static t_pkey *loadKeyFromFile(const char *file)
 	ret = pkeyFromPem((const char *)pem, pkey, 1, NULL);	/* want private key, no initial password */
 	if (ret == 2) {
 		/* password required, prompt interactively */
-		char *password = promptPassword("Enter password for encrypted key: ");
+		char *password = promptPassword("Enter password for encrypted key: ", 0);
 		if (password) {
 			ret = pkeyFromPem((const char *)pem, pkey, 1, password);
 			secureZeroMemory(password, ft_strlen(password));

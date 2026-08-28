@@ -308,7 +308,7 @@ void aesDecryptBlock(const uint8_t *in, uint8_t *out,
 /* ---------- OPTIMIZED IMPLEMENTATION (T-tables) ---------- */
 #else
 
-void aesEncryptBlock(const uint8_t *in, uint8_t *out, const uint32_t *roundKeys, uint32_t nbRounds)
+void aesEncryptBlock(const uint8_t in[AES_BLOCK_SIZE], uint8_t out[AES_BLOCK_SIZE], const uint32_t *roundKeys, uint32_t nbRounds)
 {
 	uint32_t		s0, s1, s2, s3, t0, t1, t2, t3;
 	const uint32_t	*rk = roundKeys;
@@ -379,7 +379,7 @@ void aesEncryptBlock(const uint8_t *in, uint8_t *out, const uint32_t *roundKeys,
 	out[14] = (t3 >> 8) & 0xFF;   out[15] = t3 & 0xFF;
 }
 
-void aesDecryptBlock(const uint8_t *in, uint8_t *out,
+void aesDecryptBlock(const uint8_t in[AES_BLOCK_SIZE], uint8_t out[AES_BLOCK_SIZE],
 					 const uint32_t *roundKeys,
 					 uint32_t nbRounds)
 {

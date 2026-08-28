@@ -9,7 +9,6 @@
 #elif defined(_WIN32)
 # include <windows.h>
 # include <bcrypt.h>
-# pragma comment(lib, "bcrypt.lib")
 #else
 # error "Unsupported OS"
 #endif
@@ -21,10 +20,10 @@ int	hajSecRandBytes(uint8_t *buf, size_t len)
 	if (!buf || len == 0)
 		return (-1);
 
+	
+#ifdef __linux__
 	ssize_t	readBytes = 0;
 	size_t	total = 0;
-
-#ifdef __linux__
 	while (total < len)
 	{
 		readBytes = getrandom(buf + total, len - total, 0);

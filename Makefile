@@ -1,9 +1,14 @@
 NAME		= ft_ssl
 BUILD_DIR	= build
 
-ARCH := $(shell uname -m)
+# --- Cross-compilation support ---
+.DEFAULT_GOAL := all
+WIN32 :=
+WIN64 :=
+CROSS_WIN :=
+include hajlib/cross.mk
 
-CONST_EXEC	= $(BUILD_DIR)/genConst
+CONST_EXEC	= $(BUILD_DIR)/genConst$(TARGET_EXT)
 
 LIB_NAME	= libhajcrypt
 BTLS_PATH	= tls
@@ -11,13 +16,32 @@ BTLS_LIBA	= $(BTLS_PATH)/libbtls.a
 HLIB_PATH	= hajlib
 HLIB_LIBA	= $(HLIB_PATH)/libhaj.a
 
-CC			= clang
 BASE_FLAGS	= -Wall -Wextra -Werror
 OPT_FLAGS	?= -O3
 SAN_FLAGS	?=
 ASM_FLAGS	?=
-CFLAGS		= $(BASE_FLAGS) $(OPT_FLAGS) $(SAN_FLAGS)
 
+ifeq ($(CROSS_COMPILING),1)
+	BASE_FLAGS := $(filter-out -Werror,$(BASE_FLAGS))
+	OPT_FLAGS := $(filter-out -march=native,$(OPT_FLAGS))
+# Compile as a windows console application when cross-compiling for Windows
+	LDFLAGS += -mconsole
+# Add bcrypt for random number generation on Windows
+	LDFLAGS += -lbcrypt
+	ARCH_FLAGS :=
+else
+	ARCH := $(shell uname -m 2>/dev/null || echo x86_64)
+	ifeq ($(ARCH),x86_64)
+		ARCH_FLAGS := -march=native
+	else ifeq ($(ARCH),aarch64)
+		ARCH_FLAGS := -march=armv8.2-a+crypto
+		ASM_FLAGS += $(ARCH_FLAGS)
+	else
+		ARCH_FLAGS :=
+	endif
+endif
+
+CFLAGS		+= $(BASE_FLAGS) $(OPT_FLAGS) $(SAN_FLAGS) $(ASM_FLAGS)
 INCLUDES	= -I./includes -I$(HLIB_PATH)/include
 
 include sources.mk
@@ -44,8 +68,6 @@ ZSHRC			:= $(HOME)/.zshrc
 # Check if bash-completion is installed
 HAS_BASH_COMPLETION	:= $(shell command -v _init_completion 2>/dev/null || echo "no")
 
-LIB_OBJ = $(LIB_SRC_OBJ)
-
 # --- ANSI colors ---
 GREEN	= \033[0;32m
 YELLOW	= \033[1;33m
@@ -53,18 +75,12 @@ BLUE	= \033[0;34m
 RED		= \033[0;31m
 RESET	= \033[0m
 
+# --- Targets ---
 all: $(NAME)
 
 lib: $(LIB_NAME).a
 
 const: $(CONST_EXEC) $(CONST_HEADERS)
-
-# --- Compile with optimized assembly for architecture ---
-ifeq ($(ARCH),aarch64)
-LIB_OBJ += $(LIB_ASM_ARM_OBJ)
-ASM_FLAGS := -march=armv8.2-a+crypto
-CFLAGS += $(ASM_FLAGS)
-endif
 
 # --- Build hajlib ---
 $(HLIB_LIBA):
@@ -85,7 +101,7 @@ $(BUILD_DIR)/consts/%.o: $(CONST_DIR)/%.c
 
 $(CONST_EXEC): $(HLIB_LIBA) $(CONST_OBJ)
 	@echo -e "$(GREEN)Linking genConst executable...$(RESET)"
-	$(CC) $(BASE_FLAGS) $(OPT_FLAGS) $(INCLUDES) -o $@ $(CONST_OBJ) $(HLIB_LIBA)
+	$(CC) $(BASE_FLAGS) $(OPT_FLAGS) $(INCLUDES) -o $@ $(CONST_OBJ) $(HLIB_LIBA) $(LDFLAGS)
 	@echo -e "$(GREEN)Executable $@ generated.$(RESET)"
 
 $(CONST_HEADERS): $(CONST_EXEC)
@@ -105,10 +121,10 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 	$(CC) $(BASE_FLAGS) $(ASM_FLAGS) -g $(INCLUDES) -c $< -o $@
 
 # --- Build static library ---
-$(LIB_NAME).a: $(CONST_HEADERS) $(LIB_OBJ)
+$(LIB_NAME).a: $(CONST_HEADERS) $(LIB_SRC_OBJ)
 	@echo -e "$(GREEN)Building static library $@...$(RESET)"
 	@mkdir -p $(BUILD_DIR)
-	ar rcs $@ $(LIB_OBJ)
+	$(AR) rcs $@ $(LIB_SRC_OBJ)
 	@echo -e "$(GREEN)Library $@ generated.$(RESET)"
 
 # --- Build executable ---
@@ -118,7 +134,8 @@ $(NAME): $(HLIB_LIBA) $(LIB_NAME).a $(BTLS_LIBA) $(CLI_OBJ)
 		$(CLI_OBJ) \
 		$(BTLS_LIBA) \
 		$(LIB_NAME).a \
-		$(HLIB_LIBA)
+		$(HLIB_LIBA) \
+		$(LDFLAGS)
 	@echo -e "$(GREEN)Executable $(NAME) ready.$(RESET)"
 
 btls: $(BTLS_LIBA)
@@ -140,6 +157,7 @@ clean:
 	$(MAKE) -C $(BTLS_PATH) clean
 	rm -f $(CONST_HEADERS)
 	rm -rf $(BUILD_DIR)
+	rm -f $(CONST_EXEC)
 
 fclean: clean
 	rm -f $(NAME)
@@ -228,7 +246,7 @@ install-config:
 				printf "export PATH=\"\$$HOME/.local/bin:\$$PATH\"\n" >> $(BASHRC); \
 				if [ "$(HAS_BASH_COMPLETION)" = "no" ]; then \
 					printf "if [ -f $(BASH_COMPLETION_USER_DIR)/$(NAME) ]; then\n" >> $(BASHRC); \
-					printf "    source $(BASH_COMPLETION_USER_DIR)/$(NAME)\n" >> $(BASHRC); \
+					printf "	source $(BASH_COMPLETION_USER_DIR)/$(NAME)\n" >> $(BASHRC); \
 					printf "fi\n" >> $(BASHRC); \
 				fi; \
 				printf "$(GREEN)Added configuration to $(BASHRC)$(RESET)\n"; \

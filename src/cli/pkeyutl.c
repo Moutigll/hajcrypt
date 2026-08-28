@@ -153,7 +153,7 @@ static int loadPkeyKey(const char	*keyFile,
 			free(password);
 			password = NULL;
 		}
-		password = promptPassword("Enter password for encrypted key: ");
+		password = promptPassword("Enter password for encrypted key: ", 0);
 		if (!password)
 		{
 			FT_PKEYUTL_ERR("failed to get password\n");

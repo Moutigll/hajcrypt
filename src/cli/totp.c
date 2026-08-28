@@ -5,10 +5,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <conio.h>
+#else
+#include <sys/select.h>
+#include <termios.h>
+#include <unistd.h>
+#endif
+
 #include "../../hajlib/include/hajlib.h" /* IWYU pragma: keep */
+#include "../../includes/cipher/base64.h"
 #include "../../includes/utils/dispatch.h"
 #include "../../includes/utils/utils.h"
 #include "../../includes/totp.h"
+#include "../../includes/cli/password.h"
+
 #include "../../includes/cli/totp.h"
 
 static volatile sig_atomic_t g_running = 1;
@@ -85,17 +97,15 @@ static void promptInt(const char *prompt, int *val, int def)
 static void interactiveFill(t_totpOpts *opts)
 {
 	char buf[256];
-	char secretBuf[128];
+	char *secretBuf = NULL;
 
 	if (!opts->secret) {
-		ft_printf("Do you want to provide a secret (Base32) or generate one? (p/g) [g]: ");
-		fflush(stdout);
-		if (fgets(buf, sizeof(buf), stdin) != NULL) {
-			if (buf[0] == 'p' || buf[0] == 'P') {
-				promptString("Enter secret (Base32)", secretBuf, sizeof(secretBuf), NULL);
-				if (secretBuf[0])
-					opts->secret = ft_strdup(secretBuf);
-			}
+		secretBuf = promptPassword("Enter secret (Base32) or leave empty for random: ", 0);
+		if (secretBuf && secretBuf[0] != '\0')
+			opts->secret = secretBuf;
+		else {
+			free(secretBuf);
+			opts->secret = NULL; /* will generate random later */
 		}
 	}
 
@@ -213,6 +223,142 @@ static int parseTotpArgs(int argc, char **argv, t_totpOpts *opts)
 	return (1);
 }
 
+/* ---------- clipboard, terminal & mouse helpers ---------- */
+
+static void copyToClipboard(const char *text)
+{
+	int copied = 0;
+
+#ifdef __linux__
+	/* Try native Wayland or X11 tools */
+	const char *display = getenv("WAYLAND_DISPLAY");
+	char cmd[512];
+	int ret;
+	if (display && display[0] != '\0')
+		ft_snprintf(cmd, sizeof(cmd), "echo -n '%s' | wl-copy 2>/dev/null", text);
+	else
+		ft_snprintf(cmd, sizeof(cmd), "echo -n '%s' | xclip -selection clipboard 2>/dev/null", text);
+	ret = system(cmd);
+	if (ret == 0) copied = 1;
+#elif __APPLE__
+	char cmd[512];
+	ft_snprintf(cmd, sizeof(cmd), "echo -n '%s' | pbcopy", text);
+	if (system(cmd) == 0) copied = 1;
+#elif _WIN32
+	if (OpenClipboard(NULL)) {
+		EmptyClipboard();
+		size_t len = strlen(text) + 1;
+		HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
+		if (hMem) {
+			memcpy(GlobalLock(hMem), text, len);
+			GlobalUnlock(hMem);
+			SetClipboardData(CF_TEXT, hMem);
+		}
+		CloseClipboard();
+		copied = 1;
+	}
+#endif
+
+	/* Fallback: OSC 52 if supported by terminal */
+	if (!copied) {
+		char b64[512];
+		int ret = base64Encode((const unsigned char *)text, strlen(text), b64, sizeof(b64));
+		if (ret > 0) {
+			ft_printf("\033]52;c;%s\007", b64);
+			fflush(stdout);
+		}
+	}
+}
+
+/* --- Terminal raw mode helpers (Unix/Linux only) --- */
+#ifndef _WIN32
+
+static struct termios g_origTermios;
+static int g_termiosSaved = 0;
+
+static void disableRawMode(void)
+{
+	if (g_termiosSaved)
+		tcsetattr(STDIN_FILENO, TCSAFLUSH, &g_origTermios);
+}
+
+static void enableRawMode(void)
+{
+	struct termios raw;
+
+	if (tcgetattr(STDIN_FILENO, &g_origTermios) == -1)
+		return;
+	g_termiosSaved = 1;
+	atexit(disableRawMode);
+	raw = g_origTermios;
+	raw.c_lflag &= ~(ICANON | ECHO);
+	raw.c_cc[VMIN] = 0;
+	raw.c_cc[VTIME] = 0;
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
+static char readInputEvent(void)
+{
+	char c;
+
+	if (read(STDIN_FILENO, &c, 1) != 1)
+		return (0);
+
+	if (c != '\033')
+		return (c);
+
+	char c2;
+	if (read(STDIN_FILENO, &c2, 1) != 1 || c2 != '[')
+		return (0);
+
+	char c3;
+	if (read(STDIN_FILENO, &c3, 1) != 1)
+		return (0);
+
+	if (c3 == '<') {
+		char buf[32];
+		int  i = 0;
+		char ch;
+
+		while (i < (int)sizeof(buf) - 1 && read(STDIN_FILENO, &ch, 1) == 1) {
+			if (ch == 'M' || ch == 'm') {
+				int btn, x, y;
+				buf[i] = '\0';
+				if (sscanf(buf, "%d;%d;%d", &btn, &x, &y) == 3
+					&& ch == 'M' && btn == 0)
+					return ('M');
+				return (0);
+			}
+			buf[i++] = ch;
+		}
+		return (0);
+	}
+
+	return (0);
+}
+
+#endif
+
+static void enableMouseTracking(void)
+{
+#ifndef _WIN32
+	ft_printf("\033[?1000h");
+	ft_printf("\033[?1006h");
+	fflush(stdout);
+#endif
+}
+
+static void disableMouseTracking(void)
+{
+#ifndef _WIN32
+	ft_printf("\033[?1006l");
+	ft_printf("\033[?1000l");
+	fflush(stdout);
+#endif
+}
+
+/* ---------- Main command ---------- */
+
 int cmdTotp(int argc, char **argv, char **env)
 {
 	t_totpOpts		opts;
@@ -317,19 +463,91 @@ int cmdTotp(int argc, char **argv, char **env)
 generation:
 	if (opts.live) {
 		signal(SIGINT, sigintHandler);
+
+#ifndef _WIN32
+		enableRawMode();
+#endif
+		enableMouseTracking();
+
+		uint64_t now = (uint64_t)time(NULL);
+		long remaining;
+		static char prev_code[16] = "";
+		char c = 0;
+
 		while (g_running) {
-			uint64_t now = (uint64_t)time(NULL);
+			now = (uint64_t)time(NULL);
 			if (totpGenerate(&ctx, now, code) != 0) {
 				ft_dprintf(STDERR_FILENO, "ft_ssl: totp: generation error\n");
+				disableMouseTracking();
+#ifndef _WIN32
+				disableRawMode();
+#endif
 				return (1);
 			}
-			if (!first) ft_printf("\r");
-			ft_printf("%s  (expires in %lds)  [Press Ctrl+C to exit]",
-			          code, (long)(ctx.config.period - (now % ctx.config.period)));
+			remaining = (long)(ctx.config.period - (now % ctx.config.period));
+
+			/* Update display */
+			if (!first) {
+				if (ft_strcmp(code, prev_code) != 0) {
+					ft_printf("\r%s  (expires in %2lds)  [Click to copy]  [Ctrl+C to exit]",
+					          code, remaining);
+					ft_strlcpy(prev_code, code, sizeof(prev_code));
+				} else {
+					int col = ft_strlen(code) + 15;
+					ft_printf("\033[%dG%2lds", col, remaining);
+				}
+			} else {
+				ft_printf("%s  (expires in %2lds)  [Click to copy]  [Ctrl+C to exit]",
+				          code, remaining);
+				ft_strlcpy(prev_code, code, sizeof(prev_code));
+				first = 0;
+			}
 			fflush(stdout);
-			first = 0;
-			sleep(1);
+
+#ifndef _WIN32
+			/* Wait 1 second or until a key is pressed (Unix) */
+			fd_set fds;
+			struct timeval tv = {1, 0};
+			FD_ZERO(&fds);
+			FD_SET(STDIN_FILENO, &fds);
+			int sel = select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
+
+			if (sel > 0) {
+				c = readInputEvent();
+				if (c == 'c' || c == 'C' || c == 'M') {
+					copyToClipboard(code);
+					ft_printf("\r%s  (expires in %2lds)  [\u2713 Copied!]  [Ctrl+C to exit]",
+					          code, remaining);
+					fflush(stdout);
+					sleep(1);
+				} else if (c == 'q' || c == 'Q') {
+					g_running = 0;
+					break;
+				}
+			}
+#else
+			/* Windows version */
+			Sleep(1000);
+			if (_kbhit()) {
+				c = _getch();
+				if (c == 'c' || c == 'C') {
+					copyToClipboard(code);
+					ft_printf("\r%s  (expires in %2lds)  [Copied!]  [Ctrl+C to exit]",
+					          code, remaining);
+					fflush(stdout);
+					Sleep(1000);
+				} else if (c == 'q' || c == 'Q') {
+					g_running = 0;
+					break;
+				}
+			}
+#endif
 		}
+
+		disableMouseTracking();
+#ifndef _WIN32
+		disableRawMode();
+#endif
 		ft_printf("\n");
 		secureZeroMemory(code, sizeof(code));
 		secureZeroMemory(secretBuf, sizeof(secretBuf));

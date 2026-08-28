@@ -1,6 +1,20 @@
+#define _GNU_SOURCE
 #include <errno.h>
 #include <string.h>
-#include <sys/socket.h>
+
+
+#ifdef _WIN32
+	#include <windows.h>
+	
+	/* Définir __errno_location pour MinGW */
+	int *__errno_location(void) {
+		static int errno_value = 0;
+		errno_value = GetLastError();
+		return &errno_value;
+	}
+#else
+	#include <sys/socket.h>
+#endif
 
 #include "../../hajlib/include/hprintf.h"
 #include "../../hajlib/include/hmemory.h"
@@ -71,7 +85,7 @@ ssize_t	tlsIoReadRaw(t_tlsIoctx *io, uint8_t *buf, size_t len)
 
 	if (!io || !buf) return (-1);
 
-	n = recv(io->socket, buf, len, 0);
+	n = recv(io->socket, (void *)buf, len, 0);
 	if (n < 0) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK) { 
 			io->ioError = TLS_ERR_WANT_READ;
@@ -94,7 +108,7 @@ ssize_t	tlsIoWriteRaw(t_tlsIoctx *io, const uint8_t *buf, size_t len)
 
 	if (!io || !buf) return (-1);
 
-	n = send(io->socket, buf, len, 0);
+	n = send(io->socket,(const void *)buf, len, 0);
 	if (n < 0) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
 			io->ioError = TLS_ERR_WANT_WRITE;

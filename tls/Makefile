@@ -8,19 +8,24 @@ OBJ_DIR		= obj
 HAJCRYPT_DIR	= ..
 HAJLIB_DIR		= $(HAJCRYPT_DIR)/hajlib
 
-CC			= gcc
+# --- Cross-compilation support ---
+include ../hajlib/cross.mk
+
 CFLAGS		= -O3 -Wall -Wextra -Werror -pedantic
 CPPFLAGS	= -I$(INC_DIR) \
 			  -I$(HAJCRYPT_DIR)/includes \
 			  -I$(HAJLIB_DIR)/include
-AR			= ar rcs
+
+ifeq ($(CROSS_COMPILING),1)
+    CFLAGS := $(filter-out -Werror -pedantic,$(CFLAGS))
+endif
 
 #CFLAGS		+= -fsanitize=address -fno-omit-frame-pointer
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(AR) $@ $^
+	$(AR) rcs $@ $^
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)

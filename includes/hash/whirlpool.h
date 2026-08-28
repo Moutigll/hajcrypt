@@ -67,7 +67,7 @@ void whirlpoolHash(const uint8_t *data, size_t len, uint8_t *digest);
  * @param state - pointer to the 512-bit (8 × 64-bit) state array to be transformed
  * @param block - pointer to the 512-bit (64-byte) input block to be processed
  */
-void whirlpoolTransform(uint64_t *state, const uint8_t *block);
+void whirlpoolTransform(uint64_t state[8], const uint8_t block[64]);
 
 /**
  * @brief Optimized version of the Whirlpool transformation using T-tables.
@@ -77,6 +77,6 @@ void whirlpoolTransform(uint64_t *state, const uint8_t *block);
  * @param H - pointer to the 512-bit (8 × 64-bit) state array to be transformed
  * @param block - pointer to the 512-bit (64-byte) input block to be processed
  */
-void whirlpoolTransformOpt(uint64_t *H, const uint8_t *block);
+void whirlpoolTransformOpt(uint64_t H[8], const uint8_t block[64]);
 
 #endif /* HAJCRYPT_WHIRLPOOL_H */

@@ -1,9 +1,25 @@
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+	#define _GNU_SOURCE
+#endif
 #include <stdio.h>
 #include <signal.h>
-#include <sys/epoll.h>
-#include <netinet/in.h>
 #include <errno.h>
+#include <time.h>
+#include <stdint.h>
+
+#ifdef _WIN32
+	#include <winsock2.h>
+	#include <ws2tcpip.h>
+	#include <windows.h>
+#else
+	#include <sys/epoll.h>
+	#include <netinet/in.h>
+	#include <arpa/inet.h>
+	#include <fcntl.h>
+	#include <unistd.h>
+	#include <sys/socket.h>
+	#include <sys/types.h>
+#endif
 
 #include "../../hajlib/include/hajlib.h" /* IWYU pragma: keep */
 #include "../../includes/cli/password.h"
@@ -16,6 +32,170 @@ static int g_debug_state = 0;
 static int g_debug_trace = 0;
 
 static t_server g_server;
+
+#ifdef _WIN32
+	/* Redefine linux-specific functions and types for Windows.
+	 * Moved here (after tls.h and g_server) because this shim needs
+	 * MAX_CLIENTS and g_server, which aren't available earlier in the file. */
+	#ifndef EPOLLIN
+		#define EPOLLIN		0x001
+		#define EPOLLOUT	0x004
+		#define EPOLLERR	0x008
+		#define EPOLLHUP	0x010
+		#define EPOLLET		0x80000000
+	#endif
+	#ifndef EPOLL_CTL_ADD
+		#define EPOLL_CTL_ADD	1
+		#define EPOLL_CTL_MOD	2
+		#define EPOLL_CTL_DEL	3
+	#endif
+	#ifndef EPOLL_CLOEXEC
+		#define EPOLL_CLOEXEC	0
+	#endif
+	#ifndef SOCK_NONBLOCK
+		#define SOCK_NONBLOCK	0
+		#define SOCK_CLOEXEC	0
+	#endif
+
+	/* Redefine epoll_event structure for Windows.
+	 * data is now a union (like the real epoll_event) so that
+	 * events[i].data.ptr compiles, matching the rest of the code. */
+	typedef struct epoll_event {
+		uint32_t	events;
+		union {
+			void	*ptr;
+		}		data;
+	} epoll_event;
+
+	/* Redefine close for Windows. Defined only now (after windows.h,
+	 * hajlib.h and friends are already parsed) so it can no longer
+	 * rewrite an unrelated close() prototype pulled in by those
+	 * headers (e.g. via <io.h>) into a conflicting closesocket() one. */
+	#ifdef close
+		#undef close
+	#endif
+	#define close(fd) closesocket(fd)
+
+	/* Static storage for Windows select() event loop */
+	static fd_set g_readfds, g_writefds, g_exceptfds;
+	static int g_maxfd = 0;
+
+	/* Windows select() based epoll implementation */
+	static int epoll_create1(int flags) {
+		(void)flags;
+		FD_ZERO(&g_readfds);
+		FD_ZERO(&g_writefds);
+		FD_ZERO(&g_exceptfds);
+		g_maxfd = 0;
+		return (0); /* Return dummy epoll fd */
+	}
+
+	static int epoll_ctl(int epfd, int op, int fd, struct epoll_event *ev) {
+		(void)epfd;
+		if (op == EPOLL_CTL_ADD || op == EPOLL_CTL_MOD) {
+			if (ev->events & EPOLLIN)
+				FD_SET(fd, &g_readfds);
+			if (ev->events & EPOLLOUT)
+				FD_SET(fd, &g_writefds);
+			if (ev->events & EPOLLERR)
+				FD_SET(fd, &g_exceptfds);
+			if (fd > g_maxfd)
+				g_maxfd = fd;
+		} else if (op == EPOLL_CTL_DEL) {
+			FD_CLR(fd, &g_readfds);
+			FD_CLR(fd, &g_writefds);
+			FD_CLR(fd, &g_exceptfds);
+			/* Recalculate maxfd if needed */
+			if (fd == g_maxfd) {
+				g_maxfd = 0;
+				for (int i = 0; i < MAX_CLIENTS; i++) {
+					if (g_server.clients[i].fd >= 0 && g_server.clients[i].fd > g_maxfd)
+						g_maxfd = g_server.clients[i].fd;
+				}
+				if (g_server.serverFd > g_maxfd)
+					g_maxfd = g_server.serverFd;
+			}
+		}
+		return (0);
+	}
+
+	static int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout) {
+		(void)epfd;
+		fd_set readfds, writefds, exceptfds;
+		struct timeval tv;
+		struct timeval *ptv = NULL;
+		int n, count = 0;
+
+		if (timeout >= 0) {
+			tv.tv_sec = timeout / 1000;
+			tv.tv_usec = (timeout % 1000) * 1000;
+			ptv = &tv;
+		}
+
+		FD_ZERO(&readfds);
+		FD_ZERO(&writefds);
+		FD_ZERO(&exceptfds);
+
+		/* Add server socket */
+		if (g_server.serverFd >= 0) {
+			FD_SET(g_server.serverFd, &readfds);
+			if (g_server.serverFd > g_maxfd)
+				g_maxfd = g_server.serverFd;
+		}
+
+		/* Add all clients */
+		for (size_t i = 0; i < MAX_CLIENTS; i++) {
+			if (g_server.clients[i].fd >= 0) {
+				int fd = g_server.clients[i].fd;
+				if (FD_ISSET(fd, &g_readfds))
+					FD_SET(fd, &readfds);
+				if (FD_ISSET(fd, &g_writefds))
+					FD_SET(fd, &writefds);
+				if (FD_ISSET(fd, &g_exceptfds))
+					FD_SET(fd, &exceptfds);
+				if (fd > g_maxfd)
+					g_maxfd = fd;
+			}
+		}
+
+		n = select(g_maxfd + 1, &readfds, &writefds, &exceptfds, ptv);
+		if (n <= 0)
+			return (n);
+
+		/* Check server socket */
+		if (FD_ISSET(g_server.serverFd, &readfds) && count < maxevents) {
+			events[count].events = EPOLLIN;
+			events[count].data.ptr = &g_server.serverFd;
+			count++;
+		}
+
+		/* Check clients */
+		for (size_t i = 0; i < MAX_CLIENTS && count < maxevents; i++) {
+			if (g_server.clients[i].fd >= 0) {
+				int fd = g_server.clients[i].fd;
+				events[count].events = 0;
+				if (FD_ISSET(fd, &readfds))
+					events[count].events |= EPOLLIN;
+				if (FD_ISSET(fd, &writefds))
+					events[count].events |= EPOLLOUT;
+				if (FD_ISSET(fd, &exceptfds))
+					events[count].events |= EPOLLERR;
+				if (events[count].events) {
+					events[count].data.ptr = &g_server.clients[i];
+					count++;
+				}
+			}
+		}
+
+		return (count);
+	}
+
+	/* Non-blocking helper for Windows */
+	static int set_nonblocking(int fd) {
+		u_long mode = 1;
+		return ioctlsocket(fd, FIONBIO, &mode);
+	}
+#endif
 
 static const tFtLongOption g_serverLongOpts[] = {
 	{"cert",			FT_GETOPT_REQUIRED_ARGUMENT,	'c'},
@@ -195,9 +375,7 @@ static int parseServerArgs(int argc, char **argv, t_serverOptions *opts)
 	return (1);
 }
 
-
-
-static void sugHandler(int sig)
+static void sigHandler(int sig)
 {
 	(void)sig;
 	g_server.running = 0;
@@ -251,13 +429,24 @@ static int createServSock(const t_serverOptions *opts)
 		addr_len = sizeof(addr4);
 	}
 
+#ifdef _WIN32
+	sock = socket(domain, SOCK_STREAM, 0);
+#else
 	sock = socket(domain, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
+#endif
 	if (sock < 0) {
 		perror("socket");
 		return (-1);
 	}
-
-	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+#ifdef _WIN32
+	/* Put in non-blocking mode on Windows */
+	if (set_nonblocking(sock) < 0) {
+		perror("ioctlsocket");
+		close(sock);
+		return (-1);
+	}
+#endif
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) {
 		perror("setsockopt");
 		close(sock);
 		return (-1);
@@ -342,8 +531,11 @@ static void handleNewConn(void)
 		int fd = accept(g_server.serverFd,
 						(struct sockaddr *)&clientAddr,
 						&clientAddrLen);
-		if (fd >= 0)
+		if (fd >= 0) {
+#ifndef _WIN32
 			fcntl(fd, F_SETFL, O_NONBLOCK | O_CLOEXEC);
+#endif
+		}
 #endif
 		if (fd < 0) {
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -351,6 +543,10 @@ static void handleNewConn(void)
 			perror("accept");
 			break;
 		}
+
+#ifdef _WIN32
+		set_nonblocking(fd);
+#endif
 
 		client = find_free_client();
 		if (!client) {
@@ -362,7 +558,7 @@ static void handleNewConn(void)
 		ft_bzero(client, sizeof(*client));
 		client->fd			= fd;
 		client->lastActivity = time(NULL);
-		client->state		 = CLIENT_STATE_HANDSHAKE;
+		client->state		= CLIENT_STATE_HANDSHAKE;
 
 		if (epollAdd(g_server.epollFd, fd, EPOLLIN, client) < 0) {
 			close(fd);
@@ -371,7 +567,7 @@ static void handleNewConn(void)
 		}
 
 		ft_printf("[Server] New client fd=%d\n", fd);
-		g_server.numCLients++;
+		g_server.numClients++;
 	}
 }
 
@@ -462,7 +658,7 @@ static void handleClient(t_client *client, uint32_t events)
 		}
 		ft_printf("[Server fd=%d] Disconnected\n", client->fd);
 		cleanupClient(client);
-		g_server.numCLients--;
+		g_server.numClients--;
 		break;
 
 	default:
@@ -498,7 +694,7 @@ static void eventLoop(void)
 			if (ev & (EPOLLERR | EPOLLHUP)) {
 				ft_printf("[Server fd=%d] Error/HUP\n", client->fd);
 				cleanupClient(client);
-				g_server.numCLients--;
+				g_server.numClients--;
 				continue;
 			}
 
@@ -509,7 +705,7 @@ static void eventLoop(void)
 				now - client->lastActivity > g_server.opts.timeout) {
 				ft_printf("[Server fd=%d] Timeout\n", client->fd);
 				cleanupClient(client);
-				g_server.numCLients--;
+				g_server.numClients--;
 			}
 		}
 	}
@@ -518,6 +714,14 @@ static void eventLoop(void)
 int cmdServer(int argc, char **argv, char **env)
 {
 	(void)env;
+
+#ifdef _WIN32
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+		ft_dprintf(STDERR_FILENO, "ft_ssl: server: WSAStartup failed\n");
+		return (1);
+	}
+#endif
 
 	ft_bzero(&g_server, sizeof(g_server));
 
@@ -559,9 +763,10 @@ int cmdServer(int argc, char **argv, char **env)
 		free(password);
 		return (1);
 	}
-	free(password);
-	if (password)
+	if (password) {
 		secureZeroMemory(password, ft_strlen(password));
+		free(password);
+	}
 
 	if (g_server.opts.tls12 && g_server.opts.tls13)
 		g_server.config.versionPref = TLS_VERSION_PREF_TLS13_AND_12;
@@ -605,9 +810,11 @@ int cmdServer(int argc, char **argv, char **env)
 		g_server.clients[i].state = CLIENT_STATE_DONE;
 	}
 
-	signal(SIGINT,  sugHandler);
-	signal(SIGTERM, sugHandler);
+	signal(SIGINT,  sigHandler);
+	signal(SIGTERM, sigHandler);
+#ifndef _WIN32
 	signal(SIGPIPE, SIG_IGN);
+#endif
 
 	g_server.running = 1;
 	ft_printf("[Server] Starting event loop\n");
@@ -620,6 +827,9 @@ int cmdServer(int argc, char **argv, char **env)
 	}
 	close(g_server.serverFd);
 	close(g_server.epollFd);
+#ifdef _WIN32
+	WSACleanup();
+#endif
 	tlsConfigFree(&g_server.config);
 	ft_printf("[Server] Goodbye!\n");
 	return (0);

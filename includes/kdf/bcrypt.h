@@ -15,11 +15,11 @@
 #define BCRYPT_MAX_PASSWD	72
 #define BCRYPT_MAGIC_STR	"OrpheanBeholderScryDoubt" /* O_BSD :3 */
 
-struct s_bcryptCtx {
+typedef struct s_bcryptCtx {
 	t_blowfishEcbCtx	blowfishCtx;
 	uint8_t				salt[BCRYPT_SALT_LEN];
 	uint32_t			cost;
-} typedef t_bcryptCtx;
+} t_bcryptCtx;
 
 /**
  * @brief Hash a password using bcrypt
@@ -33,7 +33,7 @@ struct s_bcryptCtx {
 int	bcryptHash(const char		*password,
 			   const uint8_t	salt[16],
 			   uint32_t			cost,
-			   char				output[60]);
+			   char				output[BCRYPT_STRING_LEN]);
 
 /**
  * @brief Verify a password against a bcrypt hash
@@ -60,7 +60,7 @@ int	bcryptGenSalt(uint8_t salt[16]);
  * @param output Buffer for result (must be at least BCRYPT_STRING_LEN)
  * @return 0 on success, -1 on error
  */
-int	bcryptSimple(const char *password, uint32_t cost, char output[60]);
+int	bcryptSimple(const char *password, uint32_t cost, char output[BCRYPT_STRING_LEN ]);
 
 /**
  * @brief Hash a password using bcrypt with a provided salt string
@@ -71,7 +71,7 @@ int	bcryptSimple(const char *password, uint32_t cost, char output[60]);
  * @param output Buffer for result (must be at least BCRYPT_STRING_LEN)
  * @return 0 on success, -1 on error
  */
-int bcryptHashWithSalt(const char *password, const char *saltStr, uint32_t cost, char output[60]);
+int bcryptHashWithSalt(const char *password, const char *saltStr, uint32_t cost, char output[BCRYPT_STRING_LEN]);
 
 /* ---------- Internal helper functions ---------- */
 

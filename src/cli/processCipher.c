@@ -1,7 +1,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/wait.h>
+
+#ifdef _WIN32
+	#include <windows.h>
+	#include <process.h>
+	#include <fcntl.h>
+
+	static pid_t _fork(void) {
+		return (pid_t)_spawnl(_P_NOWAIT, "ft_ssl.exe", "ft_ssl.exe", NULL);
+	}
+
+	static int _waitpid(pid_t pid, int *status, int options) {
+		(void)options;  /* Unused parameter */
+		HANDLE h = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+		if (!h) return -1;
+		WaitForSingleObject(h, INFINITE);
+		DWORD exitCode;
+		GetExitCodeProcess(h, &exitCode);
+		CloseHandle(h);
+		if (status) *status = (int)exitCode;
+		return pid;
+	}
+	
+	#define fork()  _fork()
+	#define pipe(fds) _pipe(fds, 4096, O_BINARY)
+	#define wait(status) _waitpid(0, status, 0)
+#else
+	#include <sys/wait.h>
+#endif
 
 #include "../../hajlib/include/hprintf.h"
 #include "../../hajlib/include/hmemory.h"
@@ -333,9 +360,9 @@ static int processCipherFd(int fd, int outFd, const t_cipher *cipher, t_sslOptio
 		if (initCipherCtx(&c, cipher, opts, outFd) != 0)
 			return (1);
 		if (c.cipher->pad == NULL && c.cipher->unpad == NULL)
-		    ret = handleStreamCipher(&c, fd);
+			ret = handleStreamCipher(&c, fd);
 		else
-		    ret = handleBlockCipher(&c, fd);
+			ret = handleBlockCipher(&c, fd);
 		c.cipher->free(c.ctx);
 		free(c.ctx);
 		return (ret);

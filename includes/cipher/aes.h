@@ -180,7 +180,7 @@ uint32_t	aesExpandKey(const uint8_t *key, size_t keyLen, uint32_t roundKeys[60])
  * @param nbRounds Number of rounds
  * @param decRoundKeys Output array for decryption round keys
  */
-void	aesExpandDecryptKeys(const uint32_t *encRoundKeys, uint32_t nbRounds, uint32_t *decRoundKeys);
+void	aesExpandDecryptKeys(const uint32_t *encRoundKeys, uint32_t nbRounds, uint32_t decRoundKeys[60]);
 
 /**
  * @brief Encrypts a single 128-bit block using AES.
