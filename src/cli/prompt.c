@@ -166,7 +166,9 @@ char *promptPassword(const char *promptMsg, int verify)
 		len1 = ft_strlen(pass1);
 		if (len1 == 0) {
 			ft_printf("Password cannot be empty.\n");
+#ifdef _WIN32
 			free(pass1);
+#endif
 			continue;
 		}
 
@@ -177,7 +179,9 @@ char *promptPassword(const char *promptMsg, int verify)
 			pass2 = getpass("confirm password: ");
 #endif
 			if (!pass2) {
+#ifdef _WIN32
 				free(pass1);
+#endif
 				return (NULL);
 			}
 		} else
@@ -185,14 +189,16 @@ char *promptPassword(const char *promptMsg, int verify)
 
 		len2 = ft_strlen(pass2);
 		if (len1 == len2 && ft_memcmp(pass1, pass2, len1) == 0)
-			return (ft_strdup(pass1));
+			return (pass1);
 
 		ft_printf("Passwords don't match. Try again.\n");
 		secureZeroMemory(pass1, len1);
 		secureZeroMemory(pass2, len2);
+#ifdef _WIN32
 		free(pass1);
 		if (pass2 != pass1)
 			free(pass2);
+#endif 
 	}
 }
 

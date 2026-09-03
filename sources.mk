@@ -25,7 +25,8 @@ LIB_SRC = \
 	$(SRC_DIR)/utils.c \
 	$(SRC_DIR)/hajSecRandBytes.c \
 	$(SRC_DIR)/dispatch.c \
-	$(SRC_DIR)/totp.c \
+	$(SRC_DIR)/totp/totp.c \
+	$(SRC_DIR)/totp/encoding.c \
 	$(SRC_DIR)/x509/asn1Decode.c \
 	$(SRC_DIR)/x509/asn1Encode.c \
 	$(SRC_DIR)/x509/pemDecode.c \
