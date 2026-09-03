@@ -165,7 +165,8 @@ char *pkcs8EncryptPem(const uint8_t			*pkcs8Der,
 					  size_t				derLen,
 					  const t_cipher		*cipher,
 					  const char			*password,
-					  const t_pkcs8Params	*params)
+					  const t_pkcs8Params	*params,
+					  const char			*type)
 {
 	uint8_t			key[64];
 	uint8_t			iv[32];
@@ -246,7 +247,7 @@ char *pkcs8EncryptPem(const uint8_t			*pkcs8Der,
 	if (!encryptedInfo) return (NULL);
 
 	/* Encode to PEM format */
-	char *pem = pemEncode(encryptedInfo, infoLen, "ENCRYPTED PRIVATE KEY");
+	char *pem = pemEncode(encryptedInfo, infoLen, type ? type : "ENCRYPTED PRIVATE KEY");
 	free(encryptedInfo);
 	
 	return (pem);

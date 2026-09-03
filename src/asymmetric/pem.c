@@ -278,7 +278,7 @@ char	*pkeyToPem(t_pkey *pkey, int isPrivate, int useTraditional, const char *pas
 		if (useTraditional && def->encodePrivKeyPkcs1)
 			pem = pkcs1EncryptPem(type, der, derLen, encCipher, password);
 		else
-			pem = pkcs8EncryptPem(der, derLen, encCipher, password, NULL);
+			pem = pkcs8EncryptPem(der, derLen, encCipher, password, NULL, NULL);
 		free(der);
 		return (pem);
 	}
@@ -446,7 +446,7 @@ static int	parsePrivateEncryptedPkcs8(const char *pem, void *key, const t_pkeyDe
 	{
 		if (!password)
 			return (2);
-		decryptedDer = pkcs8DecryptedDer(pem, password, &decryptedLen);
+		decryptedDer = pkcs8DecryptedDer(pem, password, &decryptedLen, "ENCRYPTED PRIVATE KEY");
 		if (!decryptedDer)
 			return (0);
 	}

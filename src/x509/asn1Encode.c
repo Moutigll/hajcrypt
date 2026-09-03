@@ -1,6 +1,5 @@
-#include <stdlib.h>
-
 #include "../../hajlib/include/hmemory.h"
+#include "../../hajlib/include/hstring.h"
 
 #include "../../includes/x509/asn1.h"
 
@@ -129,4 +128,30 @@ uint8_t *asn1EncodeNull(size_t *outLen)
 	der[0] = ASN1_NULL;
 	der[1] = 0x00;
 	return (der);
+}
+
+uint8_t	*asn1EncodeUTF8String(const char *str, size_t *outLen)
+{
+	if (!str) { *outLen = 0; return (NULL); }
+	size_t	len = ft_strlen(str);
+	uint8_t	*buf = malloc(1 + 4 + len); /* max length encoding 4 bytes */
+	if (!buf) return (NULL);
+	size_t	pos = 0;
+	buf[pos++] = ASN1_UTF8STRING;
+	if (len < 128)
+		buf[pos++] = (uint8_t)len;
+	else { /* long form (simple) */
+		size_t	lenBytes = 1;
+		size_t	tmp = len;
+		while (tmp > 255) { tmp >>= 8; lenBytes++; }
+		buf[pos++] = 0x80 | lenBytes;
+		for (size_t i = lenBytes; i > 0; i--) {
+			buf[pos + i - 1] = (len >> (8 * (i - 1))) & 0xFF;
+		}
+		pos += lenBytes;
+	}
+	ft_memcpy(buf + pos, str, len);
+	pos += len;
+	*outLen = pos;
+	return (buf);
 }

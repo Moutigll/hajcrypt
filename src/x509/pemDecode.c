@@ -254,7 +254,7 @@ uint8_t *pkcs1DecryptedDer(const char *pem, const char *password, size_t *outLen
 	return (decDer);
 }
 
-uint8_t *pkcs8DecryptedDer(const char *pem, const char *password, size_t *outLen)
+uint8_t *pkcs8DecryptedDer(const char *pem, const char *password, size_t *outLen, const char *expectedType)
 {
 	t_pemBlock		block;
 	uint8_t			*content, *encDer, *decDer;
@@ -276,7 +276,7 @@ uint8_t *pkcs8DecryptedDer(const char *pem, const char *password, size_t *outLen
 		return (NULL);
 
 	/* Verify the PEM header is for encrypted private key */
-	if (ft_strcmp(block.header, "ENCRYPTED PRIVATE KEY") != 0) {
+	if (ft_strcmp(block.header, expectedType ? expectedType : "ENCRYPTED PRIVATE KEY") != 0) {
 		HAJCRYPT_DPRINT("PKCS#8: unexpected PEM header\n");
 		pemFreeBlock(&block);
 		return (NULL);

@@ -1,18 +1,22 @@
 #include <time.h>
 
-#include "../hajlib/include/hmath.h"
-#include "../hajlib/include/hmemory.h"
-#include "../hajlib/include/hstring.h"
-#include "../hajlib/include/hprintf.h"
+#include "../../hajlib/include/hmath.h"
+#include "../../hajlib/include/hmemory.h"
+#include "../../hajlib/include/hstring.h"
+#include "../../hajlib/include/hprintf.h"
 
-#include "../includes/cipher/base32.h"
-#include "../includes/utils/random.h"
+#include "../../includes/cipher/base32.h"
+#include "../../includes/utils/random.h"
 
-#include "../includes/totp.h"
+#include "../../includes/totp.h"
 
 
 /* Default configuration */
-static const t_totpConfig TOTP_DEFAULT_CONFIG = {
+static const t_totpEntry TOTP_DEFAULT_CONFIG = {
+	.label = NULL,
+	.issuer = NULL,
+	.secret = NULL,
+	.secretLen = 0,
 	.algo = &g_sha1Hash,
 	.digits = 6,
 	.period = 30,
@@ -20,7 +24,7 @@ static const t_totpConfig TOTP_DEFAULT_CONFIG = {
 };
 
 /* Dynamic truncation as per RFC 4226 */
-static uint32_t dynamaicTrunc(const uint8_t *hmac, size_t hmacLen)
+static uint32_t dynamicTrunc(const uint8_t *hmac, size_t hmacLen)
 {
 	if (hmacLen < 20) return 0;
 	
@@ -45,12 +49,12 @@ static uint64_t getTimeCtr(uint64_t timestamp, uint32_t period)
 
 
 
-int totpInit(t_totpCtx *ctx, const char *secretBase32, 
-			 const t_hash *algo, uint8_t digits, uint32_t period)
-			 {
-	if (!ctx || !secretBase32) {
+int totpInit(t_totpEntry	*ctx,	const char	*secretBase32,
+			 const t_hash	*algo,	uint8_t		digits,
+			 uint32_t		period) {
+	if (!ctx || !secretBase32)
 		return (-1);
-	}
+	ft_bzero(ctx, sizeof(t_totpEntry));
 
 	if (!algo)
 		algo = TOTP_DEFAULT_CONFIG.algo;
@@ -63,38 +67,37 @@ int totpInit(t_totpCtx *ctx, const char *secretBase32,
 
 	/* Decode Base32 secret */
 	ctx->secretLen = base32Decode(secretBase32, ctx->secret, sizeof(ctx->secret));
-	if (ctx->secretLen == (size_t)-1 || ctx->secretLen == 0) {
+	if (ctx->secretLen == (size_t)-1 || ctx->secretLen == 0)
 		return (-1);
-	}
 	
 	/* Set configuration */
-	ctx->config.algo = algo;
-	ctx->config.digits = digits;
-	ctx->config.period = period;
-	ctx->config.window = 1;
+	ctx->algo = algo;
+	ctx->digits = digits;
+	ctx->period = period;
+	ctx->window = 1;
 	
 	return (0);
 }
 
-int totpInitWithConfig(t_totpCtx *ctx, const char *secretBase32, const t_totpConfig *config)
+int totpInitWithConfig(t_totpEntry *ctx, const char *secretBase32, const t_totpEntry *config)
 {
-	if (!ctx || !secretBase32 || !config || !config->algo) {
+	if (!ctx || !secretBase32 || !config || !config->algo)
 		return (-1);
-	}
+
+	ft_bzero(ctx, sizeof(t_totpEntry));
 	
 	/* Decode Base32 secret */
 	ctx->secretLen = base32Decode(secretBase32, ctx->secret, sizeof(ctx->secret));
-	if (ctx->secretLen == (size_t)-1 || ctx->secretLen == 0) {
+	if (ctx->secretLen == (size_t)-1 || ctx->secretLen == 0)
 		return (-1);
-	}
 	
 	/* Copy configuration */
-	ft_memcpy(&ctx->config, config, sizeof(t_totpConfig));
+	ft_memcpy(&ctx, config, sizeof(t_totpEntry));
 	
 	return (0);
 }
 
-int totpGenerate(t_totpCtx *ctx, uint64_t timestamp, char *code)
+int totpGenerate(t_totpEntry *ctx, uint64_t timestamp, char *code)
 {
 	uint64_t	counter;
 	uint8_t		counterBuffer[8];
@@ -103,12 +106,11 @@ int totpGenerate(t_totpCtx *ctx, uint64_t timestamp, char *code)
 	uint32_t	mod;
 	size_t		hmacLen;
 	
-	if (!ctx || !code || !ctx->config.algo || ctx->secretLen == 0) {
+	if (!ctx || !code || !ctx->algo || ctx->secretLen == 0)
 		return (-1);
-	}
 	
 	/* Get counter */
-	counter = getTimeCtr(timestamp, ctx->config.period ? ctx->config.period : TOTP_DEFAULT_CONFIG.period);
+	counter = getTimeCtr(timestamp, ctx->period ? ctx->period : TOTP_DEFAULT_CONFIG.period);
 	
 	/* Convert counter to 8-byte big-endian buffer */
 	for (int i = 7; i >= 0; i--) {
@@ -116,33 +118,33 @@ int totpGenerate(t_totpCtx *ctx, uint64_t timestamp, char *code)
 		counter >>= 8;
 	}
 
-	hmacLen = ctx->config.algo->digestSize;
+	hmacLen = ctx->algo->digestSize;
 	if (hmacLen > sizeof(hmacBuff)) {
 		hmacLen = sizeof(hmacBuff);
 	}
-	hmac(ctx->config.algo, ctx->secret, ctx->secretLen, counterBuffer, sizeof(counterBuffer), hmacBuff);
+	hmac(ctx->algo, ctx->secret, ctx->secretLen, counterBuffer, sizeof(counterBuffer), hmacBuff);
 	
 	/* Dynamic truncation */
-	binary = dynamaicTrunc(hmacBuff, hmacLen);
+	binary = dynamicTrunc(hmacBuff, hmacLen);
 	
 	/* Reduce to required digits */
 	mod = 1;
-	for (uint8_t i = 0; i < ctx->config.digits; i++) {
+	for (uint8_t i = 0; i < ctx->digits; i++) {
 		mod *= 10;
 	}
 	
 	uint32_t otp = binary % mod;
 
 	/* Format with leading zeros */
-	for (uint8_t i = 0; i < ctx->config.digits; i++) {
-		code[ctx->config.digits - 1 - i] = '0' + (otp % 10);
+	for (uint8_t i = 0; i < ctx->digits; i++) {
+		code[ctx->digits - 1 - i] = '0' + (otp % 10);
 		otp /= 10;
 	}
-	code[ctx->config.digits] = '\0';
+	code[ctx->digits] = '\0';
 	return (0);
 }
 
-int totpVerify(t_totpCtx *ctx, const char *code, uint64_t timestamp)
+int totpVerify(t_totpEntry *ctx, const char *code, uint64_t timestamp)
 {
 	uint64_t	counter;
 	char		generated[16];
@@ -153,14 +155,14 @@ int totpVerify(t_totpCtx *ctx, const char *code, uint64_t timestamp)
 		return (-1);
 	}
 	
-	counter = getTimeCtr(timestamp, ctx->config.period);
+	counter = getTimeCtr(timestamp, ctx->period);
 	
 	/* Check current time step and surrounding steps */
-	startStep = -(int64_t)ctx->config.window;
-	endStep = (int64_t)ctx->config.window;
+	startStep = -(int64_t)ctx->window;
+	endStep = (int64_t)ctx->window;
 	
 	for (int64_t step = startStep; step <= endStep; step++) {
-		uint64_t stepTime = (counter + step) * ctx->config.period;
+		uint64_t stepTime = (counter + step) * ctx->period;
 		
 		if (totpGenerate(ctx, stepTime, generated) != 0) {
 			continue;
@@ -194,9 +196,8 @@ int totpGenerateSecret(const t_hash *algo, char *output, size_t outputSize)
 	else
 		secretLen = 20; /* SHA1 default */
 	
-	if (hajSecRandBytes(secret, secretLen) != 0) {
+	if (hajSecRandBytes(secret, secretLen) != 0)
 		return (-1);
-	}
 	
 	/* Encode to Base32 */
 	encodedLen = base32Encode(secret, secretLen, output, outputSize);
@@ -210,7 +211,7 @@ int totpGenerateSecret(const t_hash *algo, char *output, size_t outputSize)
 int totpCreateUri(const char			*userEmail,
 				  const char			*secretBase32,
 				  const char			*issuer,
-				  const t_totpConfig	*config,
+				  const t_totpEntry	*config,
 				  char					*output,	size_t	outputSize)
 {
 	const char *algoName;
@@ -255,9 +256,9 @@ static int parseUriParam(const char *query, const char *key, char *out, size_t o
 	return (0);
 }
 
-int totpInitFromUri(t_totpCtx *ctx, const char *uri)
+int totpInitFromUri(t_totpEntry *ctx, const char *uri)
 {
-	t_totpConfig	config = TOTP_DEFAULT_CONFIG;
+	t_totpEntry	config = TOTP_DEFAULT_CONFIG;
 	char			secretBuf[128];
 	char			algoBuf[16];
 	char			digitsBuf[8];
@@ -307,7 +308,7 @@ int totpInitFromUri(t_totpCtx *ctx, const char *uri)
 
 int totpGenerateFromUri(const char *uri, uint64_t timestamp, char *code)
 {
-	t_totpCtx ctx;
+	t_totpEntry ctx;
 	if (totpInitFromUri(&ctx, uri) != 0)
 		return (-1);
 	return totpGenerate(&ctx, timestamp, code);
@@ -315,7 +316,7 @@ int totpGenerateFromUri(const char *uri, uint64_t timestamp, char *code)
 
 int totpVerifyFromUri(const char *uri, const char *code, uint64_t timestamp)
 {
-	t_totpCtx ctx;
+	t_totpEntry ctx;
 	if (totpInitFromUri(&ctx, uri) != 0)
 		return (-1);
 	return totpVerify(&ctx, code, timestamp);

@@ -13,6 +13,7 @@
 #define ASN1_OID			0x06
 #define ASN1_SEQUENCE		0x30
 #define ASN1_SET			0x31
+#define ASN1_UTF8STRING     0x0C
 
 typedef struct s_asn1Tlv {
 	uint8_t	tag;
@@ -127,6 +128,22 @@ uint8_t	*asn1EncodeOctetString(const uint8_t *data, size_t dataLen, size_t *outL
  *         of a NULL value, or NULL if encoding fails (e.g., memory allocation failure).
  */
 uint8_t	*asn1EncodeNull(size_t *outLen);
+
+/**
+ * @brief Encodes a UTF-8 string in ASN.1 DER format.
+ *
+ * This function encodes the provided UTF-8 string into ASN.1 DER format, which consists
+ * of a tag (0x0C), length, and the string value. The resulting byte array is allocated
+ * dynamically and should be freed by the caller.
+ *
+ * @param str Pointer to the input UTF-8 string to be encoded.
+ * @param outLen Pointer to a size_t variable where the length of the encoded
+ *               output will be stored. Must not be NULL.
+ *
+ * @return Pointer to a newly allocated buffer containing the ASN.1 DER encoding
+ *         of the UTF-8 string, or NULL if encoding fails (e.g., memory allocation failure).
+ */
+uint8_t	*asn1EncodeUTF8String(const char *str, size_t *outLen);
 
 /* ---------- Decode ---------- */
 
@@ -296,6 +313,21 @@ int asn1ParseOid(const uint8_t	*data, size_t	maxLen,
 int asn1ParseBitString(const uint8_t	*data,	size_t	maxLen,
 					 uint8_t			**out,	size_t	*outLen,
 					 size_t				*consumed);
+
+/**
+ * @brief Parses an ASN.1 UTF8String from a buffer.
+ *
+ * @param data      Pointer to the input buffer containing the UTF8String.
+ * @param maxLen    Maximum number of bytes available in @p data.
+ * @param out       Receives a pointer to the parsed UTF8String content.
+ * @param outLen    Receives the length (in bytes) of the parsed content.
+ * @param consumed  Receives the number of bytes consumed from @p data.
+ *
+ * @return Integer status code indicating success or failure.
+ *
+ * @note The caller is responsible for freeing the memory allocated for @p out.
+ */
+int asn1ParseUTF8String(const uint8_t *data, size_t maxLen, char **out, size_t *consumed);
 
 /**
  * @brief Parses an ASN.1 UTCTime or GeneralizedTime value from a buffer.

@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "../../hajlib/include/hmemory.h"
 
 #include "../../includes/x509/asn1.h"
@@ -132,6 +134,19 @@ int asn1ParseBitString(const uint8_t	*data,	size_t	maxLen,
 		return (0); /* Invalid number of unused bits */
 	*out = tlv.value + 1;
 	*outLen = tlv.length - 1;
+	return (1);
+}
+
+int asn1ParseUTF8String(const uint8_t *data, size_t maxLen, char **out, size_t *consumed)
+{
+	t_asn1Tlv tlv;
+	if (!asn1ParseTlv(data, maxLen, &tlv, consumed)) return (0);
+	if (tlv.tag != ASN1_UTF8STRING) return (0);
+	char *str = malloc(tlv.length + 1);
+	if (!str) return (0);
+	ft_memcpy(str, tlv.value, tlv.length);
+	str[tlv.length] = '\0';
+	*out = str;
 	return (1);
 }
 

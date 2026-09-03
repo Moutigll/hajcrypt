@@ -50,6 +50,7 @@ char *pkcs1EncryptPem(const char		*keyType,
  * @param cipher Pointer to the cipher structure specifying the encryption algorithm and parameters.
  * @param password The password to use for encryption.
  * @param params Optional pointer to a t_pkcs8Params structure specifying additional parameters for key derivation and encryption. If NULL, default parameters will be used.
+ * @param type Optional pointer to a null-terminated string specifying the PEM type (e.g., "ENCRYPTED PRIVATE KEY"). If NULL, "ENCRYPTED PRIVATE KEY" will be used.
  * @return Pointer to a dynamically allocated null-terminated string containing the PEM-encoded encrypted private key,
  *		 or NULL on failure.
  */
@@ -57,7 +58,8 @@ char *pkcs8EncryptPem(const uint8_t			*pkcs8Der,
 					  size_t				derLen,
 					  const t_cipher		*cipher,
 					  const char			*password,
-					  const t_pkcs8Params	*params);
+					  const t_pkcs8Params	*params,
+					  const char			*type);
 
 /* ---------- Decode ---------- */
 
@@ -90,9 +92,10 @@ uint8_t *pkcs1DecryptedDer(const char *pem, const char *password, size_t *outLen
  * @param pem Pointer to a null-terminated string containing the PEM-encoded encrypted private key.
  * @param password The password to use for decryption.
  * @param outLen Pointer to a size_t variable where the length of the decrypted DER data will be stored.
+ * @param expectedType Optional pointer to a null-terminated string specifying the expected PEM type (e.g., "ENCRYPTED PRIVATE KEY"). If NULL, "ENCRYPTED PRIVATE KEY" will be used.
  * @return Pointer to a dynamically allocated buffer containing the decrypted DER data, or NULL on failure.
  */
-uint8_t *pkcs8DecryptedDer(const char *pem, const char *password, size_t *outLen);
+uint8_t *pkcs8DecryptedDer(const char *pem, const char *password, size_t *outLen, const char *expectedType);
 
 /**
  * @brief Frees the memory allocated for a t_pemBlock structure.
