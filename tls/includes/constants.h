@@ -13,10 +13,10 @@
 
 
 typedef enum e_tlsVersionSupported {
-	TLS_VERS_1_0 = 0b0001,
-	TLS_VERS_1_1 = 0b0010,
-	TLS_VERS_1_2 = 0b0100,
-	TLS_VERS_1_3 = 0b1000
+	TLS_VERS_1_0 = 0x1,
+	TLS_VERS_1_1 = 0x2,
+	TLS_VERS_1_2 = 0x4,
+	TLS_VERS_1_3 = 0x8
 }	t_tlsVersionSupported;
 
 typedef enum e_tlsRecordCipherType

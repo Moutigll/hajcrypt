@@ -41,7 +41,6 @@ static int tlsEncodeHello(const t_tlsHello *hello, uint8_t *out, size_t *outLen,
 
 	/* Encode extensions first (size probe) */
 	tlsEncodeExtensions(&hello->extensions, NULL, &extLen, isServer);
-	extLen = extLen; /* already set */
 
 	/* Use pre-encoded extensions if available, otherwise encode from parsedExtensions */
 	if (hello->rawExtensions && hello->extensionsLen)

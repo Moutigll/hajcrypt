@@ -11,7 +11,7 @@ HAJLIB_DIR		= $(HAJCRYPT_DIR)/hajlib
 # --- Cross-compilation support ---
 include ../hajlib/cross.mk
 
-CFLAGS		= -O3 -Wall -Wextra -Werror -pedantic
+CFLAGS		= -O3 -Wall -Wextra -Werror -pedantic -Wno-gnu-zero-variadic-macro-arguments
 CPPFLAGS	= -I$(INC_DIR) \
 			  -I$(HAJCRYPT_DIR)/includes \
 			  -I$(HAJLIB_DIR)/include

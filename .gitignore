@@ -10,4 +10,5 @@ ft_ssl
 *.crt
 *.pem
 *.key
+*.totp
 ft_ssl.exe
