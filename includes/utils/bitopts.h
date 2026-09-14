@@ -231,5 +231,17 @@ static inline void wBytes(uint8_t *b, size_t p, const void *src, size_t n)
 	if (b && src && n) ft_memcpy(b + p, src, n);
 }
 
+static inline uint32_t hToBe32(uint32_t x)
+{
+#if defined(NATIVE_BIG_ENDIAN)
+	return x;
+#else
+	return ((x & 0x000000FFU) << 24) |
+	       ((x & 0x0000FF00U) << 8)  |
+	       ((x & 0x00FF0000U) >> 8)  |
+	       ((x & 0xFF000000U) >> 24);
+#endif
+}
+
 
 #endif /* HAJCRYPT_BITOPTS_H */

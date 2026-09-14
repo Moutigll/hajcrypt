@@ -131,10 +131,10 @@ static int	testFfdheGroup(int groupId, const char *groupName, size_t bufSize)
 	size_t		bobSharedLen;
 	int			ret;
 
-	alicePub = ft_calloc(1, bufSize);
-	bobPub = ft_calloc(1, bufSize);
-	aliceShared = ft_calloc(1, bufSize);
-	bobShared = ft_calloc(1, bufSize);
+	alicePub = calloc(1, bufSize);
+	bobPub = calloc(1, bufSize);
+	aliceShared = calloc(1, bufSize);
+	bobShared = calloc(1, bufSize);
 	if (!alicePub || !bobPub || !aliceShared || !bobShared)
 	{
 		printFailure("Buffer allocation failed");

@@ -258,7 +258,7 @@ int	tlsRecordEncrypt(t_tlsRecordCtx	*ctx,
 	 * We build it without padding (only for handshake messages).
 	 */
 	innerPlainLen = fragmentLen + 1;
-	innerPlaintext = ft_calloc(1, innerPlainLen);
+	innerPlaintext = calloc(1, innerPlainLen);
 	if (!innerPlaintext)
 		return (0);
 
@@ -276,7 +276,7 @@ int	tlsRecordEncrypt(t_tlsRecordCtx	*ctx,
 	buildNonce(ctx->cipher.iv, aead->ivSize, seqNum, nonce);
 
 	/* Allocate buffer for ciphertext + tag */
-	ciphertext = ft_calloc(1, encryptedLen);
+	ciphertext = calloc(1, encryptedLen);
 	if (!ciphertext)
 	{
 		secureZeroMemory(innerPlaintext, innerPlainLen);
@@ -373,7 +373,7 @@ int tlsRecordDecrypt(t_tlsRecordCtx	*ctx,
 	innerPlainLen = encryptedLen - tagLen;
 	tag = encrypted + innerPlainLen;
 
-	innerPlain = ft_calloc(1, innerPlainLen);
+	innerPlain = calloc(1, innerPlainLen);
 	if (!innerPlain)
 		{ BTLS_DEBUG("Memory allocation failed"); return (0); }
 
@@ -440,7 +440,7 @@ int	tlsRecordBuild(uint8_t contentType, const uint8_t *data, size_t dataLen, t_t
 	record->header.legacyVersion = TLS_LEGACY_VERSION;
 	record->header.length = dataLen;
 	record->fragmentLen = dataLen;
-	record->fragment = ft_calloc(1, dataLen ? dataLen : 1);
+	record->fragment = calloc(1, dataLen ? dataLen : 1);
 	if (!record->fragment && dataLen > 0)
 		return (0);
 	if (data && dataLen > 0)

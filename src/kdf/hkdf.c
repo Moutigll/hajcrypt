@@ -20,7 +20,7 @@ int	hkdfExtract(const uint8_t	*salt,	size_t	saltLen,
 
 	if (!salt || saltLen == 0)
 	{
-		zeroSalt = ft_calloc(1, hash->digestSize);
+		zeroSalt = calloc(1, hash->digestSize);
 		if (!zeroSalt)
 			return (0);
 		hmac(hash, zeroSalt, hash->digestSize, ikm, ikmLen, prk);
@@ -64,7 +64,7 @@ int hkdfExpand(const uint8_t *prk,  size_t prkLen,
         prevLen = firstBlock ? 0 : hash->digestSize;
         bufLen  = prevLen + infoLen + 1;
 
-        buffer = ft_calloc(1, bufLen);
+        buffer = calloc(1, bufLen);
         if (!buffer) { ret = 0; break; }
 
         if (!firstBlock)

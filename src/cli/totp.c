@@ -4,16 +4,30 @@
 #include <signal.h>
 #include <stdio.h>
 
+#include <sys/stat.h>
+
 #ifdef _WIN32
 	#include <windows.h>
 	#include <conio.h>
 	#include <direct.h>
 	#include <io.h>
 	#define PATH_MAX 260
-	#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
-	#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+	#ifndef S_IFMT
+		#define S_IFMT 0xF000
+	#endif
+	#ifndef S_IFREG
+		#define S_IFREG 0x8000
+	#endif
+	#ifndef S_IFDIR
+		#define S_IFDIR 0x4000
+	#endif
+	#ifndef S_ISREG
+		#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+	#endif
+	#ifndef S_ISDIR
+		#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+	#endif
 #else
-	#include <sys/stat.h>
 	#include <sys/select.h>
 	#include <dirent.h>
 	#include <termios.h>
@@ -261,17 +275,9 @@ static void scanDirectory(const char *path, t_totpEntry **entries, size_t *count
 
 static int getFileStat(const char *path, struct stat *st)
 {
-#ifdef _WIN32
-	struct _stat winStat;
-	if (_stat(path, &winStat) != 0)
+	if (!st)
 		return (-1);
-	st->st_mode = winStat.st_mode;
-	st->st_size = winStat.st_size;
-	st->st_mtime = winStat.st_mtime;
-	return (0);
-#else
 	return (stat(path, st));
-#endif
 }
 
 static int parseTotpArgs(int argc, char **argv, t_totpOpts *opts)
@@ -552,6 +558,26 @@ static void enableMouseTracking(void)
 #ifndef _WIN32
 	ft_printf("\033[?1000h\033[?1006h");
 	fflush(stdout);
+#else
+	{
+		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		if (hOut != INVALID_HANDLE_VALUE) {
+			DWORD mode = 0;
+			if (GetConsoleMode(hOut, &mode)) {
+				mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+				SetConsoleMode(hOut, mode);
+			}
+		}
+		HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+		if (hIn != INVALID_HANDLE_VALUE) {
+			DWORD mode = 0;
+			if (GetConsoleMode(hIn, &mode)) {
+				mode |= ENABLE_MOUSE_INPUT;
+				mode |= ENABLE_EXTENDED_FLAGS;
+				SetConsoleMode(hIn, mode);
+			}
+		}
+	}
 #endif
 }
 
@@ -560,6 +586,17 @@ static void disableMouseTracking(void)
 #ifndef _WIN32
 	ft_printf("\033[?1006l\033[?1000l");
 	fflush(stdout);
+#else
+	{
+		HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+		if (hIn != INVALID_HANDLE_VALUE) {
+			DWORD mode = 0;
+			if (GetConsoleMode(hIn, &mode)) {
+				mode &= ~ENABLE_MOUSE_INPUT;
+				SetConsoleMode(hIn, mode);
+			}
+		}
+	}
 #endif
 }
 
@@ -648,7 +685,7 @@ static void runLiveMode(t_totpEntry *entries, size_t count)
 				ft_strlcpy(label, "?", sizeof(label));
 
 			/* Display entry on a single line */
-			ft_printf("%-30s %-10s  (%3ds)", label, code, remaining);
+			ft_printf("%-35s %-10s  (%3ds)", label, code, remaining);
 
 			/* Save current code for click detection */
 			if (prevCodes[i])
@@ -731,13 +768,45 @@ static void runLiveMode(t_totpEntry *entries, size_t count)
 			}
 		}
 #else
-		/* Windows specific input handling */
-		Sleep(1000);
-		if (_kbhit())
+		/* Windows-specific input handling */
 		{
-			char c = _getch();
-			if (c == 'q' || c == 'Q')
-				g_running = 0;
+			HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+			if (hIn != INVALID_HANDLE_VALUE) {
+				DWORD eventsRead = 0;
+				INPUT_RECORD ir[16];
+				if (WaitForSingleObject(hIn, 1000) == WAIT_OBJECT_0 &&
+					ReadConsoleInputW(hIn, ir, 16, &eventsRead)) {
+					for (DWORD j = 0; j < eventsRead; j++) {
+						if (ir[j].EventType == KEY_EVENT &&
+							ir[j].Event.KeyEvent.bKeyDown) {
+							char c = (char)ir[j].Event.KeyEvent.uChar.AsciiChar;
+							if (c == 'q' || c == 'Q')
+								g_running = 0;
+						}
+						else if (ir[j].EventType == MOUSE_EVENT &&
+							(ir[j].Event.MouseEvent.dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED | RIGHTMOST_BUTTON_PRESSED))) {
+							COORD pos = ir[j].Event.MouseEvent.dwMousePosition;
+							int x = (int)pos.X + 1;
+							int y = (int)pos.Y + 1;
+							int idx = -1;
+							for (size_t k = 0; k < count; k++) {
+								int row = (int)k + 1;
+								if (y == row && x >= 1 && x <= 50) {
+									idx = (int)k;
+									break;
+								}
+							}
+							if (idx >= 0 && idx < (int)count && prevCodes[idx]) {
+								copyToClipboard(prevCodes[idx]);
+								ft_printf("\033[%d;1HCopied: %s",
+									instrRow + 1, prevCodes[idx]);
+								fflush(stdout);
+								Sleep(1000);
+							}
+						}
+					}
+				}
+			}
 		}
 #endif
 	}
@@ -883,9 +952,13 @@ int cmdTotp(int argc, char **argv, char **env)
 	char code[16];
 	for (size_t i = 0; i < entryCount; i++) {
 		if (totpGenerate(&entries[i], now, code) == 0) {
-			ft_dprintf(outFd, "%s: %s\n",
+			int remaining = (int)(entries[i].period - (now % entries[i].period));
+			if (remaining < 0)
+				remaining += entries[i].period;
+			ft_dprintf(outFd, "%-15s %-10s  (%3ds)\n",
 					entries[i].label ? entries[i].label : "unknown",
-					code);
+					code,
+					remaining);
 		}
 	}
 	if (outFd != STDOUT_FILENO)

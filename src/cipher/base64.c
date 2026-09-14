@@ -161,21 +161,6 @@ void base64Free(void *vctx)
 	(void)vctx;
 }
 
-void base64Pad(uint8_t *block, size_t len, size_t blockSize)
-{
-	(void)block;
-	(void)len;
-	(void)blockSize;
-}
-
-int base64Unpad(uint8_t *block, size_t *len, size_t blockSize)
-{
-	(void)block;
-	(void)len;
-	(void)blockSize;
-	return 0;
-}
-
 const t_cipher g_base64Cipher = {
 	.name		= "base64",
 	.deprecated	= 0,
@@ -192,8 +177,8 @@ const t_cipher g_base64Cipher = {
 	.final	= base64Final,
 	.free	= base64Free,
 	
-	.pad	= base64Pad,
-	.unpad	= base64Unpad,
+	.pad	= NULL,
+	.unpad	= NULL,
 	
 	.supportsWrap	= 1
 };

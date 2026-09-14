@@ -23,7 +23,7 @@ static const t_algoId g_sha256WithRSAEncryption		= OID_DEF("sha256WithRSAEncrypt
 
 t_x509Cert *x509CertParse(const uint8_t *der, size_t derLen)
 {
-	t_x509Cert *cert = ft_calloc(1, sizeof(t_x509Cert));
+	t_x509Cert *cert = calloc(1, sizeof(t_x509Cert));
 	if (!cert)
 		return (NULL);
 
@@ -225,7 +225,7 @@ t_x509Cert *x509CertParse(const uint8_t *der, size_t derLen)
 		else
 			{ HAJCRYPT_DPRINT("x509CertParse: unsupported algorithm\n"); goto error; }
 
-		void *key = ft_calloc(1, def->keyLen); 
+		void *key = calloc(1, def->keyLen); 
 		if (!key)
 			{ HAJCRYPT_DPRINT("x509CertParse: failed to allocate memory for public key\n"); goto error; }
 		

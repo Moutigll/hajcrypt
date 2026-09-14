@@ -13,11 +13,11 @@ int	kexInit(t_kexCtx *ctx, t_kexType type, int group_id)
 	ctx->type = type;
 	switch (type) {
 	case KEX_TYPE_FFDHE:
-		ctx->internal = ft_calloc(1, sizeof(t_ffdheCtx));
+		ctx->internal = calloc(1, sizeof(t_ffdheCtx));
 		if (!ctx->internal) return (0);
 		return ffdheInit((t_ffdheCtx*)ctx->internal, group_id);
 	case KEX_TYPE_ECDH:
-		ctx->internal = ft_calloc(1, sizeof(t_ecdhCtx));
+		ctx->internal = calloc(1, sizeof(t_ecdhCtx));
 		if (!ctx->internal) return (0);
 		return ecdhInit((t_ecdhCtx*)ctx->internal, group_id);
 	default:

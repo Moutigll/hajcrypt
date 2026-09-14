@@ -47,7 +47,7 @@ int tls13BuildCertificate(t_tlsCtx *ctx, uint8_t *out, size_t *outLen)
 	}
 
 	bodyLen = 1 + 3 + totalListLen;
-	body = ft_calloc(1, bodyLen);
+	body = calloc(1, bodyLen);
 	if (!body)
 		return (0);
 

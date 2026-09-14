@@ -6,6 +6,7 @@
 #include "../../includes/x509/asn1.h"
 #include "../../includes/x509/pem.h"
 #include "../../includes/utils/dispatch.h"
+#include "../../includes/utils/bitopts.h"
 
 #include "../../includes/totp.h"
 
@@ -24,7 +25,7 @@ uint8_t *totpEntryEncode(const t_totpEntry *entry, size_t *outLen)
 
 	uint8_t		digitVal = entry->digits;
 	uint8_t		*digitDer = asn1EncodeInteger(&digitVal, 1, &digitLen);
-	uint32_t	periodBE = htobe32(entry->period); /* Big-endian for ASN.1 INTEGER */
+	uint32_t	periodBE = hToBe32(entry->period); /* Big-endian for ASN.1 INTEGER */
 	uint8_t		*periodDer = asn1EncodeInteger((uint8_t*)&periodBE, 4, &periodLen);
 
 	uint8_t		windowVal = (uint8_t)entry->window;

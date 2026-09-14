@@ -29,7 +29,7 @@ int	tlsHkdfExpandLabel(const uint8_t	*secret,
 	labelStrLen = ft_strlen(label);
 
 	infoLen = 2 + 1 + (TLS13_PREFIX_LEN + labelStrLen) + 1 + contextLen;
-	info = (uint8_t *)ft_calloc(infoLen, sizeof(uint8_t));
+	info = (uint8_t *)calloc(infoLen, sizeof(uint8_t));
 	if (!info)
 		return (0);
 

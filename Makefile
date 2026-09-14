@@ -6,7 +6,9 @@ BUILD_DIR	= build
 WIN32 :=
 WIN64 :=
 CROSS_WIN :=
+
 include hajlib/cross.mk
+include sources.mk
 
 CONST_EXEC	= $(BUILD_DIR)/genConst$(TARGET_EXT)
 
@@ -34,6 +36,8 @@ else
 	ifeq ($(ARCH),x86_64)
 		ARCH_FLAGS := -march=native
 	else ifeq ($(ARCH),aarch64)
+# optimize for ARMv8.2 with crypto extensions if available
+		LIB_SRC_OBJ += $(LIB_ASM_ARM_OBJ)
 		ARCH_FLAGS := -march=armv8.2-a+crypto
 		ASM_FLAGS += $(ARCH_FLAGS)
 	else
@@ -43,8 +47,6 @@ endif
 
 CFLAGS		+= $(BASE_FLAGS) $(OPT_FLAGS) $(SAN_FLAGS) $(ASM_FLAGS)
 INCLUDES	= -I./includes -I$(HLIB_PATH)/include
-
-include sources.mk
 
 # Installation paths
 PREFIX						?= /usr/local
@@ -97,11 +99,11 @@ $(BTLS_LIBA): $(HLIB_LIBA)
 # ---- Generate constants ----
 $(BUILD_DIR)/consts/%.o: $(CONST_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(BASE_FLAGS) $(OPT_FLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(CONST_EXEC): $(HLIB_LIBA) $(CONST_OBJ)
 	@echo -e "$(GREEN)Linking genConst executable...$(RESET)"
-	$(CC) $(BASE_FLAGS) $(OPT_FLAGS) $(INCLUDES) -o $@ $(CONST_OBJ) $(HLIB_LIBA) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(CONST_OBJ) $(HLIB_LIBA) $(LDFLAGS)
 	@echo -e "$(GREEN)Executable $@ generated.$(RESET)"
 
 $(CONST_HEADERS): $(CONST_EXEC)
